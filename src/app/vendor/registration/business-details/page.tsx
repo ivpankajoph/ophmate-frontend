@@ -1,36 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-
 import { motion } from "framer-motion";
-import {  CreditCard, MapPin, Mail, Phone, ClipboardList, FileText, PiggyBank } from "lucide-react";
+import { CreditCard, ClipboardList, MapPin, PiggyBank } from "lucide-react";
+import Swal from "sweetalert2";
 import QuoteBlock from "@/components/quotes";
+import { AppDispatch } from "@/store";
+import { updateVendorBusiness } from "@/store/slices/vendorSlice";
+import { Input } from "@/components/ui/input";
 
+// Indian States
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands",
+  "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep",
+  "Delhi", "Puducherry", "Jammu and Kashmir", "Ladakh"
+];
+
+const BUSINESS_TYPES = [
+  "Sole Proprietorship",
+  "Partnership",
+  "Limited Liability Partnership (LLP)",
+  "Private Limited Company",
+  "Public Limited Company",
+  "One Person Company (OPC)",
+  "Hindu Undivided Family (HUF)",
+  "Others"
+];
+
+// Validation helpers
+const isEmpty = (value: string) => !value.trim();
+const validateGST = (gst: string) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gst);
+const validatePAN = (pan: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+const validatePhone = (phone: string) => /^[6-9]\d{9}$/.test(phone);
+const validatePincode = (pin: string) => /^[1-9][0-9]{5}$/.test(pin);
+const validateIFSC = (ifsc: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc);
+const validateAccount = (acc: string) => /^\d{9,18}$/.test(acc);
+const validateUPI = (upi: string) => upi.includes("@");
 
 export default function Step3() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading } = useSelector((state: any) => state.vendor);
+  const token = useSelector((state: any) => state?.auth?.token);
 
   const [form, setForm] = useState({
     name: "",
     business_type: "",
     gst_number: "",
     pan_number: "",
-    email: "",
-    phone: "",
     alternate_contact_name: "",
     alternate_contact_phone: "",
     street: "",
     city: "",
     state: "",
     pincode: "",
+    address: "",
     bank_name: "",
     bank_account: "",
-    ifsc: "",
+    ifsc_code: "",
     branch: "",
     upi_id: "",
     categories: "",
@@ -40,33 +77,288 @@ export default function Step3() {
     pan_card: null as File | null,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle text input with optional paste prevention & auto-uppercase
+  const handleTextInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    options?: { preventPaste?: boolean; toUpperCase?: boolean }
+  ) => {
+    let value = e.target.value;
+    const { name } = e.target;
+
+    if (options?.toUpperCase) {
+      value = value.toUpperCase();
+    }
+
+    setForm({ ...form, [name]: value });
+
+    if (touched[name] || isSubmitting) {
+      validateField(name, value);
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setForm({ ...form, [name]: value });
+    if (touched[name] || isSubmitting) {
+      validateField(name, value);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setForm({ ...form, [e.target.name]: e.target.files[0] });
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const file = files[0];
+      const allowedTypes = ["application/pdf"];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors((prev) => ({ ...prev, [name]: "Only PDF, JPG, or PNG allowed." }));
+        return;
+      }
+      setForm({ ...form, [name]: file });
+      if (touched[name] || isSubmitting) {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[name];
+          return updated;
+        });
+      }
     }
+  };
+
+  const handleBlur = (name: string) => {
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    validateField(name, form[name as keyof typeof form] as string);
+  };
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+
+    switch (name) {
+      case "name":
+      case "alternate_contact_name":
+      case "street":
+      case "city":
+      case "address":
+      case "bank_name":
+      case "branch":
+      case "categories":
+      case "return_policy":
+      case "operating_hours":
+        if (isEmpty(value)) error = `${name.replace(/_/g, " ")} is required.`;
+        break;
+
+      case "business_type":
+      case "state":
+        if (!value) error = `${name.replace(/_/g, " ")} is required.`;
+        break;
+
+      case "gst_number":
+        if (isEmpty(value)) {
+          error = "GST Number is required.";
+        } else if (!validateGST(value)) {
+          error = "Invalid GST format.";
+        }
+        break;
+
+      case "pan_number":
+        if (isEmpty(value)) {
+          error = "PAN Number is required.";
+        } else if (!validatePAN(value)) {
+          error = "Invalid PAN format (e.g., ABCDE1234F).";
+        }
+        break;
+
+      case "alternate_contact_phone":
+        if (isEmpty(value)) {
+          error = "Alternate Contact Phone is required.";
+        } else if (!validatePhone(value)) {
+          error = "Invalid 10-digit phone number.";
+        }
+        break;
+
+      case "pincode":
+        if (isEmpty(value)) {
+          error = "Pincode is required.";
+        } else if (!validatePincode(value)) {
+          error = "Invalid pincode (6 digits, no leading zero).";
+        }
+        break;
+
+      case "bank_account":
+        if (isEmpty(value)) {
+          error = "Account Number is required.";
+        } else if (!validateAccount(value)) {
+          error = "Account must be 9–18 digits.";
+        }
+        break;
+
+      case "ifsc_code":
+        if (isEmpty(value)) {
+          error = "IFSC Code is required.";
+        } else if (!validateIFSC(value)) {
+          error = "Invalid IFSC code.";
+        }
+        break;
+
+      case "upi_id":
+        if (value && !validateUPI(value)) {
+          error = "UPI ID must contain '@'.";
+        }
+        break;
+
+      case "gst_cert":
+        if (!form.gst_cert) error = "GST Certificate is required.";
+        break;
+
+      case "pan_card":
+        if (!form.pan_card) error = "PAN Card is required.";
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors((prev) => {
+      const updated = { ...prev };
+      if (error) {
+        updated[name] = error;
+      } else {
+        delete updated[name];
+      }
+      return updated;
+    });
+  };
+
+  const validateForm = () => {
+    setIsSubmitting(true);
+    const newErrors: Record<string, string> = {};
+
+    // Trigger validation for all fields
+    Object.keys(form).forEach((key) => {
+      if (key === "gst_cert" || key === "pan_card") return;
+      validateField(key, form[key as keyof typeof form] as string);
+    });
+
+    // File fields
+    if (!form.gst_cert) newErrors.gst_cert = "GST Certificate is required.";
+    if (!form.pan_card) newErrors.pan_card = "PAN Card is required.";
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0 && Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+    if (!validateForm()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please fix form errors",
+        text: "Some fields are missing or invalid.",
+      });
+      return;
+    }
+
     try {
       const data = new FormData();
-      Object.entries(form).forEach(([key, value]: any) => {
-        if (value !== null) data.append(key, value);
+      Object.entries(form).forEach(([key, value]) => {
+        if (value !== null) data.append(key, value as any);
       });
 
-  
-      router.push("/vendor/registration/thankyou");
+      if (!token) {
+        Swal.fire({ icon: "warning", title: "Unauthorized", text: "Please login first!" });
+        return;
+      }
+
+      const result = await dispatch(updateVendorBusiness({ formData: data }));
+
+      if (updateVendorBusiness.fulfilled.match(result)) {
+        Swal.fire({
+          icon: "success",
+          title: "Business Updated!",
+          text: "Your business details have been saved successfully.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        router.push("/vendor/registration/thankyou");
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: (result.payload as string) || "Failed to update business details.",
+        });
+      }
     } catch (err) {
       console.error(err);
-      alert("Failed to save business details");
+      Swal.fire({
+        icon: "error",
+        title: "Unexpected Error",
+        text: "Something went wrong while saving details.",
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Reusable input with error display
+  const renderTextInput = (
+    name: string,
+    label: string,
+    icon?: React.ReactNode,
+    placeholder?: string,
+    options?: { preventPaste?: boolean; toUpperCase?: boolean }
+  ) => (
+    <div className="flex flex-col">
+      <label className="mb-1 font-semibold text-sm">{label}</label>
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            {icon}
+          </div>
+        )}
+        <Input
+          name={name}
+          value={form[name as keyof typeof form] as string}
+          onChange={(e:any) => handleTextInput(e, options)}
+          onBlur={() => handleBlur(name)}
+          onPaste={options?.preventPaste ? (e:any) => e.preventDefault() : undefined}
+          placeholder={placeholder || label}
+          className={icon ? "pl-10" : ""}
+        />
+        {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+      </div>
+    </div>
+  );
+
+  const renderSelect = (name: string, label: string, options: string[]) => (
+    <div className="flex flex-col">
+      <label className="mb-1 font-semibold text-sm">{label}</label>
+      <Select
+        value={form[name as keyof typeof form] as string}
+        onValueChange={(value) => handleSelectChange(name, value)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={`Select ${label}`} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt}>
+              {opt}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+    </div>
+  );
+
+  const renderFileInput = (name: string, label: string) => (
+    <div className="flex flex-col">
+      <label className="font-semibold mb-1">{label}</label>
+      <Input type="file" name={name} accept=".pdf" onChange={handleFileChange}  />
+      {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-background px-8 py-16 flex flex-col items-center justify-start">
@@ -88,143 +380,72 @@ export default function Step3() {
         transition={{ duration: 0.7 }}
         className="w-full max-w-6xl"
       >
-        <Card className="shadow-2xl border border-border bg-background/80 backdrop-blur-lg p-8">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-3xl font-bold">Step 3 – Business Information</CardTitle>
+        <Card className="shadow-2xl border border-border bg-background/80 backdrop-blur-lg p-8 space-y-6">
+          {/* Business Info */}
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-3xl font-bold">Business Information</CardTitle>
           </CardHeader>
-          <CardContent className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Business Info */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Business Name</label>
-              <div className="relative">
-                <ClipboardList className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="name" value={form.name} onChange={handleChange} placeholder="Business Name" className="pl-10" />
-              </div>
-            </div>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {renderTextInput("name", "Business Name", )}
+            {renderSelect("business_type", "Business Type", BUSINESS_TYPES)}
+            {renderTextInput("gst_number", "GST Number", undefined, "e.g. 22AAAAA0000A1Z5", {
+              preventPaste: false,
+              toUpperCase: true,
+            })}
+            {renderTextInput("pan_number", "PAN Number", undefined, "e.g. ABCDE1234F", {
+              preventPaste: true,
+              toUpperCase: true,
+            })}
+            {renderTextInput("alternate_contact_name", "Alternate Contact Name")}
+            {renderTextInput("alternate_contact_phone", "Alternate Contact Phone", undefined, "10-digit number")}
+          </CardContent>
 
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Business Type</label>
-              <div className="relative">
-                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="business_type" value={form.business_type} onChange={handleChange} placeholder="Private Limited / LLP" className="pl-10" />
-              </div>
-            </div>
+          {/* Address */}
+          <CardHeader className="text-center pt-4 pb-2">
+            <CardTitle className="text-2xl font-semibold">Address Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {renderTextInput("address", "Full Address")}
+            {renderTextInput("street", "Street",)}
+            {renderTextInput("city", "City")}
+            {renderSelect("state", "State", INDIAN_STATES)}
+            {renderTextInput("pincode", "Pincode", undefined, "6-digit code")}
+          </CardContent>
 
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">GST Number</label>
-              <Input name="gst_number" value={form.gst_number} onChange={handleChange} placeholder="GST Number" />
-            </div>
+          {/* Bank Details */}
+          <CardHeader className="text-center pt-4 pb-2">
+            <CardTitle className="text-2xl font-semibold">Bank Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {renderTextInput("bank_name", "Bank Name")}
+            {renderTextInput("bank_account", "Account Number", undefined, "9–18 digits", {
+              preventPaste: true,
+            })}
+            {renderTextInput("ifsc_code", "IFSC Code", undefined, "e.g. SBIN0002499", {
+              preventPaste: true,
+              toUpperCase: true,
+            })}
+            {renderTextInput("branch", "Branch Name")}
+            {renderTextInput("upi_id", "UPI ID", undefined, "e.g. name@upi")}
+          </CardContent>
 
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">PAN Number</label>
-              <Input name="pan_number" value={form.pan_number} onChange={handleChange} placeholder="PAN Number" />
-            </div>
+          {/* Other Info */}
+          <CardHeader className="text-center pt-4 pb-2">
+            <CardTitle className="text-2xl font-semibold">Other Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {renderTextInput("categories", "Categories (comma separated)")}
+            {renderTextInput("return_policy", "Return Policy")}
+            {renderTextInput("operating_hours", "Operating Hours")}
+          </CardContent>
 
-            {/* Contact */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="email" value={form.email} onChange={handleChange} placeholder="Business Email" className="pl-10" />
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Phone</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone Number" className="pl-10" />
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Alternate Contact Name</label>
-              <Input name="alternate_contact_name" value={form.alternate_contact_name} onChange={handleChange} placeholder="Alternate Contact Name" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Alternate Contact Phone</label>
-              <Input name="alternate_contact_phone" value={form.alternate_contact_phone} onChange={handleChange} placeholder="Alternate Phone" />
-            </div>
-
-            {/* Address */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Street</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="street" value={form.street} onChange={handleChange} placeholder="Street / House" className="pl-10" />
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">City</label>
-              <Input name="city" value={form.city} onChange={handleChange} placeholder="City" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">State</label>
-              <Input name="state" value={form.state} onChange={handleChange} placeholder="State" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Pincode</label>
-              <Input name="pincode" value={form.pincode} onChange={handleChange} placeholder="Pincode" />
-            </div>
-
-            {/* Bank Details */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Bank Name</label>
-              <div className="relative">
-                <PiggyBank className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input name="bank_name" value={form.bank_name} onChange={handleChange} placeholder="Bank Name" className="pl-10" />
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Bank Account</label>
-              <Input name="bank_account" value={form.bank_account} onChange={handleChange} placeholder="Account Number" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">IFSC Code</label>
-              <Input name="ifsc" value={form.ifsc} onChange={handleChange} placeholder="IFSC Code" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Branch</label>
-              <Input name="branch" value={form.branch} onChange={handleChange} placeholder="Branch Name" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">UPI ID</label>
-              <Input name="upi_id" value={form.upi_id} onChange={handleChange} placeholder="UPI ID" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Categories (comma separated)</label>
-              <Input name="categories" value={form.categories} onChange={handleChange} placeholder="Electronics, Mobile Accessories" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Return Policy</label>
-              <Input name="return_policy" value={form.return_policy} onChange={handleChange} placeholder="7 days" />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">Operating Hours</label>
-              <Input name="operating_hours" value={form.operating_hours} onChange={handleChange} placeholder="9 AM - 7 PM" />
-            </div>
-
-            {/* Documents */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">GST Certificate</label>
-              <Input type="file" name="gst_cert" onChange={handleFileChange} />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-sm">PAN Card</label>
-              <Input type="file" name="pan_card" onChange={handleFileChange} />
-            </div>
+          {/* Documents */}
+          <CardHeader className="text-center pt-4 pb-2">
+            <CardTitle className="text-2xl font-semibold">Documents</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {renderFileInput("gst_cert", "GST Certificate")}
+            {renderFileInput("pan_card", "PAN Card")}
           </CardContent>
 
           <div className="mt-8 text-center">

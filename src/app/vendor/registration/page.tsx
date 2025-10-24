@@ -7,16 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { redirect } from "next/dist/server/api-utils";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store";
+import { resetOtpState, sendOtp, verifyOtp } from "@/store/slices/authSlice";
+import Swal from "sweetalert2";
 
 export default function VendorRegistrationPage() {
   const [phone, setPhone] = useState("");
   const [showOtp, setShowOtp] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const otpRefs = useRef<HTMLInputElement[]>([]);
+
+  const { loading, success, error } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
     if (showOtp && timer > 0) {
@@ -34,6 +39,7 @@ export default function VendorRegistrationPage() {
 
   const handleContinue = () => {
     if (phone.length === 10) {
+      handleSubmit();
       setShowOtp(true);
       setTimer(30);
       setCanResend(false);
@@ -72,10 +78,68 @@ export default function VendorRegistrationPage() {
     }
   };
   const router = useRouter();
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleSubmit = async () => {
+    if (!phone) {
+      Swal.fire("Warning", "Please enter a phone number", "warning");
+      return;
+    }
+
+    try {
+      await dispatch(sendOtp(phone));
+    } catch (err) {
+      console.log(err, "error");
+      Swal.fire("Error", "Something went wrong", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (success) {
+      Swal.fire({
+        title: "Success!",
+        text: "OTP sent successfully!",
+        icon: "success",
+        confirmButtonColor: "#3085d6",
+      });
+      dispatch(resetOtpState());
+    }
+
+    if (error) {
+      Swal.fire({
+        title: "Error!",
+        text: error,
+        icon: "error",
+        confirmButtonColor: "#d33",
+      });
+      dispatch(resetOtpState());
+    }
+  }, [success, error, dispatch]);
   const handleResend = () => {
     setOtp(["", "", "", "", "", ""]);
     setTimer(30);
     setCanResend(false);
+  };
+
+  const handleVerifyOtp = async () => {
+    // If OTP is an array, join it properly; otherwise safely convert to string
+    const otpString: string = Array.isArray(otp)
+      ? otp.join("")
+      : String(otp).trim();
+
+    if (!phone || !otpString) {
+      Swal.fire("Warning", "Please enter both phone number and OTP", "warning");
+      return;
+    }
+
+    try {
+      await dispatch(verifyOtp({ phone, otp: otpString }));
+      router.push('/vendor/registration/personal-details')
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      Swal.fire("Error", "Something went wrong while verifying OTP", "error");
+    }
   };
 
   const isOtpComplete = otp.join("").length === 6;
@@ -153,7 +217,8 @@ export default function VendorRegistrationPage() {
                 {/* OTP Section */}
                 <div className="text-center space-y-3">
                   <p className="text-lg text-muted-foreground">
-                    OTP sent to <span className="font-semibold">+91 {phone}</span>
+                    OTP sent to{" "}
+                    <span className="font-semibold">+91 {phone}</span>
                   </p>
                   <Button
                     variant="link"
@@ -169,7 +234,9 @@ export default function VendorRegistrationPage() {
                   {otp.map((digit, index) => (
                     <Input
                       key={index}
-                      ref={(el) => { otpRefs.current[index] = el!; }}
+                      ref={(el) => {
+                        otpRefs.current[index] = el!;
+                      }}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
@@ -202,7 +269,7 @@ export default function VendorRegistrationPage() {
                     size="lg"
                     className="w-full text-lg"
                     disabled={!isOtpComplete}
-                    onClick={() => router.push("/vendor/registration/personal-details")}
+                    onClick={() => handleVerifyOtp()}
                   >
                     Verify OTP
                   </Button>
