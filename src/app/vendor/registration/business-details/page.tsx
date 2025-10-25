@@ -67,7 +67,7 @@ export default function Step3() {
     address: "",
     bank_name: "",
     bank_account: "",
-    ifsc_code: "",
+    ifsc_code: "", 
     branch: "",
     upi_id: "",
     categories: "",
