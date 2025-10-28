@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,32 +8,41 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllProducts } from "@/store/slices/productSlice";
+import { useRouter } from "next/navigation";
 
-// Mock product type
-type Product = {
-  id: string;
-  title: string;
-  price: number;
-  image: string;
-  rating: number;
-  tags?: string[];
-};
-
-const PRODUCTS: Product[] = Array.from({ length: 12 }).map((_, i) => ({
-  id: String(i + 1),
-  title: `Acme Product ${i + 1}`,
-  price: Math.round((10 + Math.random() * 190) * 100) / 100,
-  image: `/images/product-${(i % 6) + 1}.jpg`,
-  rating: Math.round((3 + Math.random() * 2) * 10) / 10,
-  tags: i % 3 === 0 ? ["New"] : i % 3 === 1 ? ["Bestseller"] : ["Limited"],
-}));
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL_BANNERS;
+  
+ export const getImageUrl = (path?: string) => {
+    if (!path) return "/placeholder.jpg";
+    if (path.startsWith("http")) return path; // already full URL
+    return `${BASE_URL}/${path.replace(/^\//, "")}`; // ensure no double slash
+  };
 
 export default function EcommerceHeroPage() {
-  const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const dispatch = useDispatch<any>();
 
-  // simple scroll-snap carousel controls
+  const router = useRouter();
+
+  const handleCardClick = (p: any) => {
+    const categoryName = p.productCategory || p.category?.name || "unknown"; // fallback if field name differs
+    router.push(`/product/${encodeURIComponent(categoryName)}/${p._id}`);
+  };
+
+ 
+
+  // Select state from Redux store
+  const { products, loading, error } = useSelector(
+    (state: any) => state.product || { products: [] }
+  );
+
+  useEffect(() => {
+    dispatch(fetchAllProducts());
+  }, [dispatch]);
+
   const scrollToIndex = (index: number) => {
     if (!carouselRef.current) return;
     const container = carouselRef.current;
@@ -47,13 +56,11 @@ export default function EcommerceHeroPage() {
     setActive(index);
   };
 
-  const featured = PRODUCTS.slice(0, 6);
+  const featured = products?.slice(0, 6) || [];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Promo bar */}
-
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="container mx-auto px-4 pt-10">
         <div className="grid grid-cols-12 gap-6 items-center">
           <div className="col-span-12 lg:col-span-6">
@@ -66,7 +73,6 @@ export default function EcommerceHeroPage() {
               more.
             </p>
 
-            {/* Categories chips */}
             <div className="mt-6 flex flex-wrap gap-2">
               {[
                 "All",
@@ -132,7 +138,7 @@ export default function EcommerceHeroPage() {
             </div>
           </div>
 
-          {/* Hero Visual - carousel / banner */}
+          {/* Hero Right Visual */}
           <div className="col-span-12 lg:col-span-6">
             <div className="relative rounded-2xl overflow-hidden shadow-xl bg-gradient-to-tr from-indigo-50 to-white p-6">
               <div className="flex items-center justify-between gap-4">
@@ -141,7 +147,6 @@ export default function EcommerceHeroPage() {
                   <p className="mt-2 text-sm text-muted-foreground">
                     Up to 40% off on selected items
                   </p>
-
                   <div className="mt-4 flex gap-3">
                     <Button>Shop Sale</Button>
                     <Button variant="ghost">Learn More</Button>
@@ -158,48 +163,54 @@ export default function EcommerceHeroPage() {
                 </div>
               </div>
 
-              {/* small product carousel (scroll-snap) */}
-              <div className="mt-6">
-                <div className="relative">
-                  <div
-                    ref={carouselRef}
-                    className="no-scrollbar flex gap-4 overflow-x-auto scroll-snap-x py-2 px-1"
-                    style={{ scrollSnapType: "x mandatory" }}
-                  >
-                    {featured.map((p, i) => (
+              {/* Small Product Carousel */}
+              <div className="mt-6 relative">
+                <div
+                  ref={carouselRef}
+                  className="no-scrollbar flex gap-4 overflow-x-auto scroll-snap-x py-2 px-1"
+                  style={{ scrollSnapType: "x mandatory" }}
+                >
+                  {loading ? (
+                    <p className="text-sm text-gray-500">Loading...</p>
+                  ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                  ) : (
+                    featured.map((p: any, i: number) => (
                       <div
-                        key={p.id}
+                        key={p._id}
                         className="min-w-[180px] flex-shrink-0 rounded-lg bg-white p-3 shadow-md scroll-snap-align-center"
                         style={{ scrollSnapAlign: "center" }}
                         onClick={() => scrollToIndex(i)}
                       >
                         <div className="relative h-36 w-full mb-2 rounded-md overflow-hidden">
                           <Image
-                            src={p.image}
-                            alt={p.title}
+                            src={getImageUrl(p.default_images?.[0])}
+                            alt={p.productName}
                             fill
                             className="object-cover"
                           />
                         </div>
-                        <div className="text-sm font-medium">{p.title}</div>
+                        <div className="text-sm font-medium">
+                          {p.productName}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          ${p.price.toFixed(2)}
+                          ₹{p.variants?.[0]?.final_price || 0}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    ))
+                  )}
+                </div>
 
-                  <div className="absolute bottom-2 left-4 flex gap-2">
-                    {featured.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => scrollToIndex(i)}
-                        className={`h-2 w-8 rounded-full ${
-                          i === active ? "bg-indigo-600" : "bg-neutral-200"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                <div className="absolute bottom-2 left-4 flex gap-2">
+                  {featured.map((_: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => scrollToIndex(i)}
+                      className={`h-2 w-8 rounded-full ${
+                        i === active ? "bg-indigo-600" : "bg-neutral-200"
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -207,9 +218,8 @@ export default function EcommerceHeroPage() {
         </div>
       </section>
 
-      {/* Product Sections */}
+      {/* Trending Section */}
       <section className="container mx-auto px-4 mt-12">
-        {/* Horizontal sliding list - Trending Now */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">Trending Now</h2>
@@ -217,39 +227,47 @@ export default function EcommerceHeroPage() {
           </div>
 
           <div className="no-scrollbar flex gap-4 overflow-x-auto py-2">
-            {PRODUCTS.map((p) => (
-              <Card key={p.id} className="min-w-[220px] flex-shrink-0">
-                <CardContent className="p-3">
-                  <div className="relative h-40 w-full rounded-md overflow-hidden mb-3">
-                    <Image
-                      src={p.image}
-                      alt={p.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">{p.title}</div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        ${p.price.toFixed(2)}
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              products.map((p: any) => (
+                <Card
+                  key={p._id}
+                  onClick={() => handleCardClick(p)}
+                  className="min-w-[220px] flex-shrink-0"
+                >
+                  <CardContent className="p-3">
+                    <div className="relative h-40 w-full rounded-md overflow-hidden mb-3">
+                      <Image
+                        src={getImageUrl(p.default_images?.[0])}
+                        alt={p.productName}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{p.productName}</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          ₹{p.variants?.[0]?.final_price || 0}
+                        </div>
+                        <div className="flex items-center gap-1 mt-2 text-yellow-500">
+                          <Star className="h-4 w-4" />
+                          <span className="text-sm">4.5</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 mt-2 text-yellow-500">
-                        <Star className="h-4 w-4" />{" "}
-                        <span className="text-sm">{p.rating}</span>
+                      <div className="self-start">
+                        <Button size="icon">+</Button>
                       </div>
                     </div>
-                    <div className="self-start">
-                      <Button size="icon">+</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Grid - Popular Picks */}
+        {/* Popular Picks */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">Popular Picks</h2>
@@ -257,31 +275,38 @@ export default function EcommerceHeroPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {PRODUCTS.map((p) => (
-              <div key={p.id} className="group">
-                <div className="relative w-full h-56 rounded-xl overflow-hidden shadow hover:scale-[1.01] transition-transform">
-                  <Image
-                    src={p.image}
-                    alt={p.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="mt-3 flex justify-between items-center">
-                  <div>
-                    <div className="font-medium text-sm">{p.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      ${p.price.toFixed(2)}
-                    </div>
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              products.map((p: any) => (
+                <div key={p._id} className="group">
+                  <div
+                    onClick={() => handleCardClick(p)}
+                    className="relative w-full h-56 rounded-xl overflow-hidden shadow hover:scale-[1.01] transition-transform"
+                  >
+                    <Image
+                      src={getImageUrl(p.default_images?.[0])}
+                      alt={p.productName}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <Badge>{p.tags?.[0]}</Badge>
+                  <div className="mt-3 flex justify-between items-center">
+                    <div>
+                      <div className="font-medium text-sm">{p.productName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        ₹{p.variants?.[0]?.final_price || 0}
+                      </div>
+                    </div>
+                    <Badge>{p.brand}</Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
-        {/* Promotional banner */}
+        {/* Promotional Banner + Testimonials */}
         <div className="rounded-2xl overflow-hidden bg-gradient-to-r from-amber-50 to-white p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="text-xl font-bold">Bundle & Save</h3>
@@ -292,39 +317,6 @@ export default function EcommerceHeroPage() {
           <div className="flex gap-3">
             <Button>Build bundle</Button>
             <Button variant="ghost">See bundles</Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials / Footer CTA */}
-      <section className="container mx-auto px-4 mt-12 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="col-span-2 rounded-2xl bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold">What our customers say</h3>
-            <div className="mt-4 space-y-4">
-              <blockquote className="text-sm text-muted-foreground">
-                “Amazing quality — delivery was fast and the product exceeded
-                expectations.”
-              </blockquote>
-              <blockquote className="text-sm text-muted-foreground">
-                “Customer service helped me quickly. 10/10 would buy again.”
-              </blockquote>
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 flex flex-col justify-between">
-            <div>
-              <h3 className="text-xl font-bold">Join our newsletter</h3>
-              <p className="mt-2 text-sm">
-                Get 10% off your first order and updates about new drops.
-              </p>
-            </div>
-            <div className="mt-4">
-              <div className="flex gap-2">
-                <Input placeholder="Your email" />
-                <Button>Subscribe</Button>
-              </div>
-            </div>
           </div>
         </div>
       </section>
