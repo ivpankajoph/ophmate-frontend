@@ -9,13 +9,12 @@ import Image from "next/image";
 export default function Home() {
   return (
 <>
-<PromotionalBanner/>
-<Navbar/>
-<ProductNavbar/>
+
+
 
 <FullWidthBanner/>
 <EcommerceHeroPage/>
-<Footer/>
+
 </>
   );
 }

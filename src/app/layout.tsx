@@ -6,6 +6,10 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "@/store";
 import ReduxProvider from "@/providers/ReduxProvider";
+import PromotionalBanner from "@/components/promotional-banner";
+import Navbar from "@/components/navbar/Navbar";
+import Footer from "@/components/footer";
+import ProductNavbar from "@/components/productBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +36,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PromotionalBanner />
+        <Navbar />
+        {/* <ProductNavbar/> */}
         <ReduxProvider>{children}</ReduxProvider>
+        <Footer />
       </body>
     </html>
   );

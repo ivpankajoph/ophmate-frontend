@@ -153,14 +153,6 @@ export default function EcommerceHeroPage() {
                   </div>
                 </div>
 
-                <div className="hidden md:block w-[260px] h-[260px] relative">
-                  <Image
-                    src="/images/hero-1.jpg"
-                    alt="hero"
-                    fill
-                    className="object-cover rounded-xl"
-                  />
-                </div>
               </div>
 
               {/* Small Product Carousel */}
@@ -256,9 +248,9 @@ export default function EcommerceHeroPage() {
                           <span className="text-sm">4.5</span>
                         </div>
                       </div>
-                      <div className="self-start">
+                      {/* <div className="self-start">
                         <Button size="icon">+</Button>
-                      </div>
+                      </div> */}
                     </div>
                   </CardContent>
                 </Card>
