@@ -62,7 +62,7 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const { product, loading, error } = useSelector(
-    (state: RootState) => state.product
+    (state: any) => state.product
   );
 
   const [selectedImage, setSelectedImage] = useState<string>("");
@@ -83,10 +83,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!product) return;
 
-    let firstActiveVariant: Variant | undefined;
+    let firstActiveVariant: any | undefined;
     if (product.variants && product.variants.length > 0) {
       firstActiveVariant =
-        product.variants.find((v) => v.is_active) || product.variants[0];
+        product.variants.find((v:any) => v.is_active) || product.variants[0];
       setSelectedVariant(firstActiveVariant);
 
       const firstImg = firstActiveVariant.image_urls[0];
@@ -318,7 +318,7 @@ export default function ProductDetailPage() {
             <div>
               <div className="text-sm font-medium mb-2">Color</div>
               <div className="flex gap-2 flex-wrap">
-                {product.variants.map((v) => (
+                {product.variants.map((v:any) => (
                   <button
                     key={v._id}
                     aria-pressed={selectedVariant?._id === v._id}
@@ -378,7 +378,7 @@ export default function ProductDetailPage() {
 
               <div className="mt-2 text-sm text-muted-foreground">
                 Available:{" "}
-                {selectedVariant?.stockQuantity > 0
+                {(selectedVariant?.stockQuantity ?? 0) > 0
                   ? "In stock"
                   : "Out of stock"}
               </div>
@@ -421,7 +421,7 @@ export default function ProductDetailPage() {
                 <p>{product.description || "No details available."}</p>
                 {features.length > 0 && (
                   <ul>
-                    {features.map((f, i) => (
+                    {features.map((f: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, i: React.Key | null | undefined) => (
                       <li key={i}>{f}</li>
                     ))}
                   </ul>
