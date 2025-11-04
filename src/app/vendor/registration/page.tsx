@@ -21,7 +21,7 @@ export default function VendorRegistrationPage() {
   const [canResend, setCanResend] = useState(false);
   const otpRefs = useRef<HTMLInputElement[]>([]);
 
-  const { loading, success, error } = useSelector((state: any) => state.auth);
+  const { success, error } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
     if (showOtp && timer > 0) {
@@ -89,6 +89,7 @@ export default function VendorRegistrationPage() {
 
     try {
       await dispatch(sendOtp(phone));
+      sessionStorage.setItem("vendor_phone",phone)
     } catch (err) {
       console.log(err, "error");
       Swal.fire("Error", "Something went wrong", "error");
@@ -97,22 +98,10 @@ export default function VendorRegistrationPage() {
 
   useEffect(() => {
     if (success) {
-      Swal.fire({
-        title: "Success!",
-        text: "OTP sent successfully!",
-        icon: "success",
-        confirmButtonColor: "#3085d6",
-      });
       dispatch(resetOtpState());
     }
 
     if (error) {
-      Swal.fire({
-        title: "Error!",
-        text: error,
-        icon: "error",
-        confirmButtonColor: "#d33",
-      });
       dispatch(resetOtpState());
     }
   }, [success, error, dispatch]);
@@ -135,7 +124,7 @@ export default function VendorRegistrationPage() {
 
     try {
       await dispatch(verifyOtp({ phone, otp: otpString }));
-      router.push('/vendor/registration/personal-details')
+      router.push("/vendor/registration/personal-details");
     } catch (error) {
       console.error("Error verifying OTP:", error);
       Swal.fire("Error", "Something went wrong while verifying OTP", "error");

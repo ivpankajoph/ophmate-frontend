@@ -36,7 +36,7 @@ export default function Step2() {
     try {
       setLoading(true);
       const result: any = await dispatch(sendEmailOtp({ email }));
-
+      sessionStorage.setItem("vendor_email",email)
       if (result.meta.requestStatus === "fulfilled") {
         setOtpSent(true);
         Swal.fire("Success", "OTP sent to your email!", "success");

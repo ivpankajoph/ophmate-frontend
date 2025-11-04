@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,7 +85,8 @@ export default function BusinessDetails() {
     let newValue = value;
 
     if (options?.toUpperCase) newValue = newValue.toUpperCase();
-    if (options?.preventPaste && e.nativeEvent instanceof ClipboardEvent) return;
+    if (options?.preventPaste && e.nativeEvent instanceof ClipboardEvent)
+      return;
 
     setForm((prev) => ({ ...prev, [name]: newValue }));
 
@@ -93,6 +94,16 @@ export default function BusinessDetails() {
       validateField(name, newValue);
     }
   };
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem("vendor_email") || "";
+    const storedPhone = sessionStorage.getItem("vendor_phone") || "";
+    console.log("asdsad",storedEmail,storedPhone)
+    setForm((prev) => ({
+      ...prev,
+      email: storedEmail,
+      phone_no: storedPhone,
+    }));
+  }, []);
 
   const handleSelectChange = (name: string, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -156,7 +167,8 @@ export default function BusinessDetails() {
         if (value && !/^\S+@\S+\.\S+$/.test(value)) error = "Invalid email";
         break;
       default:
-        if (!value && name !== "address_line_2") error = "This field is required";
+        if (!value && name !== "address_line_2")
+          error = "This field is required";
     }
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
@@ -215,7 +227,8 @@ export default function BusinessDetails() {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: (result.payload as string) || "Failed to update business details.",
+          text:
+            (result.payload as string) || "Failed to update business details.",
         });
       }
     } catch (err) {
@@ -235,19 +248,23 @@ export default function BusinessDetails() {
     name: string,
     label: string,
     placeholder?: string,
+    disabled?: boolean,
     options?: { preventPaste?: boolean; toUpperCase?: boolean }
   ) => (
     <div className="flex flex-col">
       <label className="mb-1 font-semibold text-sm">{label}</label>
       <Input
         name={name}
+        disabled={disabled}
         value={form[name as keyof typeof form] as string}
         onChange={(e) => handleTextInput(e, options)}
         onBlur={() => handleBlur(name)}
         onPaste={options?.preventPaste ? (e) => e.preventDefault() : undefined}
         placeholder={placeholder || label}
       />
-      {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+      {errors[name] && (
+        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
+      )}
     </div>
   );
 
@@ -269,15 +286,24 @@ export default function BusinessDetails() {
           ))}
         </SelectContent>
       </Select>
-      {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+      {errors[name] && (
+        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
+      )}
     </div>
   );
 
   const renderFileInput = (name: string, label: string) => (
     <div className="flex flex-col">
       <label className="font-semibold mb-1">{label}</label>
-      <Input type="file" name={name} accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
-      {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+      <Input
+        type="file"
+        name={name}
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={handleFileChange}
+      />
+      {errors[name] && (
+        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
+      )}
     </div>
   );
 
@@ -289,7 +315,9 @@ export default function BusinessDetails() {
         transition={{ duration: 0.7 }}
         className="text-center mb-10 max-w-4xl"
       >
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary">Business Details</h1>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary">
+          Business Details
+        </h1>
         <p className="text-muted-foreground mt-3 text-base sm:text-lg">
           Fill in your business information to complete registration.
         </p>
@@ -302,21 +330,42 @@ export default function BusinessDetails() {
         className="w-full max-w-6xl space-y-8"
       >
         {/* Your Information */}
+        {/* Your Information */}
         <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Your Information</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Your Information
+            </CardTitle>
           </CardHeader>
+
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Editable Name */}
             {renderTextInput("registrar_name", "Your Name")}
-            {renderTextInput("email", "Email")}
-            {renderTextInput("phone_no", "Phone No", "10-digit number")}
+
+            {/* Read-only Email */}
+            <div className="relative">
+              {renderTextInput("email", "Email", form.email, true)}
+              <p className="text-xs text-muted-foreground absolute right-2 top-2 italic">
+                Can’t edit
+              </p>
+            </div>
+
+            {/* Read-only Phone */}
+            <div className="relative">
+              {renderTextInput("phone_no", "Phone No", "10-digit number", true)}
+              <p className="text-xs text-muted-foreground absolute right-2 top-2 italic">
+                Can’t edit
+              </p>
+            </div>
           </CardContent>
         </Card>
 
         {/* Business Information */}
         <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Business Information</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Business Information
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {renderTextInput("name", "Business Name")}
@@ -325,37 +374,67 @@ export default function BusinessDetails() {
               "gst_number",
               "GST Number",
               "e.g. 22AAAAA0000A1Z5",
+              false,
               { toUpperCase: true }
             )}
+            {renderTextInput("pan_number", "PAN Number", "e.g. ABCDE1234F", false,{
+              preventPaste: true,
+              toUpperCase: true,
+            })}
             {renderTextInput(
-              "pan_number",
-              "PAN Number",
-              "e.g. ABCDE1234F",
-              { preventPaste: true, toUpperCase: true }
+              "alternate_contact_name",
+              "Alternate Contact Name"
             )}
-            {renderTextInput("alternate_contact_name", "Alternate Contact Name")}
-            {renderTextInput("alternate_contact_phone", "Alternate Contact Phone", "10-digit number")}
+            {renderTextInput(
+              "alternate_contact_phone",
+              "Alternate Contact Phone",
+              "10-digit number"
+            )}
           </CardContent>
         </Card>
 
         {/* Business Profile */}
         <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Business Profile</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Business Profile
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("established_year", "Established Year", "e.g. 2015")}
-            {renderSelect("business_nature", "Business Nature", BUSINESS_NATURES)}
-            {renderTextInput("annual_turnover", "Annual Turnover", "e.g. ₹10 Lakhs - ₹1 Crore")}
-            {renderTextInput("dealing_area", "Dealing Area", "e.g. Pan-India, Local, Global")}
-            {renderTextInput("office_employees", "Number of Office Employees", "e.g. 15")}
+            {renderTextInput(
+              "established_year",
+              "Established Year",
+              "e.g. 2015"
+            )}
+            {renderSelect(
+              "business_nature",
+              "Business Nature",
+              BUSINESS_NATURES
+            )}
+            {renderTextInput(
+              "annual_turnover",
+              "Annual Turnover",
+              "e.g. ₹10 Lakhs - ₹1 Crore"
+            )}
+            {renderTextInput(
+              "dealing_area",
+              "Dealing Area",
+              "e.g. Pan-India, Local, Global"
+            )}
+            {renderTextInput(
+              "office_employees",
+              "Number of Office Employees",
+              "e.g. 15"
+            )}
           </CardContent>
         </Card>
 
         {/* Address Details */}
         <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Address Details</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Address Details
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {renderTextInput("address_line_1", "Address Line 1")}
@@ -375,8 +454,10 @@ export default function BusinessDetails() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {renderTextInput("bank_name", "Bank Name")}
-            {renderTextInput("bank_account", "Account Number", "9–18 digits", { preventPaste: true })}
-            {renderTextInput("ifsc_code", "IFSC Code", "e.g. SBIN0002499", {
+            {renderTextInput("bank_account", "Account Number", "9–18 digits",false, {
+              preventPaste: true,
+            })}
+            {renderTextInput("ifsc_code", "IFSC Code", "e.g. SBIN0002499",false, {
               preventPaste: true,
               toUpperCase: true,
             })}
@@ -388,7 +469,9 @@ export default function BusinessDetails() {
         {/* Other Information */}
         <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Other Information</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Other Information
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {renderTextInput("categories", "Categories (comma separated)")}
@@ -410,7 +493,11 @@ export default function BusinessDetails() {
 
         {/* Submit Button */}
         <div className="mt-6 text-center">
-          <Button size="lg" onClick={handleSubmit} disabled={loading || isSubmitting}>
+          <Button
+            size="lg"
+            onClick={handleSubmit}
+            disabled={loading || isSubmitting}
+          >
             {loading || isSubmitting ? "Saving..." : "Complete Registration"}
           </Button>
         </div>
