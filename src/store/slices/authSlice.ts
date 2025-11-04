@@ -19,9 +19,7 @@ const initialState: AuthState = {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
-// -------------------------
-// Phone OTP Thunks
-// -------------------------
+
 export const sendOtp = createAsyncThunk<
   any,
   string,
@@ -29,6 +27,8 @@ export const sendOtp = createAsyncThunk<
 >('auth/sendOtp', async (phone, { rejectWithValue }) => {
   try {
     const response = await axios.post(`${BASE_URL}/vendor/send-otp`, { phone })
+    console.log("sdadas",response,response.data)
+    sessionStorage.setItem("vendor_otp",response.data.otp)
     return response.data
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || 'Failed to send OTP')
@@ -105,7 +105,6 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Send Phone OTP
     builder.addCase(sendOtp.pending, (state) => {
       state.loading = true
       state.error = null

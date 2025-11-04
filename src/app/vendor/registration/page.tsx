@@ -123,8 +123,8 @@ export default function VendorRegistrationPage() {
     }
 
     try {
-      await dispatch(verifyOtp({ phone, otp: otpString }));
-      router.push("/vendor/registration/personal-details");
+     await dispatch(verifyOtp({ phone, otp: otpString })).unwrap();
+  router.push("/vendor/registration/personal-details");
     } catch (error) {
       console.error("Error verifying OTP:", error);
       Swal.fire("Error", "Something went wrong while verifying OTP", "error");
@@ -132,7 +132,7 @@ export default function VendorRegistrationPage() {
   };
 
   const isOtpComplete = otp.join("").length === 6;
-
+  const temp_otp = sessionStorage.getItem("vendor_otp")
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background px-6 py-20 text-foreground">
       {/* Header Quote */}
@@ -216,6 +216,7 @@ export default function VendorRegistrationPage() {
                   >
                     Edit number
                   </Button>
+                  <p>Your Temporary otp is : {temp_otp}</p>
                 </div>
 
                 {/* OTP Boxes */}
