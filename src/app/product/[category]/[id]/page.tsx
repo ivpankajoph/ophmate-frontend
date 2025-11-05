@@ -491,9 +491,9 @@ export default function ProductDetailPage() {
               <AccordionItem value="seller_details">
                 <AccordionTrigger>Seller Details</AccordionTrigger>
                 <AccordionContent>
-                <Link href={`/vendor/catalog/${product.vendor.vendor_id}`}>  <p className="text-sm text-muted-foreground">
+                <a href={`/vendor/catalog/${product?.vendor?.vendor_id}`}>  <p className="text-sm text-muted-foreground">
                     {product.vendor?.name || "N/A"}
-                  </p></Link>
+                  </p></a>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
