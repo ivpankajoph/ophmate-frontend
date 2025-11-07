@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import Lottie from "lottie-react"; // ✅ Make sure this is installed
+import Lottie from "lottie-react";
 import {
   Card,
   CardContent,
@@ -23,10 +23,8 @@ import Link from "next/link";
 import { getImageUrl } from "@/components/main/Index";
 import { User2Icon } from "lucide-react";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
-// @ts-ignore: Allow importing JSON without type declarations
 
-
-// Hide scrollbar styles (moved to CSS or global styles ideally)
+// Hide scrollbar styles
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
   style.textContent = `
@@ -36,8 +34,25 @@ if (typeof document !== "undefined") {
   document.head.appendChild(style);
 }
 
-export default function VendorCatalogPage({ params }: { params: { id: string } }) {
-  const vendorId = params.id;
+// Define the correct type for params
+type VendorCatalogPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
+  // Await the params promise
+  const resolvedParams = params;
+  const [vendorId, setVendorId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Resolve the params promise
+    const resolveParams = async () => {
+      const resolved = await resolvedParams;
+      setVendorId(resolved.id);
+    };
+    
+    resolveParams();
+  }, [resolvedParams]);
 
   const [vendor, setVendor] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
@@ -46,6 +61,8 @@ export default function VendorCatalogPage({ params }: { params: { id: string } }
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    if (!vendorId) return;
+
     const fetchVendor = async () => {
       try {
         setLoading(true);
