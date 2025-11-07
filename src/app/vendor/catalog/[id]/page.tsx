@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { getImageUrl } from "@/components/main/Index";
 import { User2Icon } from "lucide-react";
+import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 // @ts-ignore: Allow importing JSON without type declarations
 
 
@@ -49,7 +50,7 @@ export default function VendorCatalogPage({ params }: { params: { id: string } }
       try {
         setLoading(true);
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/${vendorId}/products`
+          `${NEXT_PUBLIC_API_URL}/users/${vendorId}/products`
         );
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();

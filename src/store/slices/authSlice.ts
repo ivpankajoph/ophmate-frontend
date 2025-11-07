@@ -1,3 +1,4 @@
+import { NEXT_PUBLIC_API_URL } from '@/config/variables'
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import axios from 'axios'
 
@@ -17,7 +18,7 @@ const initialState: AuthState = {
 }
 
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = NEXT_PUBLIC_API_URL
 
 
 export const sendOtp = createAsyncThunk<

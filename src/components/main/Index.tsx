@@ -11,8 +11,9 @@ import { Star } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProducts } from "@/store/slices/productSlice";
 import { useRouter } from "next/navigation";
+import { NEXT_PUBLIC_API_URL_BANNERS } from "@/config/variables";
 
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL_BANNERS;
+  const BASE_URL = NEXT_PUBLIC_API_URL_BANNERS;
   
  export const getImageUrl = (path?: string) => {
     if (!path) return "/placeholder.jpg";

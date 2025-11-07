@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = NEXT_PUBLIC_API_URL;
 
 // Async thunk to fetch all products
 export const fetchAllProducts = createAsyncThunk(

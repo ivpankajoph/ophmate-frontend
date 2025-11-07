@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
 import { fetchBanners } from "@/store/slices/bannerSlice";
+import { NEXT_PUBLIC_API_URL_BANNERS } from "@/config/variables";
 
 export default function FullWidthBanner() {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,7 +19,7 @@ export default function FullWidthBanner() {
   console.log("Banners from Redux:", banners);
 
   const [index, setIndex] = useState(0);
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL_BANNERS;
+  const BASE_URL = NEXT_PUBLIC_API_URL_BANNERS;
 
   // // Fetch banners on mount
   useEffect(() => {
