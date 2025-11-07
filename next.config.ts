@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         hostname: "phpstack-1522038-5968955.cloudwaysapps.com",
         pathname: "/**", // ✅ allow all paths under this host
       },
+      {
+        protocol: "https",
+        hostname: "ophmate-backend.onrender.com",
+        pathname: "/**", // ✅ allow all images served from your backend
+      },
     ],
   },
 };
