@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         hostname: "ophmate-backend.onrender.com",
         pathname: "/**", // ✅ allow all images served from your backend
       },
+      {
+        protocol: "https",
+        hostname: "ophmate-backend-579008086831.us-central1.run.app",
+        pathname: "/**", // ✅ ADD THIS LINE
+      },
     ],
   },
 };
