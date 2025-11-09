@@ -30,6 +30,14 @@ import {
   validateIFSC,
   validateAccount,
   validateUPI,
+  ESTABLISHED_YEAR,
+  ANNUAL_TURNOVER,
+  DEALING_AREA,
+  NUMBER_OF_EMPLOYEES,
+  CATEGORIES,
+  OPERATING_HOURS,
+  RETURN_POLICY,
+  BANK_NAMES,
 } from "@/lib/constants";
 
 export default function BusinessDetails() {
@@ -97,7 +105,7 @@ export default function BusinessDetails() {
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("vendor_email") || "";
     const storedPhone = sessionStorage.getItem("vendor_phone") || "";
-    console.log("asdsad",storedEmail,storedPhone)
+    console.log("asdsad", storedEmail, storedPhone);
     setForm((prev) => ({
       ...prev,
       email: storedEmail,
@@ -298,7 +306,7 @@ export default function BusinessDetails() {
       <Input
         type="file"
         name={name}
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
         onChange={handleFileChange}
       />
       {errors[name] && (
@@ -340,7 +348,11 @@ export default function BusinessDetails() {
 
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Editable Name */}
-            {renderTextInput("registrar_name", "Your Name")}
+            {renderTextInput("registrar_name", "Your Name", undefined, false,
+              {
+                preventPaste: false,
+                toUpperCase: true,
+              })}
 
             {/* Read-only Email */}
             <div className="relative">
@@ -368,7 +380,11 @@ export default function BusinessDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("name", "Business Name")}
+            {renderTextInput("name", "Business Name",undefined, false,
+              {
+                preventPaste: false,
+                toUpperCase: true,
+              })}
             {renderSelect("business_type", "Business Type", BUSINESS_TYPES)}
             {renderTextInput(
               "gst_number",
@@ -377,10 +393,16 @@ export default function BusinessDetails() {
               false,
               { toUpperCase: true }
             )}
-            {renderTextInput("pan_number", "PAN Number", "e.g. ABCDE1234F", false,{
-              preventPaste: true,
-              toUpperCase: true,
-            })}
+            {renderTextInput(
+              "pan_number",
+              "PAN Number",
+              "e.g. ABCDE1234F",
+              false,
+              {
+                preventPaste: false,
+                toUpperCase: true,
+              }
+            )}
             {renderTextInput(
               "alternate_contact_name",
               "Alternate Contact Name"
@@ -401,30 +423,26 @@ export default function BusinessDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput(
+            {renderSelect(
               "established_year",
               "Established Year",
-              "e.g. 2015"
+              ESTABLISHED_YEAR
             )}
             {renderSelect(
               "business_nature",
               "Business Nature",
               BUSINESS_NATURES
             )}
-            {renderTextInput(
+            {renderSelect(
               "annual_turnover",
               "Annual Turnover",
-              "e.g. ₹10 Lakhs - ₹1 Crore"
+              ANNUAL_TURNOVER
             )}
-            {renderTextInput(
-              "dealing_area",
-              "Dealing Area",
-              "e.g. Pan-India, Local, Global"
-            )}
-            {renderTextInput(
+            {renderSelect("dealing_area", "Dealing Area", DEALING_AREA)}
+            {renderSelect(
               "office_employees",
               "Number of Office Employees",
-              "e.g. 15"
+              NUMBER_OF_EMPLOYEES
             )}
           </CardContent>
         </Card>
@@ -453,14 +471,26 @@ export default function BusinessDetails() {
             <CardTitle className="text-2xl font-bold">Bank Details</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("bank_name", "Bank Name")}
-            {renderTextInput("bank_account", "Account Number", "9–18 digits",false, {
-              preventPaste: true,
-            })}
-            {renderTextInput("ifsc_code", "IFSC Code", "e.g. SBIN0002499",false, {
-              preventPaste: true,
-              toUpperCase: true,
-            })}
+            {renderSelect("bank_name", "Bank Name",BANK_NAMES)}
+            {renderTextInput(
+              "bank_account",
+              "Account Number",
+              "9–18 digits",
+              false,
+              {
+                preventPaste: true,
+              }
+            )}
+            {renderTextInput(
+              "ifsc_code",
+              "IFSC Code",
+              "e.g. SBIN0002499",
+              false,
+              {
+                preventPaste: true,
+                toUpperCase: true,
+              }
+            )}
             {renderTextInput("branch", "Branch Name")}
             {renderTextInput("upi_id", "UPI ID", "e.g. name@upi")}
           </CardContent>
@@ -474,9 +504,13 @@ export default function BusinessDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("categories", "Categories (comma separated)")}
-            {renderTextInput("return_policy", "Return Policy")}
-            {renderTextInput("operating_hours", "Operating Hours")}
+            {renderSelect(
+              "categories",
+              "Categories (comma separated)",
+              CATEGORIES
+            )}
+            {renderSelect("return_policy", "Return Policy",RETURN_POLICY)}
+            {renderSelect("operating_hours", "Operating Hours",OPERATING_HOURS)}
           </CardContent>
         </Card>
 
