@@ -2,14 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 // @ts-ignore - CSS global import has no type declarations
 import "./globals.css";
-import { Provider } from "react-redux";
-import { PersistGate } from "redux-persist/integration/react";
-import { store, persistor } from "@/store";
 import ReduxProvider from "@/providers/ReduxProvider";
-import PromotionalBanner from "@/components/promotional-banner";
-import Navbar from "@/components/navbar/Navbar";
-import Footer from "@/components/footer";
-import ProductNavbar from "@/components/productBar";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,11 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <PromotionalBanner />
-        <Navbar />
+ 
         {/* <ProductNavbar/> */}
         <ReduxProvider>{children}</ReduxProvider>
-        <Footer />
+  
       </body>
     </html>
   );
