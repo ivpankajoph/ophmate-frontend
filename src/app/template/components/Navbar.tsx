@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+
 import { useState } from "react";
 import {
   Facebook,
@@ -13,14 +14,20 @@ import {
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-
+import { useParams } from "next/navigation";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    
+
   const { homepage } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
   }));
+
+  // Get vendor_id from dynamic route
+  const params = useParams();
+  const vendor_id = params.vendor_id;
+
+  const menuItems = ["Home", "About", "Contact", "Category"];
 
   return (
     <nav className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-6 relative z-20 backdrop-blur-2xl">
@@ -44,10 +51,14 @@ export default function Navbar() {
 
       {/* Desktop Menu */}
       <div className="hidden lg:flex items-center gap-8">
-        {["Home", "About", "Contact", "Category"].map((item) => (
+        {menuItems.map((item) => (
           <Link
             key={item}
-            href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+            href={
+              item === "Home"
+                ? `/template/${vendor_id}`
+                : `/template/${vendor_id}/${item.toLowerCase()}`
+            }
             className="text-base font-medium hover:opacity-75 transition-all duration-200"
           >
             {item}
@@ -82,10 +93,14 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-opacity-70 backdrop-blur-lg py-8 shadow-md animate-slideDown bg-white">
           <div className="flex flex-col items-center gap-6">
-            {["Home", "About", "Contact", "Category"].map((item) => (
+            {menuItems.map((item) => (
               <Link
                 key={item}
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                href={
+                  item === "Home"
+                    ? `/template/${vendor_id}`
+                    : `/template/${vendor_id}/${item.toLowerCase()}`
+                }
                 className="text-lg font-medium transition-all hover:opacity-75"
                 onClick={() => setMobileMenuOpen(false)}
               >

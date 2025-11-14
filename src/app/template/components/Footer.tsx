@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-
 import { RootState } from "@/store";
 import {
   Facebook,
@@ -13,13 +12,19 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import Link from "next/link";
 import { useSelector } from "react-redux";
+import { useParams } from "next/navigation";
 
 export default function Footer() {
   const contact = useSelector((state: any) => state?.vendorprofilepage?.vendor);
   const { homepage } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
   }));
+
+  // Get vendor_id dynamically
+  const params = useParams();
+  const vendor_id = params.vendor_id;
 
   return (
     <footer className="w-full border-t mt-10">
@@ -45,8 +50,8 @@ export default function Footer() {
             </div>
 
             <p className="opacity-75 mb-6 leading-relaxed text-sm md:text-base">
-              Your premier destination for all things green. Bringing nature
-              into your home, one plant at a time.
+              Your premier destination for all things green. Bringing nature into
+              your home, one plant at a time.
             </p>
 
             {/* Social Icons */}
@@ -69,11 +74,20 @@ export default function Footer() {
               Quick Links
             </h3>
             <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
-              {["Home", "Shop", "About Us", "Contact", "FAQs"].map((item) => (
-                <li key={item}>
-                  <a href="#" className="opacity-75 hover:opacity-100 transition">
-                    {item}
-                  </a>
+              {[
+                { name: "Home", path: `/template/${vendor_id}` },
+                { name: "Shop", path: `/template/${vendor_id}/category` },
+                { name: "About Us", path: `/template/${vendor_id}/about` },
+                { name: "Contact", path: `/template/${vendor_id}/contact` },
+                { name: "FAQs", path: `/template/${vendor_id}/faqs` },
+              ].map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.path}
+                    className="opacity-75 hover:opacity-100 transition"
+                  >
+                    {item.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -93,9 +107,12 @@ export default function Footer() {
                 "Plant Care",
               ].map((cat) => (
                 <li key={cat}>
-                  <a href="#" className="opacity-75 hover:opacity-100 transition">
+                  <Link
+                    href={`/template/${vendor_id}/category`}
+                    className="opacity-75 hover:opacity-100 transition"
+                  >
                     {cat}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -171,13 +188,15 @@ export default function Footer() {
           <div className="flex gap-6">
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(
               (link) => (
-                <a
+                <Link
                   key={link}
-                  href="#"
+                  href={`/template/${vendor_id}/${link
+                    .toLowerCase()
+                    .replace(/ /g, "-")}`}
                   className="hover:opacity-100 transition"
                 >
                   {link}
-                </a>
+                </Link>
               )
             )}
           </div>
