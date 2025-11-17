@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 // @ts-ignore - CSS global import has no type declarations
 import "./globals.css";
 import ReduxProvider from "@/providers/ReduxProvider";
-
+import VendorProvider from "@/providers/VendorProvider";
+import Script from "next/script";
+import GoogleAnalytics from "@/components/google-analytics/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
- 
-        {/* <ProductNavbar/> */}
-        <ReduxProvider>{children}</ReduxProvider>
-  
+        <VendorProvider>
+          <GoogleAnalytics />
+          <ReduxProvider>{children}</ReduxProvider>
+        </VendorProvider>
       </body>
     </html>
   );
