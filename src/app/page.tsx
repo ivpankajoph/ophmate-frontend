@@ -1,10 +1,11 @@
 "use client";
 import PromotionalBanner from "@/components/promotional-banner";
 import { useEffect } from "react";
-import Navbar from "./template/components/Navbar";
+
 import FullWidthBanner from "@/components/banner";
 import EcommerceHeroPage from "@/components/main/Index";
 import Footer from "@/components/footer";
+import Navbar from "@/components/navbar/Navbar";
 
 declare global {
   interface Window {

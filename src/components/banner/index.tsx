@@ -71,7 +71,7 @@ export default function FullWidthBanner() {
           className="absolute inset-0"
         >
           <Image
-            src={`${BASE_URL}${currentBanner.imageUrl}`}
+            src={currentBanner.imageUrl ? currentBanner.imageUrl : "/placeholder-banner.png"}
             alt={currentBanner.title ?? ""}
             fill
             priority
