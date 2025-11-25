@@ -1,5 +1,13 @@
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react"
-import Link from "next/link"
+import {
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+  Mail,
+  Phone,
+  MapPin,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -13,16 +21,28 @@ export default function Footer() {
             trends, unbeatable deals, and premium products — all in one place.
           </p>
           <div className="flex gap-3 mt-5">
-            <Link href="#" className="p-2 rounded-full bg-background hover:bg-primary/10 transition">
+            <Link
+              href="#"
+              className="p-2 rounded-full bg-background hover:bg-primary/10 transition"
+            >
               <Facebook className="h-4 w-4" />
             </Link>
-            <Link href="#" className="p-2 rounded-full bg-background hover:bg-primary/10 transition">
+            <Link
+              href="#"
+              className="p-2 rounded-full bg-background hover:bg-primary/10 transition"
+            >
               <Instagram className="h-4 w-4" />
             </Link>
-            <Link href="#" className="p-2 rounded-full bg-background hover:bg-primary/10 transition">
+            <Link
+              href="#"
+              className="p-2 rounded-full bg-background hover:bg-primary/10 transition"
+            >
               <Twitter className="h-4 w-4" />
             </Link>
-            <Link href="#" className="p-2 rounded-full bg-background hover:bg-primary/10 transition">
+            <Link
+              href="#"
+              className="p-2 rounded-full bg-background hover:bg-primary/10 transition"
+            >
               <Youtube className="h-4 w-4" />
             </Link>
           </div>
@@ -32,11 +52,31 @@ export default function Footer() {
         <div>
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/" className="hover:underline">Home</Link></li>
-            <li><Link href="/shop" className="hover:underline">Shop</Link></li>
-            <li><Link href="/about" className="hover:underline">About Us</Link></li>
-            <li><Link href="/contact" className="hover:underline">Contact</Link></li>
-            <li><Link href="/faq" className="hover:underline">FAQs</Link></li>
+            <li>
+              <Link href="/" className="hover:underline">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/shop" className="hover:underline">
+                Shop
+              </Link>
+            </li>
+            <li>
+              <Link href="/about" className="hover:underline">
+                About Us
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:underline">
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link href="/faq" className="hover:underline">
+                FAQs
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -44,10 +84,31 @@ export default function Footer() {
         <div>
           <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/returns" className="hover:underline">Returns & Refunds</Link></li>
-            <li><Link href="/shipping" className="hover:underline">Shipping Info</Link></li>
-            <li><Link href="/privacy" className="hover:underline">Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
+            <li>
+              <Link href="/returns" className="hover:underline">
+                Returns & Refunds
+              </Link>
+            </li>
+            <li>
+              <Link href="/shipping" className="hover:underline">
+                Shipping Info
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="hover:underline">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:underline">
+                Terms & Conditions
+              </Link>
+            </li>
+            <li>
+              <Link href="/data-deletion" className="hover:underline">
+                Data Deletion
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -61,11 +122,15 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              <a href="tel:+911234567890" className="hover:underline">+91 12345 67890</a>
+              <a href="tel:+911234567890" className="hover:underline">
+                +91 12345 67890
+              </a>
             </li>
             <li className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              <a href="mailto:support@shopease.com" className="hover:underline">support@shopease.com</a>
+              <a href="mailto:support@shopease.com" className="hover:underline">
+                support@shopease.com
+              </a>
             </li>
           </ul>
         </div>
@@ -76,11 +141,15 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 px-6">
           <p>© {new Date().getFullYear()} ShopEase. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
-            <Link href="/terms" className="hover:underline">Terms of Use</Link>
+            <Link href="/privacy" className="hover:underline">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:underline">
+              Terms of Use
+            </Link>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }
