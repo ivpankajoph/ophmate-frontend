@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -12,32 +11,36 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProducts } from "@/store/slices/productSlice";
 import { useRouter } from "next/navigation";
 import { NEXT_PUBLIC_API_URL_BANNERS } from "@/config/variables";
+import { AppDispatch } from "@/store";
 
-  const BASE_URL = NEXT_PUBLIC_API_URL_BANNERS;
-  
- export const getImageUrl = (path?: string) => {
-    if (!path) return "/placeholder.jpg";
-    if (path.startsWith("http")) return path; // already full URL
-    return `${BASE_URL}/${path.replace(/^\//, "")}`; // ensure no double slash
-  };
+const BASE_URL = NEXT_PUBLIC_API_URL_BANNERS;
+
+export const getImageUrl = (path?: string) => {
+  if (!path) return "/placeholder.jpg";
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL}/${path.replace(/^\//, "")}`;
+};
 
 export default function EcommerceHeroPage() {
   const [active, setActive] = useState(0);
-  const carouselRef = useRef<HTMLDivElement | null>(null);
-  const dispatch = useDispatch<any>();
+  const carouselRef = useRef<HTMLDivElement>(null);
+  // Import AppDispatch from your store
 
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
   const handleCardClick = (p: any) => {
-    const categoryName = p.productCategory || p.category?.name || "unknown"; // fallback if field name differs
-    router.push(`/product/${encodeURIComponent(categoryName)}/${p._id}`);
+    try {
+      const categoryName = p.productCategory || p.category?.name || "unknown";
+      router.push(`/product/${encodeURIComponent(categoryName)}/${p._id}`);
+    } catch (error) {
+      console.error("Navigation error:", error);
+    }
   };
 
- 
-
-  // Select state from Redux store
-  const { products, loading, error } = useSelector(
-    (state: any) => state.product || { products: [] }
+  // Select state from Redux store with safe defaults
+  const { products = [], loading = false, error = null } = useSelector(
+    (state: any) => state.product || {}
   );
 
   useEffect(() => {
@@ -49,209 +52,270 @@ export default function EcommerceHeroPage() {
     const container = carouselRef.current;
     const child = container.children[index] as HTMLElement | undefined;
     if (!child) return;
-    child.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
-    setActive(index);
+    
+    try {
+      child.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+      setActive(index);
+    } catch (error) {
+      console.error("Scroll error:", error);
+    }
   };
 
-  const featured = products?.slice(0, 6) || [];
+  // Safely get featured products
+  const featured = Array.isArray(products) ? products.slice(0, 6) : [];
+  const hasProducts = Array.isArray(products) && products.length > 0;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-10">
-        <div className="grid grid-cols-12 gap-6 items-center">
-          <div className="col-span-12 lg:col-span-6">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-              Discover stylish gear for every day
-            </h1>
-            <p className="mt-4 text-muted-foreground max-w-xl">
-              Curated collections, fast shipping and hassle-free returns. Shop
-              top-rated products across categories — clothes, bags, tech and
-              more.
-            </p>
+      <section className="relative overflow-hidden px-6 py-16 lg:px-12 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            {/* Hero Left */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="mb-6 text-5xl font-bold leading-tight text-neutral-900 lg:text-6xl">
+                Discover stylish gear for every day
+              </h1>
+              <p className="mb-8 text-lg text-neutral-600">
+                Curated collections, fast shipping and hassle-free returns. Shop
+                top-rated products across categories — clothes, bags, tech and
+                more.
+              </p>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              {[
-                "All",
-                "Clothing",
-                "Bags",
-                "Electronics",
-                "Footwear",
-                "Home",
-              ].map((c) => (
-                <button
-                  key={c}
-                  className="px-3 py-1.5 rounded-full border text-sm hover:bg-muted transition"
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+              <div className="mb-8 flex flex-wrap gap-2">
+                {["All", "Clothing", "Bags", "Electronics", "Footwear", "Home"].map(
+                  (c) => (
+                    <Badge
+                      key={c}
+                      variant="outline"
+                      className="cursor-pointer px-4 py-2 hover:bg-indigo-50"
+                    >
+                      {c}
+                    </Badge>
+                  )
+                )}
+              </div>
 
-            <div className="mt-8 flex gap-4 items-center">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-neutral-100 grid place-items-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2v6"
-                      stroke="#4F46E5"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M6 10h12"
-                      stroke="#4F46E5"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+              <div className="grid grid-cols-2 gap-6 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-indigo-100 p-2">
+                    <svg
+                      className="h-5 w-5 text-indigo-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900">Fast Delivery</p>
+                    <p className="text-neutral-500">Most orders in 2 days</p>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold">Fast Delivery</div>
-                  <div className="text-xs text-muted-foreground">
-                    Most orders in 2 days
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-green-100 p-2">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900">Easy Returns</p>
+                    <p className="text-neutral-500">30 days money back</p>
                   </div>
                 </div>
               </div>
+            </motion.div>
 
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-neutral-100 grid place-items-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M5 12h14"
-                      stroke="#06b6d4"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">Easy Returns</div>
-                  <div className="text-xs text-muted-foreground">
-                    30 days money back
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Right Visual */}
-          <div className="col-span-12 lg:col-span-6">
-            <div className="relative rounded-2xl overflow-hidden shadow-xl bg-gradient-to-tr from-indigo-50 to-white p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold">Spring Sale</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Up to 40% off on selected items
+            {/* Hero Right Visual */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="relative h-[500px] overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 shadow-2xl">
+                <div className="absolute right-8 top-8 rounded-2xl bg-white p-6 shadow-lg">
+                  <p className="mb-1 text-sm font-semibold text-indigo-600">
+                    Spring Sale
                   </p>
-                  <div className="mt-4 flex gap-3">
-                    <Button>Shop Sale</Button>
-                    <Button variant="ghost">Learn More</Button>
-                  </div>
+                  <p className="text-2xl font-bold text-neutral-900">
+                    Up to 40% off
+                  </p>
+                  <p className="text-sm text-neutral-500">on selected items</p>
                 </div>
-
+                <div className="absolute bottom-8 left-8 flex gap-3">
+                  <Button size="lg" className="bg-white text-indigo-600 hover:bg-neutral-50">
+                    Shop Sale
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white bg-transparent text-white hover:bg-white/10"
+                  >
+                    Learn More
+                  </Button>
+                </div>
               </div>
 
               {/* Small Product Carousel */}
-              <div className="mt-6 relative">
+              <div className="mt-6">
                 <div
                   ref={carouselRef}
-                  className="no-scrollbar flex gap-4 overflow-x-auto scroll-snap-x py-2 px-1"
-                  style={{ scrollSnapType: "x mandatory" }}
+                  className="flex gap-4 overflow-x-auto scrollbar-hide"
                 >
                   {loading ? (
-                    <p className="text-sm text-gray-500">Loading...</p>
+                    <div className="flex w-full items-center justify-center py-8">
+                      <p className="text-neutral-500">Loading...</p>
+                    </div>
                   ) : error ? (
-                    <p className="text-red-500">{error}</p>
+                    <div className="flex w-full items-center justify-center py-8">
+                      <p className="text-red-500">Error: {error}</p>
+                    </div>
+                  ) : !hasProducts ? (
+                    <div className="flex w-full items-center justify-center py-8">
+                      <p className="text-neutral-500">No products available</p>
+                    </div>
                   ) : (
                     featured.map((p: any, i: number) => (
-                      <div
-                        key={p._id}
-                        className="min-w-[180px] flex-shrink-0 rounded-lg bg-white p-3 shadow-md scroll-snap-align-center"
-                        style={{ scrollSnapAlign: "center" }}
+                      <Card
+                        key={p._id || i}
+                        className={`min-w-[180px] flex-shrink-0 cursor-pointer transition-all ${
+                          i === active ? "ring-2 ring-indigo-600" : ""
+                        }`}
                         onClick={() => scrollToIndex(i)}
                       >
-                        <div className="relative h-36 w-full mb-2 rounded-md overflow-hidden">
-                          <Image
-                            src={getImageUrl(p.default_images?.[0])}
-                            alt={p.productName}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="text-sm font-medium">
-                          {p.productName}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          ₹{p.variants?.[0]?.final_price || 0}
-                        </div>
-                      </div>
+                        <CardContent className="p-3">
+                          <div className="relative mb-2 h-32 w-full overflow-hidden rounded-lg bg-neutral-100">
+                            {p.images?.[0] ? (
+                              <Image
+                                src={getImageUrl(p.images[0])}
+                                alt={p.productName || "Product"}
+                                fill
+                                className="object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "/placeholder.jpg";
+                                }}
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-neutral-400">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                          <p className="mb-1 truncate text-sm font-medium">
+                            {p.productName || "Unnamed Product"}
+                          </p>
+                          <p className="text-sm font-bold text-indigo-600">
+                            ₹{p.variants?.[0]?.final_price || 0}
+                          </p>
+                        </CardContent>
+                      </Card>
                     ))
                   )}
                 </div>
-
-                <div className="absolute bottom-2 left-4 flex gap-2">
-                  {featured.map((_: any, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => scrollToIndex(i)}
-                      className={`h-2 w-8 rounded-full ${
-                        i === active ? "bg-indigo-600" : "bg-neutral-200"
-                      }`}
-                    />
-                  ))}
-                </div>
+                {hasProducts && featured.length > 0 && (
+                  <div className="mt-4 flex justify-center gap-2">
+                    {featured.map((_: any, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => scrollToIndex(i)}
+                        className={`h-2 w-8 rounded-full transition-colors ${
+                          i === active ? "bg-indigo-600" : "bg-neutral-200"
+                        }`}
+                        aria-label={`Go to slide ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Trending Section */}
-      <section className="container mx-auto px-4 mt-12">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Trending Now</h2>
-            <Button variant="ghost">View all</Button>
+      <section className="px-6 py-12 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-3xl font-bold text-neutral-900">Trending Now</h2>
+            <Button variant="ghost" className="text-indigo-600">
+              View all →
+            </Button>
           </div>
 
-          <div className="no-scrollbar flex gap-4 overflow-x-auto py-2">
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
             {loading ? (
-              <p>Loading...</p>
+              <div className="flex w-full items-center justify-center py-12">
+                <p className="text-neutral-500">Loading products...</p>
+              </div>
+            ) : error ? (
+              <div className="flex w-full items-center justify-center py-12">
+                <p className="text-red-500">Failed to load products: {error}</p>
+              </div>
+            ) : !hasProducts ? (
+              <div className="flex w-full items-center justify-center py-12">
+                <p className="text-neutral-500">No trending products available</p>
+              </div>
             ) : (
               products.map((p: any) => (
                 <Card
                   key={p._id}
                   onClick={() => handleCardClick(p)}
-                  className="min-w-[220px] flex-shrink-0"
+                  className="min-w-[220px] flex-shrink-0 cursor-pointer transition-transform hover:scale-105"
                 >
-                  <CardContent className="p-3">
-                    <div className="relative h-40 w-full rounded-md overflow-hidden mb-3">
-                      <Image
-                        src={getImageUrl(p.default_images?.[0])}
-                        alt={p.productName}
-                        fill
-                        className="object-cover"
-                      />
+                  <CardContent className="p-4">
+                    <div className="relative mb-3 h-48 w-full overflow-hidden rounded-lg bg-neutral-100">
+                      {p.images?.[0] ? (
+                        <Image
+                          src={getImageUrl(p.images[0])}
+                          alt={p.productName || "Product"}
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.jpg";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-neutral-400">
+                          No Image
+                        </div>
+                      )}
                     </div>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{p.productName}</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          ₹{p.variants?.[0]?.final_price || 0}
-                        </div>
-                        <div className="flex items-center gap-1 mt-2 text-yellow-500">
-                          <Star className="h-4 w-4" />
-                          <span className="text-sm">4.5</span>
-                        </div>
-                      </div>
-                      {/* <div className="self-start">
-                        <Button size="icon">+</Button>
-                      </div> */}
+                    <p className="mb-2 truncate font-semibold text-neutral-900">
+                      {p.productName || "Unnamed Product"}
+                    </p>
+                    <p className="mb-2 text-lg font-bold text-indigo-600">
+                      ₹{p.variants?.[0]?.final_price || 0}
+                    </p>
+                    <div className="flex items-center gap-1 text-sm text-neutral-600">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span>4.5</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -259,60 +323,95 @@ export default function EcommerceHeroPage() {
             )}
           </div>
         </div>
+      </section>
 
-        {/* Popular Picks */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Popular Picks</h2>
-            <div className="text-sm text-muted-foreground">Curated for you</div>
+      {/* Popular Picks */}
+      <section className="px-6 py-12 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-neutral-900">Popular Picks</h2>
+            <p className="text-neutral-600">Curated for you</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {loading ? (
-              <p>Loading...</p>
-            ) : (
-              products.map((p: any) => (
-                <div key={p._id} className="group">
-                  <div
-                    onClick={() => handleCardClick(p)}
-                    className="relative w-full h-56 rounded-xl overflow-hidden shadow hover:scale-[1.01] transition-transform"
-                  >
-                    <Image
-                      src={getImageUrl(p.default_images?.[0])}
-                      alt={p.productName}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="mt-3 flex justify-between items-center">
-                    <div>
-                      <div className="font-medium text-sm">{p.productName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        ₹{p.variants?.[0]?.final_price || 0}
+          {loading ? (
+            <div className="flex w-full items-center justify-center py-12">
+              <p className="text-neutral-500">Loading products...</p>
+            </div>
+          ) : error ? (
+            <div className="flex w-full items-center justify-center py-12">
+              <p className="text-red-500">Failed to load products: {error}</p>
+            </div>
+          ) : !hasProducts ? (
+            <div className="flex w-full items-center justify-center py-12">
+              <p className="text-neutral-500">No popular products available</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((p: any) => (
+                <div
+                  key={p._id}
+                  onClick={() => handleCardClick(p)}
+                  className="group relative w-full cursor-pointer overflow-hidden rounded-xl shadow transition-transform hover:scale-[1.02]"
+                >
+                  <div className="relative h-56 w-full bg-neutral-100">
+                    {p.images?.[0] ? (
+                      <Image
+                        src={getImageUrl(p.images[0])}
+                        alt={p.productName || "Product"}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-110"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.jpg";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-neutral-400">
+                        No Image
                       </div>
-                    </div>
-                    <Badge>{p.brand}</Badge>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 text-white">
+                    <p className="mb-1 truncate text-lg font-bold">
+                      {p.productName || "Unnamed Product"}
+                    </p>
+                    <p className="mb-2 text-sm">
+                      ₹{p.variants?.[0]?.final_price || 0}
+                    </p>
+                    <Badge className="w-fit bg-white/20 backdrop-blur-sm">
+                      {p.brand || "Unknown Brand"}
+                    </Badge>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+      </section>
 
-        {/* Promotional Banner + Testimonials */}
-        <div className="rounded-2xl overflow-hidden bg-gradient-to-r from-amber-50 to-white p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-xl font-bold">Bundle & Save</h3>
-            <p className="mt-2 text-muted-foreground">
+      {/* Promotional Banner */}
+      <section className="px-6 py-12 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-orange-400 to-pink-500 p-12 text-center text-white shadow-xl">
+            <h2 className="mb-4 text-4xl font-bold">Bundle & Save</h2>
+            <p className="mb-6 text-lg">
               Mix and match items and save up to 20% on bundles.
             </p>
-          </div>
-          <div className="flex gap-3">
-            <Button>Build bundle</Button>
-            <Button variant="ghost">See bundles</Button>
+            <div className="flex justify-center gap-4">
+              <Button size="lg" className="bg-white text-orange-500 hover:bg-neutral-50">
+                Build bundle
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white bg-transparent text-white hover:bg-white/10"
+              >
+                See bundles
+              </Button>
+            </div>
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

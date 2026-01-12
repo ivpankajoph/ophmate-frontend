@@ -13,17 +13,17 @@ export const updateVendorBusiness = createAsyncThunk(
   "vendor/updateBusiness",
   async (
     {
- 
+
       formData,
     }: {
-    
+
       formData: FormData;
     },
-    { rejectWithValue,getState }
+    { rejectWithValue, getState }
   ) => {
     try {
-        const state: any = getState();
-        const token = state?.auth?.token;
+      const state: any = getState();
+      const token = state?.auth?.token;
       const response = await axios.put(
         `${BASE_URL}/vendor/business`,
         formData,
@@ -34,6 +34,8 @@ export const updateVendorBusiness = createAsyncThunk(
           },
         }
       );
+
+      console.log("Business update response:", response,response.data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

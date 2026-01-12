@@ -1,16 +1,9 @@
 "use client";
-
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, useEffect, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
@@ -19,117 +12,179 @@ import QuoteBlock from "@/components/quotes";
 import { AppDispatch } from "@/store";
 import { updateVendorBusiness } from "@/store/slices/vendorSlice";
 import {
-  BUSINESS_NATURES,
-  BUSINESS_TYPES,
-  COUNTRIES,
-  INDIAN_STATES,
-  validateGST,
-  validatePAN,
-  validatePhone,
-  validatePincode,
-  validateIFSC,
-  validateAccount,
-  validateUPI,
-  ESTABLISHED_YEAR,
-  ANNUAL_TURNOVER,
-  DEALING_AREA,
-  NUMBER_OF_EMPLOYEES,
-  CATEGORIES,
-  OPERATING_HOURS,
-  RETURN_POLICY,
-  BANK_NAMES,
+  BUSINESS_NATURES, BUSINESS_TYPES, COUNTRIES, INDIAN_STATES,
+  validateGST, validatePAN, validatePhone, validatePincode,
+  validateIFSC, validateAccount, validateUPI, ESTABLISHED_YEAR,
+  ANNUAL_TURNOVER, DEALING_AREA, NUMBER_OF_EMPLOYEES,
+  CATEGORIES, OPERATING_HOURS, RETURN_POLICY, BANK_NAMES,
 } from "@/lib/constants";
+import PromotionalBanner from "@/components/promotional-banner";
+import Navbar from "@/components/navbar/Navbar";
+import Footer from "@/components/footer";
+
+// OPTIMIZATION: Memoized input component to prevent re-renders
+const TextInput = memo(({
+  name, label, value, placeholder, disabled, error,
+  onChange, onBlur, onPaste, toUpperCase
+}: any) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    if (toUpperCase) val = val.toUpperCase();
+    onChange(name, val);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <Input
+        name={name}
+        value={value}
+        disabled={disabled}
+        onChange={handleChange}
+        onBlur={() => onBlur(name)}
+        onPaste={onPaste}
+        placeholder={placeholder || label}
+      />
+      {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+    </div>
+  );
+});
+
+// OPTIMIZATION: Memoized select component
+const SelectInput = memo(({ name, label, value, options, error, onChange }: any) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">{label}</label>
+    <Select value={value} onValueChange={(val) => onChange(name, val)}>
+      <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
+      <SelectContent>
+        {options.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+      </SelectContent>
+    </Select>
+    {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+  </div>
+));
+
+// OPTIMIZATION: Memoized file input
+const FileInput = memo(({ name, label, error, onChange }: any) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">{label}</label>
+    <Input type="file" name={name} onChange={onChange} accept=".pdf,.jpg,.jpeg,.png" />
+    {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+  </div>
+));
+
+// ✅ Multi Select with removable chips
+const MultiSelectInput = memo(
+  ({ name, label, options, values, error, onChange }: any) => {
+    const handleSelect = (value: string) => {
+      if (!values.includes(value)) {
+        onChange(name, [...values, value]);
+      }
+    };
+
+    const handleRemove = (value: string) => {
+      onChange(
+        name,
+        values.filter((v: string) => v !== value)
+      );
+    };
+
+    return (
+      <div>
+        <label className="block text-sm font-medium mb-1">{label}</label>
+
+        <Select onValueChange={handleSelect}>
+          <SelectTrigger>
+            <SelectValue placeholder={`Select ${label}`} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt: string) => (
+              <SelectItem
+                key={opt}
+                value={opt}
+                disabled={values.includes(opt)}
+              >
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Selected chips */}
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {values.map((val: string) => (
+              <span
+                key={val}
+                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+              >
+                {val}
+                <button
+                  type="button"
+                  onClick={() => handleRemove(val)}
+                  className="text-blue-600 hover:text-red-600"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+      </div>
+    );
+  }
+);
+
 
 export default function BusinessDetails() {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useSelector((state: any) => state.vendor);
-  const token = useSelector((state: any) => state?.auth?.token);
+  const dispatch = useDispatch<any>();
+
+  // OPTIMIZATION: Only select what you need from Redux
+  const loading = useSelector((state: any) => state.vendor?.loading);
+  const token = useSelector((state: any) => state.auth?.token);
 
   const [form, setForm] = useState({
-    registrar_name: "",
-    email: "",
-    phone_no: "",
-    name: "",
-    business_type: "",
-    gst_number: "",
-    pan_number: "",
-    alternate_contact_name: "",
-    alternate_contact_phone: "",
-    address_line_1: "",
-    address_line_2: "",
-    street: "",
-    city: "",
-    state: "",
-    pincode: "",
-    country: "India",
-    bank_name: "",
-    bank_account: "",
-    ifsc_code: "",
-    branch: "",
-    upi_id: "",
-    categories: "",
-    return_policy: "",
-    operating_hours: "",
-    established_year: "",
-    business_nature: "",
-    annual_turnover: "",
-    dealing_area: "",
-    office_employees: "",
-    gst_cert: null as File | null,
-    pan_card: null as File | null,
+    registrar_name: "", email: "", phone_no: "", name: "", business_type: "",
+    gst_number: "", pan_number: "", alternate_contact_name: "",
+    alternate_contact_phone: "", address_line_1: "", address_line_2: "",
+    street: "", city: "", state: "", pincode: "", country: "India",
+    bank_name: "", bank_account: "", ifsc_code: "", branch: "", upi_id: "",
+    categories: [] as string[],
+    return_policy: "", operating_hours: "",
+    established_year: "", business_nature: "", annual_turnover: "",
+    dealing_area: "", office_employees: "",
+    gst_cert: null as File | null, pan_card: null as File | null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle text inputs
-  const handleTextInput = (
-    e: ChangeEvent<HTMLInputElement>,
-    options?: { preventPaste?: boolean; toUpperCase?: boolean }
-  ) => {
-    const { name, value } = e.target;
-    let newValue = value;
-
-    if (options?.toUpperCase) newValue = newValue.toUpperCase();
-    if (options?.preventPaste && e.nativeEvent instanceof ClipboardEvent)
-      return;
-
-    setForm((prev) => ({ ...prev, [name]: newValue }));
-
-    if (touched[name] || isSubmitting) {
-      validateField(name, newValue);
-    }
-  };
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("vendor_email") || "";
     const storedPhone = sessionStorage.getItem("vendor_phone") || "";
-    console.log("asdsad", storedEmail, storedPhone);
-    setForm((prev) => ({
-      ...prev,
-      email: storedEmail,
-      phone_no: storedPhone,
-    }));
+    setForm((prev) => ({ ...prev, email: storedEmail, phone_no: storedPhone }));
   }, []);
 
-  const handleSelectChange = (name: string, value: string) => {
+  // OPTIMIZATION: Single update function with no validation during typing
+  const updateField = useCallback((name: string, value: any) => {
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (touched[name] || isSubmitting) {
-      validateField(name, value);
-    }
-  };
+  }, []);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+
+  const handleSelectChange = useCallback((name: string, value: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
-    if (files && files[0]) {
+    if (files?.[0]) {
       const file = files[0];
       const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
       if (!allowedTypes.includes(file.type)) {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Only PDF, JPG, or PNG allowed.",
-        }));
+        setErrors((prev) => ({ ...prev, [name]: "Only PDF, JPG, or PNG allowed." }));
         return;
       }
       setForm((prev) => ({ ...prev, [name]: file }));
@@ -139,15 +194,13 @@ export default function BusinessDetails() {
         return updated;
       });
     }
-  };
+  }, []);
 
-  const handleBlur = (name: string) => {
-    setTouched((prev) => ({ ...prev, [name]: true }));
-    validateField(name, form[name as keyof typeof form] as string);
-  };
-
-  const validateField = (name: string, value: string) => {
+  // OPTIMIZATION: Validate only on blur
+  const handleBlur = useCallback((name: string) => {
+    const value = form[name as keyof typeof form] as string;
     let error = "";
+
     switch (name) {
       case "gst_number":
         if (value && !validateGST(value)) error = "Invalid GST format";
@@ -174,42 +227,36 @@ export default function BusinessDetails() {
       case "email":
         if (value && !/^\S+@\S+\.\S+$/.test(value)) error = "Invalid email";
         break;
+      case "categories":
+        if (!form.categories.length) error = "Select at least one category";
+        break;
       default:
-        if (!value && name !== "address_line_2")
-          error = "This field is required";
+        if (!value && name !== "address_line_2") error = "This field is required";
     }
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    Object.keys(form).forEach((key) => {
-      if (
-        key !== "address_line_2" &&
-        key !== "gst_cert" &&
-        key !== "pan_card" &&
-        !form[key as keyof typeof form]
-      ) {
-        newErrors[key] = "This field is required";
-      }
-    });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors((prev) => error ? { ...prev, [name]: error } : { ...prev });
+  }, [form]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    if (!validateForm()) {
+
+    // Validate all fields
+    const newErrors: Record<string, string> = {};
+    Object.keys(form).forEach((key) => {
+      const value = form[key as keyof typeof form];
+      if (key !== "address_line_2" && key !== "gst_cert" && key !== "pan_card" && !value) {
+        newErrors[key] = "This field is required";
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       setIsSubmitting(false);
       return;
     }
 
     if (!token) {
-      Swal.fire({
-        icon: "warning",
-        title: "Unauthorized",
-        text: "Please login first!",
-      });
+      Swal.fire({ icon: "warning", title: "Unauthorized", text: "Please login first!" });
       setIsSubmitting(false);
       return;
     }
@@ -219,325 +266,185 @@ export default function BusinessDetails() {
       Object.entries(form).forEach(([key, value]) => {
         if (value) data.append(key, value as any);
       });
-
       const result = await dispatch(updateVendorBusiness({ formData: data }));
 
+      console.log("Update dispatch result:", result);
       if (updateVendorBusiness.fulfilled.match(result)) {
         Swal.fire({
-          icon: "success",
-          title: "Business Updated!",
+          icon: "success", title: "Business Updated!",
           text: "Your business details have been saved successfully.",
-          timer: 2000,
-          showConfirmButton: false,
+          timer: 2000, showConfirmButton: false,
         });
         router.push("/vendor/registration/thankyou");
       } else {
         Swal.fire({
-          icon: "error",
-          title: "Error",
-          text:
-            (result.payload as string) || "Failed to update business details.",
+          icon: "error", title: "Error",
+          text: (result.payload as string) || "Failed to update business details.",
         });
       }
     } catch (err) {
       console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Unexpected Error",
-        text: "Something went wrong while saving details.",
-      });
+      Swal.fire({ icon: "error", title: "Unexpected Error", text: "Something went wrong." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Reusable input
-  const renderTextInput = (
-    name: string,
-    label: string,
-    placeholder?: string,
-    disabled?: boolean,
-    options?: { preventPaste?: boolean; toUpperCase?: boolean }
-  ) => (
-    <div className="flex flex-col">
-      <label className="mb-1 font-semibold text-sm">{label}</label>
-      <Input
-        name={name}
-        disabled={disabled}
-        value={form[name as keyof typeof form] as string}
-        onChange={(e) => handleTextInput(e, options)}
-        onBlur={() => handleBlur(name)}
-        onPaste={options?.preventPaste ? (e) => e.preventDefault() : undefined}
-        placeholder={placeholder || label}
-      />
-      {errors[name] && (
-        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
-      )}
-    </div>
-  );
-
-  const renderSelect = (name: string, label: string, options: string[]) => (
-    <div className="flex flex-col">
-      <label className="mb-1 font-semibold text-sm">{label}</label>
-      <Select
-        value={form[name as keyof typeof form] as string}
-        onValueChange={(value) => handleSelectChange(name, value)}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder={`Select ${label}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt) => (
-            <SelectItem key={opt} value={opt}>
-              {opt}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {errors[name] && (
-        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
-      )}
-    </div>
-  );
-
-  const renderFileInput = (name: string, label: string) => (
-    <div className="flex flex-col">
-      <label className="font-semibold mb-1">{label}</label>
-      <Input
-        type="file"
-        name={name}
-        accept=".pdf"
-        onChange={handleFileChange}
-      />
-      {errors[name] && (
-        <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
-      )}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-background px-4 sm:px-8 py-12 flex flex-col items-center justify-start">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="text-center mb-10 max-w-4xl"
-      >
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary">
-          Business Details
-        </h1>
-        <p className="text-muted-foreground mt-3 text-base sm:text-lg">
-          Fill in your business information to complete registration.
-        </p>
-      </motion.div>
+    <>
+      <PromotionalBanner />
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+        <QuoteBlock />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="max-w-6xl mx-auto"
+        >
+          <Card className="shadow-xl">
+            <CardHeader className="">
+              <CardTitle className="text-3xl">Business Details</CardTitle>
+              <p className="">Fill in your business information to complete registration.</p>
+            </CardHeader>
+            <CardContent className="p-6 space-y-8">
+              {/* Your Information */}
+              <Card>
+                <CardHeader><CardTitle>Your Information</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <TextInput name="registrar_name" label="Your Name" value={form.registrar_name}
+                    onChange={updateField} onBlur={handleBlur} error={errors.registrar_name} toUpperCase />
+                  <div>
+                    <TextInput name="email" label="Email" value={form.email} disabled
+                      onChange={updateField} onBlur={handleBlur} error={errors.email} />
+                    <p className="text-xs text-gray-500 mt-1">Can't edit</p>
+                  </div>
+                  <div>
+                    <TextInput name="phone_no" label="Phone No" value={form.phone_no} disabled
+                      placeholder="10-digit number" onChange={updateField} onBlur={handleBlur} error={errors.phone_no} />
+                    <p className="text-xs text-gray-500 mt-1">Can't edit</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7 }}
-        className="w-full max-w-6xl space-y-8"
-      >
-        {/* Your Information */}
-        {/* Your Information */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Your Information
-            </CardTitle>
-          </CardHeader>
+              {/* Business Information */}
+              <Card>
+                <CardHeader><CardTitle>Business Information</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <TextInput name="name" label="Business Name" value={form.name}
+                    onChange={updateField} onBlur={handleBlur} error={errors.name} toUpperCase />
+                  <SelectInput name="business_type" label="Business Type" value={form.business_type}
+                    options={BUSINESS_TYPES} onChange={handleSelectChange} error={errors.business_type} />
+                  <TextInput name="gst_number" label="GST Number" value={form.gst_number}
+                    placeholder="e.g. 22AAAAA0000A1Z5" onChange={updateField} onBlur={handleBlur} error={errors.gst_number} toUpperCase />
+                  <TextInput name="pan_number" label="PAN Number" value={form.pan_number}
+                    placeholder="e.g. ABCDE1234F" onChange={updateField} onBlur={handleBlur} error={errors.pan_number} toUpperCase />
+                  <TextInput name="alternate_contact_name" label="Alternate Contact Name" value={form.alternate_contact_name}
+                    onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_name} />
+                  <TextInput name="alternate_contact_phone" label="Alternate Contact Phone" value={form.alternate_contact_phone}
+                    placeholder="10-digit number" onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_phone} />
+                </CardContent>
+              </Card>
 
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Editable Name */}
-            {renderTextInput("registrar_name", "Your Name", undefined, false,
-              {
-                preventPaste: false,
-                toUpperCase: true,
-              })}
+              {/* Business Profile */}
+              <Card>
+                <CardHeader><CardTitle>Business Profile</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <SelectInput name="established_year" label="Established Year" value={form.established_year}
+                    options={ESTABLISHED_YEAR} onChange={handleSelectChange} error={errors.established_year} />
+                  <SelectInput name="business_nature" label="Business Nature" value={form.business_nature}
+                    options={BUSINESS_NATURES} onChange={handleSelectChange} error={errors.business_nature} />
+                  <SelectInput name="annual_turnover" label="Annual Turnover" value={form.annual_turnover}
+                    options={ANNUAL_TURNOVER} onChange={handleSelectChange} error={errors.annual_turnover} />
+                  <SelectInput name="dealing_area" label="Dealing Area" value={form.dealing_area}
+                    options={DEALING_AREA} onChange={handleSelectChange} error={errors.dealing_area} />
+                  <SelectInput name="office_employees" label="Number of Office Employees" value={form.office_employees}
+                    options={NUMBER_OF_EMPLOYEES} onChange={handleSelectChange} error={errors.office_employees} />
+                </CardContent>
+              </Card>
 
-            {/* Read-only Email */}
-            <div className="relative">
-              {renderTextInput("email", "Email", form.email, true)}
-              <p className="text-xs text-muted-foreground absolute right-2 top-2 italic">
-                Can’t edit
-              </p>
-            </div>
+              {/* Address Details */}
+              <Card>
+                <CardHeader><CardTitle>Address Details</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <TextInput name="address_line_1" label="Address Line 1" value={form.address_line_1}
+                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_1} />
+                  <TextInput name="address_line_2" label="Address Line 2 (Optional)" value={form.address_line_2}
+                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_2} />
+                  <TextInput name="street" label="Street" value={form.street}
+                    onChange={updateField} onBlur={handleBlur} error={errors.street} />
+                  <TextInput name="city" label="City" value={form.city}
+                    onChange={updateField} onBlur={handleBlur} error={errors.city} />
+                  <SelectInput name="state" label="State" value={form.state}
+                    options={INDIAN_STATES} onChange={handleSelectChange} error={errors.state} />
+                  <TextInput name="pincode" label="Pincode" value={form.pincode}
+                    placeholder="6-digit code" onChange={updateField} onBlur={handleBlur} error={errors.pincode} />
+                  <SelectInput name="country" label="Country" value={form.country}
+                    options={COUNTRIES} onChange={handleSelectChange} error={errors.country} />
+                </CardContent>
+              </Card>
 
-            {/* Read-only Phone */}
-            <div className="relative">
-              {renderTextInput("phone_no", "Phone No", "10-digit number", true)}
-              <p className="text-xs text-muted-foreground absolute right-2 top-2 italic">
-                Can’t edit
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Bank Details */}
+              <Card>
+                <CardHeader><CardTitle>Bank Details</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <SelectInput name="bank_name" label="Bank Name" value={form.bank_name}
+                    options={BANK_NAMES} onChange={handleSelectChange} error={errors.bank_name} />
+                  <TextInput name="bank_account" label="Account Number" value={form.bank_account}
+                    placeholder="9–18 digits" onChange={updateField} onBlur={handleBlur} error={errors.bank_account}
+                    onPaste={(e: any) => e.preventDefault()} />
+                  <TextInput name="ifsc_code" label="IFSC Code" value={form.ifsc_code}
+                    placeholder="e.g. SBIN0002499" onChange={updateField} onBlur={handleBlur} error={errors.ifsc_code}
+                    onPaste={(e: any) => e.preventDefault()} toUpperCase />
+                  <TextInput name="branch" label="Branch Name" value={form.branch}
+                    onChange={updateField} onBlur={handleBlur} error={errors.branch} />
+                  <TextInput name="upi_id" label="UPI ID" value={form.upi_id}
+                    placeholder="e.g. name@upi" onChange={updateField} onBlur={handleBlur} error={errors.upi_id} />
+                </CardContent>
+              </Card>
 
-        {/* Business Information */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Business Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("name", "Business Name",undefined, false,
-              {
-                preventPaste: false,
-                toUpperCase: true,
-              })}
-            {renderSelect("business_type", "Business Type", BUSINESS_TYPES)}
-            {renderTextInput(
-              "gst_number",
-              "GST Number",
-              "e.g. 22AAAAA0000A1Z5",
-              false,
-              { toUpperCase: true }
-            )}
-            {renderTextInput(
-              "pan_number",
-              "PAN Number",
-              "e.g. ABCDE1234F",
-              false,
-              {
-                preventPaste: false,
-                toUpperCase: true,
-              }
-            )}
-            {renderTextInput(
-              "alternate_contact_name",
-              "Alternate Contact Name"
-            )}
-            {renderTextInput(
-              "alternate_contact_phone",
-              "Alternate Contact Phone",
-              "10-digit number"
-            )}
-          </CardContent>
-        </Card>
+              {/* Other Information */}
+              <Card>
+                <CardHeader><CardTitle>Other Information</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <MultiSelectInput
+                    name="categories"
+                    label="Categories"
+                    values={form.categories}
+                    options={CATEGORIES}
+                    onChange={updateField}
+                    error={errors.categories}
+                  />
 
-        {/* Business Profile */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Business Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderSelect(
-              "established_year",
-              "Established Year",
-              ESTABLISHED_YEAR
-            )}
-            {renderSelect(
-              "business_nature",
-              "Business Nature",
-              BUSINESS_NATURES
-            )}
-            {renderSelect(
-              "annual_turnover",
-              "Annual Turnover",
-              ANNUAL_TURNOVER
-            )}
-            {renderSelect("dealing_area", "Dealing Area", DEALING_AREA)}
-            {renderSelect(
-              "office_employees",
-              "Number of Office Employees",
-              NUMBER_OF_EMPLOYEES
-            )}
-          </CardContent>
-        </Card>
+                  <SelectInput name="return_policy" label="Return Policy" value={form.return_policy}
+                    options={RETURN_POLICY} onChange={handleSelectChange} error={errors.return_policy} />
+                  <SelectInput name="operating_hours" label="Operating Hours" value={form.operating_hours}
+                    options={OPERATING_HOURS} onChange={handleSelectChange} error={errors.operating_hours} />
+                </CardContent>
+              </Card>
 
-        {/* Address Details */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Address Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderTextInput("address_line_1", "Address Line 1")}
-            {renderTextInput("address_line_2", "Address Line 2 (Optional)")}
-            {renderTextInput("street", "Street")}
-            {renderTextInput("city", "City")}
-            {renderSelect("state", "State", INDIAN_STATES)}
-            {renderTextInput("pincode", "Pincode", "6-digit code")}
-            {renderSelect("country", "Country", COUNTRIES)}
-          </CardContent>
-        </Card>
+              {/* Documents */}
+              <Card>
+                <CardHeader><CardTitle>Documents</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <FileInput name="gst_cert" label="GST Certificate (PDF/JPG/PNG)"
+                    onChange={handleFileChange} error={errors.gst_cert} />
+                  <FileInput name="pan_card" label="PAN Card (PDF/JPG/PNG)"
+                    onChange={handleFileChange} error={errors.pan_card} />
+                </CardContent>
+              </Card>
 
-        {/* Bank Details */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Bank Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderSelect("bank_name", "Bank Name",BANK_NAMES)}
-            {renderTextInput(
-              "bank_account",
-              "Account Number",
-              "9–18 digits",
-              false,
-              {
-                preventPaste: true,
-              }
-            )}
-            {renderTextInput(
-              "ifsc_code",
-              "IFSC Code",
-              "e.g. SBIN0002499",
-              false,
-              {
-                preventPaste: true,
-                toUpperCase: true,
-              }
-            )}
-            {renderTextInput("branch", "Branch Name")}
-            {renderTextInput("upi_id", "UPI ID", "e.g. name@upi")}
-          </CardContent>
-        </Card>
-
-        {/* Other Information */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Other Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {renderSelect(
-              "categories",
-              "Categories (comma separated)",
-              CATEGORIES
-            )}
-            {renderSelect("return_policy", "Return Policy",RETURN_POLICY)}
-            {renderSelect("operating_hours", "Operating Hours",OPERATING_HOURS)}
-          </CardContent>
-        </Card>
-
-        {/* Documents */}
-        <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Documents</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {renderFileInput("gst_cert", "GST Certificate (PDF/JPG/PNG)")}
-            {renderFileInput("pan_card", "PAN Card (PDF/JPG/PNG)")}
-          </CardContent>
-        </Card>
-
-        {/* Submit Button */}
-        <div className="mt-6 text-center">
-          <Button
-            size="lg"
-            onClick={handleSubmit}
-            disabled={loading || isSubmitting}
-          >
-            {loading || isSubmitting ? "Saving..." : "Complete Registration"}
-          </Button>
-        </div>
-      </motion.div>
-
-      <QuoteBlock />
-    </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSubmit} disabled={loading || isSubmitting}
+                  className="bg-black px-8 py-3">
+                  {loading || isSubmitting ? "Saving..." : "Complete Registration"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+      <Footer />
+    </>
   );
 }

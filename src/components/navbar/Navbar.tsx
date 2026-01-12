@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
 import CartDrawer from "../cart/CartDrawer"
+import Image from "next/image"
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -52,7 +53,7 @@ export default function Navbar() {
           </Sheet>
 
           <Link href="/" className="text-xl font-bold">
-            🛍️ OPH-Mart
+            <Image src="/logo.png" alt="OPH-Mart" width={100} height={40} />
           </Link>
         </div>
 

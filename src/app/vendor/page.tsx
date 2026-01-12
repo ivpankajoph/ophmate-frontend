@@ -11,11 +11,18 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Navbar from "@/components/navbar/Navbar";
+import Footer from "@/components/footer";
+import PromotionalBanner from "@/components/promotional-banner";
 
 export default function VendorPage() {
   const router = useRouter();
 
   return (
+
+    <>
+    <PromotionalBanner/>
+    <Navbar/>
     <div className="min-h-screen flex flex-col items-center bg-background text-foreground overflow-hidden">
       {/* Hero Section */}
       <section className="w-full flex flex-col items-center justify-center text-center py-32 px-6 bg-gradient-to-b from-primary/10 to-background">
@@ -161,5 +168,7 @@ export default function VendorPage() {
         </Button>
       </section>
     </div>
+    <Footer/>
+    </>
   );
 }
