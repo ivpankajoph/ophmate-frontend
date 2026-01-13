@@ -6,6 +6,8 @@ import FullWidthBanner from "@/components/banner";
 import EcommerceHeroPage from "@/components/main/Index";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar/Navbar";
+import Category from "@/components/Category";
+import ProductsMainPage from "@/components/ProductMainPage";
 
 declare global {
   interface Window {
@@ -31,7 +33,9 @@ export default function Home() {
       <PromotionalBanner />
       <Navbar />
       <FullWidthBanner />
-      <EcommerceHeroPage />
+      <Category/>
+      <ProductsMainPage/>
+      {/* <EcommerceHeroPage /> */}
       <Footer />
     </>
   );

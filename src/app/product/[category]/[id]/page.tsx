@@ -21,41 +21,55 @@ import { AppDispatch, RootState } from "@/store";
 import { useParams } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
 import { getImageUrl } from "@/components/main/Index";
+import PromotionalBanner from "@/components/promotional-banner";
+import Navbar from "@/components/navbar/Navbar";
+import Footer from "@/components/footer";
 
-// Types
+// Updated Types to match your API
+type VariantImage = {
+  url: string;
+  publicId: string;
+};
+
 type Variant = {
   _id: string;
-  sku: string;
-  attributes: Record<string, string>;
-  actual_price: number;
-  price: number;
-  final_price: number;
+  variantSku: string;
+  variantAttributes: {
+    color: string;
+    country: string;
+  };
+  actualPrice: number;
+  discountPercent: number;
+  finalPrice: number;
   stockQuantity: number;
-  image_urls: string[];
-  is_active: boolean;
+  variantsImageUrls: VariantImage[];
+  isActive: boolean;
+  variantMetaTitle: string;
+  variantMetaDescription: string;
+  variantMetaKeywords: string[];
+  variantCanonicalUrl: string;
 };
 
 type Product = {
   _id: string;
   productName: string;
-  slug: string;
   productCategory: string;
   brand: string;
-  short_description: string;
-  description: string;
-  default_images: string[];
-  isAvailable: boolean;
   variants: Variant[];
-  createdAt: string;
-  updatedAt: string;
+  // Note: Your API doesn't return these fields, so we'll handle carefully
+  short_description?: string;
+  description?: string;
+  default_images?: string[];
+  isAvailable?: boolean;
   vendor?: {
     name?: string;
+    vendor_id?: string;
   };
 };
 
 // Helper
 const getColorFromVariant = (variant: Variant): string => {
-  return variant.attributes.Color || "Unknown";
+  return variant.variantAttributes.color || "Unknown";
 };
 
 export default function ProductDetailPage() {
@@ -83,28 +97,26 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!product) return;
 
-    let firstActiveVariant: any | undefined;
+    let firstActiveVariant: Variant | undefined;
     if (product.variants && product.variants.length > 0) {
       firstActiveVariant =
-        product.variants.find((v:any) => v.is_active) || product.variants[0];
-      setSelectedVariant(firstActiveVariant);
+        product.variants.find((v: Variant) => v.isActive) || product.variants[0];
+      setSelectedVariant(firstActiveVariant ?? null);
 
-      const firstImg = firstActiveVariant.image_urls[0];
-      setSelectedImage(getImageUrl(firstImg) || getImageUrl(product.default_images[0]) || "");
-    } else {
-      setSelectedImage(getImageUrl(product.default_images[0]) || "");
+      const firstImg = firstActiveVariant?.variantsImageUrls[0]?.url.trim();
+      setSelectedImage(firstImg || "");
     }
   }, [product]);
 
   // Update main image when variant changes
   useEffect(() => {
-    if (selectedVariant?.image_urls?.[0]) {
-      setSelectedImage(getImageUrl(selectedVariant.image_urls[0]));
+    if (selectedVariant?.variantsImageUrls?.[0]?.url) {
+      setSelectedImage(selectedVariant.variantsImageUrls[0].url.trim());
     }
   }, [selectedVariant]);
 
   const subtotal = useMemo(() => {
-    const basePrice = selectedVariant?.final_price ?? product?.variants?.[0]?.final_price ?? 0;
+    const basePrice = selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
     return basePrice * quantity;
   }, [quantity, selectedVariant, product]);
 
@@ -152,35 +164,40 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Image sources
-  const defaultImages = product.default_images.length > 0 ? product.default_images : [];
-  const variantImages = selectedVariant?.image_urls || [];
-  const allImageUrls = [...new Set([...defaultImages, ...variantImages])]
-    .filter(Boolean)
-    .map(getImageUrl);
+  // Get all unique image URLs from variants
+  const allImageUrls = Array.from(
+    new Set(
+      product.variants.flatMap((v: { variantsImageUrls: { url: string; }[]; }) => 
+        v.variantsImageUrls.map((img: { url: string; }) => img.url.trim())
+      )
+    )
+  ).filter(Boolean);
 
-  // Description features
-  const features = product.description
-    ? product.description.split(/[\r\n]+/).filter(Boolean)
-    : [];
+  // Use variant description if available, otherwise use meta description
+  const productDescription = selectedVariant?.variantMetaDescription || 
+                            product.variants[0]?.variantMetaDescription || 
+                            "No description available.";
 
   // Specifications
   const specs: Record<string, string> = {
     Brand: product.brand || "N/A",
     Category: product.productCategory || "N/A",
     "Stock Available": selectedVariant?.stockQuantity?.toString() || "0",
-    Price: `₹${(selectedVariant?.final_price || 0).toLocaleString()}`,
-    ...(selectedVariant?.attributes || {}),
+    Price: `₹${(selectedVariant?.finalPrice || 0).toLocaleString()}`,
+    ...(selectedVariant?.variantAttributes || {}),
   };
 
   return (
+    <>
+    <PromotionalBanner/>
+    <Navbar/>
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Gallery */}
         <div className="lg:col-span-6">
           <div className="flex gap-4">
             <div className="flex flex-col gap-3">
-              {allImageUrls.map((img, i) => (
+              {(allImageUrls as string[]).map((img, i) => (
                 <button
                   key={i}
                   aria-label={`View product image ${i + 1}`}
@@ -234,12 +251,12 @@ export default function ProductDetailPage() {
 
                 <div className="absolute top-4 left-4">
                   <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white">
-                    {product.isAvailable ? "In stock" : "Out of stock"}
+                    {(selectedVariant?.stockQuantity ?? 0) > 0 ? "In stock" : "Out of stock"}
                   </Badge>
                 </div>
 
                 <div className="absolute bottom-4 left-4 right-4 hidden md:flex gap-2 justify-center">
-                  {allImageUrls.map((img, i) => (
+                  {(allImageUrls as string[]).map((img: string, i: number) => (
                     <button
                       key={i}
                       onClick={() => setSelectedImage(img)}
@@ -289,27 +306,32 @@ export default function ProductDetailPage() {
               </div>
               <Separator orientation="vertical" className="h-6" />
               <div className="text-sm text-muted-foreground">
-                SKU: {selectedVariant?.sku || "N/A"}
+                SKU: {selectedVariant?.variantSku || "N/A"}
               </div>
             </div>
 
             <div className="mt-4">
               <div className="flex items-baseline gap-3">
                 <div className="text-2xl font-bold">
-                  ₹{(selectedVariant?.final_price || 0).toLocaleString()}
+                  ₹{(selectedVariant?.finalPrice || 0).toLocaleString()}
                 </div>
-                {selectedVariant?.actual_price !== selectedVariant?.final_price && (
+                {selectedVariant?.actualPrice !== selectedVariant?.finalPrice && (
                   <div className="text-sm text-muted-foreground line-through">
-                    ₹{(selectedVariant?.actual_price || 0).toLocaleString()}
+                    ₹{(selectedVariant?.actualPrice || 0).toLocaleString()}
+                  </div>
+                )}
+                {selectedVariant?.discountPercent && selectedVariant.discountPercent > 0 && (
+                  <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                    {selectedVariant.discountPercent}% off
                   </div>
                 )}
               </div>
             </div>
 
             <p className="mt-4 text-muted-foreground max-w-prose">
-              {product.short_description ||
-                product.description?.split("\n")[0] ||
-                "No description available."}
+              {selectedVariant?.variantMetaDescription?.split('.')[0] || 
+               productDescription.split('.')[0] || 
+               "No description available."}
             </p>
           </div>
 
@@ -323,25 +345,25 @@ export default function ProductDetailPage() {
                     key={v._id}
                     aria-pressed={selectedVariant?._id === v._id}
                     onClick={() => setSelectedVariant(v)}
-                    disabled={!v.is_active}
+                    disabled={!v.isActive}
                     className={`px-3 py-2 rounded-md border ${
                       selectedVariant?._id === v._id
                         ? "ring-2 ring-indigo-500 bg-indigo-50"
                         : "bg-white"
                     } text-sm flex items-center gap-2 ${
-                      !v.is_active ? "opacity-50 cursor-not-allowed" : ""
+                      !v.isActive ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
-                    {v.image_urls[0] && (
+                    {v.variantsImageUrls[0] && (
                       <Image
-                        src={getImageUrl(v.image_urls[0])}
+                        src={v.variantsImageUrls[0].url.trim()}
                         alt={getColorFromVariant(v)}
                         width={36}
                         height={36}
                         className="object-cover rounded-sm"
                       />
                     )}
-                    <span>{getColorFromVariant(v)}</span>
+                    <span>{getColorFromVariant(v).charAt(0).toUpperCase() + getColorFromVariant(v).slice(1)}</span>
                     {v.stockQuantity <= 0 && (
                       <span className="text-xs text-red-500">Out</span>
                     )}
@@ -418,14 +440,7 @@ export default function ProductDetailPage() {
 
             <TabsContent value="details" className="mt-4">
               <div className="prose max-w-none">
-                <p>{product.description || "No details available."}</p>
-                {features.length > 0 && (
-                  <ul>
-                    {features.map((f: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, i: React.Key | null | undefined) => (
-                      <li key={i}>{f}</li>
-                    ))}
-                  </ul>
-                )}
+                <p>{productDescription}</p>
               </div>
             </TabsContent>
 
@@ -488,14 +503,18 @@ export default function ProductDetailPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="seller_details">
-                <AccordionTrigger>Seller Details</AccordionTrigger>
-                <AccordionContent>
-                <a href={`/vendor/catalog/${product?.vendor?.vendor_id}`}>  <p className="text-sm text-muted-foreground">
-                    {product.vendor?.name || "N/A"}
-                  </p></a>
-                </AccordionContent>
-              </AccordionItem>
+              {product.vendor?.vendor_id && (
+                <AccordionItem value="seller_details">
+                  <AccordionTrigger>Seller Details</AccordionTrigger>
+                  <AccordionContent>
+                    <a href={`/vendor/catalog/${product.vendor.vendor_id}`}>  
+                      <p className="text-sm text-muted-foreground">
+                        {product.vendor.name || "N/A"}
+                      </p>
+                    </a>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
             </Accordion>
           </div>
         </div>
@@ -550,5 +569,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+    <Footer/>
+    </>
   );
 }
