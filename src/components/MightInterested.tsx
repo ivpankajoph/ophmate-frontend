@@ -35,7 +35,7 @@ const MightInterested = () => {
         setLoading(true);
 
         const res = await fetch(
-          `http://localhost:8080/api/products/category/${categoryId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryId}`
         );
 
         const data = await res.json();
