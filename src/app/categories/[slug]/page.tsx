@@ -517,9 +517,9 @@ export default function CategoryDetailPage() {
                             {item.product.productName}
                           </h3>
 
-                          {item.variant.variantAttributes?.color && (
+                          {item.variant?.variantAttributes?.color && (
                             <p className="text-sm text-gray-600 mb-3">
-                              Color: <span className="font-medium capitalize">{item.variant.variantAttributes.color}</span>
+                              Color: <span className="font-medium capitalize">{item.variant?.variantAttributes?.color}</span>
                             </p>
                           )}
 

@@ -66,7 +66,7 @@ const ProductsMainPage = () => {
                         <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
                       </div>
                       <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        {firstVariant.variantAttributes.color}
+                        {firstVariant?.variantAttributes?.color}
                       </span>
                     </div>
                     

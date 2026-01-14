@@ -69,7 +69,7 @@ type Product = {
 
 // Helper
 const getColorFromVariant = (variant: Variant): string => {
-  return variant.variantAttributes.color || "Unknown";
+  return variant?.variantAttributes?.color || "Unknown";
 };
 
 export default function ProductDetailPage() {
