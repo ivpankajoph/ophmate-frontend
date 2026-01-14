@@ -3,12 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Package,
-  Sparkles,
-  TrendingUp,
-  ChevronRight,
-} from "lucide-react";
+import { Package, Sparkles, TrendingUp, ChevronRight } from "lucide-react";
 
 interface Category {
   _id: string;
@@ -33,7 +28,7 @@ const fetchCategories = async (): Promise<Category[]> => {
 };
 
 const CategoryCard = ({ category }: { category: Category }) => (
-  <Link href={`/categories/${category.slug}`} className="block">
+  <Link href={`/categories/${category._id}`} className="block">
     <div className="group relative overflow-hidden rounded-2xl h-80 cursor-pointer">
       <div className="absolute inset-0">
         <img
@@ -47,10 +42,16 @@ const CategoryCard = ({ category }: { category: Category }) => (
         <div className="transform transition-transform duration-300 group-hover:translate-y-[-8px]">
           <div className="flex items-center space-x-2 mb-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            <span className="text-yellow-400 text-xs font-semibold uppercase">Featured</span>
+            <span className="text-yellow-400 text-xs font-semibold uppercase">
+              Featured
+            </span>
           </div>
-          <h3 className="text-white text-3xl font-bold mb-2">{category.name}</h3>
-          <p className="text-gray-200 text-sm mb-4 line-clamp-2">{category.description}</p>
+          <h3 className="text-white text-3xl font-bold mb-2">
+            {category.name}
+          </h3>
+          <p className="text-gray-200 text-sm mb-4 line-clamp-2">
+            {category.description}
+          </p>
           <div className="flex items-center text-white font-semibold group-hover:gap-2 gap-1">
             <span>Explore Collection</span>
             <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
@@ -69,7 +70,9 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCategories().then(setCategories).finally(() => setLoading(false));
+    fetchCategories()
+      .then(setCategories)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -84,7 +87,9 @@ export default function CategoriesPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">Discover Our Categories</h1>
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            Discover Our Categories
+          </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Curated selections of premium products tailored for your lifestyle
           </p>
@@ -99,7 +104,9 @@ export default function CategoriesPage() {
         ) : (
           <div className="text-center py-20">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-gray-900">No Categories Found</h3>
+            <h3 className="text-2xl font-bold text-gray-900">
+              No Categories Found
+            </h3>
           </div>
         )}
       </div>
