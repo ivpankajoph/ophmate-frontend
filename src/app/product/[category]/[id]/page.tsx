@@ -21,6 +21,7 @@ import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import MightInterested from "@/components/MightInterested";
+import Link from "next/link";
 
 // Types
 type VariantImage = {
@@ -138,7 +139,8 @@ export default function ProductDetailPage() {
   }, [selectedVariant]);
 
   const subtotal = useMemo(() => {
-    const basePrice = selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
+    const basePrice =
+      selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
     return basePrice * quantity;
   }, [quantity, selectedVariant, product]);
 
@@ -204,7 +206,6 @@ export default function ProductDetailPage() {
 
   const specs: Record<string, string> = {
     Brand: product.brand || "N/A",
-    Category: product.productCategory || "N/A",
     "Stock Available": selectedVariant?.stockQuantity?.toString() || "0",
     Price: `₹${(selectedVariant?.finalPrice || 0).toLocaleString()}`,
     ...(selectedVariant?.variantAttributes || {}),
@@ -266,7 +267,9 @@ export default function ProductDetailPage() {
                         top: cursorPos.y - 96,
                         backgroundImage: `url(${selectedImage})`,
                         backgroundSize: `${520 * 2}px ${520 * 2}px`,
-                        backgroundPosition: `-${cursorPos.x * 2}px -${cursorPos.y * 2}px`,
+                        backgroundPosition: `-${cursorPos.x * 2}px -${
+                          cursorPos.y * 2
+                        }px`,
                       }}
                     />
                   )}
@@ -341,21 +344,24 @@ export default function ProductDetailPage() {
                   <div className="text-2xl font-bold">
                     ₹{(selectedVariant?.finalPrice || 0).toLocaleString()}
                   </div>
-                  {selectedVariant?.actualPrice !== selectedVariant?.finalPrice && (
+                  {selectedVariant?.actualPrice !==
+                    selectedVariant?.finalPrice && (
                     <div className="text-sm text-muted-foreground line-through">
                       ₹{(selectedVariant?.actualPrice || 0).toLocaleString()}
                     </div>
                   )}
-                  {selectedVariant?.discountPercent && selectedVariant.discountPercent > 0 && (
-                    <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
-                      {selectedVariant.discountPercent}% off
-                    </div>
-                  )}
+                  {selectedVariant?.discountPercent &&
+                    selectedVariant.discountPercent > 0 && (
+                      <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                        {selectedVariant.discountPercent}% off
+                      </div>
+                    )}
                 </div>
               </div>
 
               <p className="mt-4 text-muted-foreground max-w-prose">
-                {productDescription.split('.')[0] || "No description available."}
+                {productDescription.split(".")[0] ||
+                  "No description available."}
               </p>
             </div>
 
@@ -438,7 +444,9 @@ export default function ProductDetailPage() {
               <Button
                 className="flex-1 flex items-center justify-center gap-2 py-4"
                 onClick={handleAddToCart}
-                disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
+                disabled={
+                  !selectedVariant || selectedVariant.stockQuantity <= 0
+                }
               >
                 <ShoppingCart /> Add to Bag — ₹{subtotal.toLocaleString()}
               </Button>
@@ -483,7 +491,9 @@ export default function ProductDetailPage() {
 
               {/* Reviews */}
               <section>
-                <h2 className="text-xl font-bold mb-3">Customer Reviews (213)</h2>
+                <h2 className="text-xl font-bold mb-3">
+                  Customer Reviews (213)
+                </h2>
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="p-4 border rounded-lg">
@@ -511,7 +521,9 @@ export default function ProductDetailPage() {
               {/* FAQs */}
               {product.faqs && product.faqs.length > 0 && (
                 <section>
-                  <h2 className="text-xl font-bold mb-3">Frequently Asked Questions</h2>
+                  <h2 className="text-xl font-bold mb-3">
+                    Frequently Asked Questions
+                  </h2>
                   <Accordion type="multiple" className="w-full">
                     {product.faqs.map((faq: FAQ, index: number) => (
                       <AccordionItem key={index} value={`faq-${index}`}>
@@ -551,16 +563,16 @@ export default function ProductDetailPage() {
                     </p>
                   </AccordionContent>
                 </AccordionItem>
-                {product.vendor?.vendor_id && (
+                {product.vendor?._id && (
                   <AccordionItem value="seller_details">
                     <AccordionTrigger>Seller Details</AccordionTrigger>
                     <AccordionContent>
-                      <a
-                        href={`/vendor/catalog/${product.vendor.vendor_id}`}
+                      <Link
+                        href={`/vendor/catalog/${product.vendor._id}`}
                         className="text-sm text-muted-foreground hover:underline"
                       >
                         {product.vendor.name || "N/A"}
-                      </a>
+                      </Link>
                     </AccordionContent>
                   </AccordionItem>
                 )}
