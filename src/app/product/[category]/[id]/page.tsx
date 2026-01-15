@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Star, Heart, ShoppingCart, Truck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
+import { AppDispatch } from "@/store";
 import { useParams } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
 import PromotionalBanner from "@/components/promotional-banner";
@@ -100,7 +100,6 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!product) return;
 
-    // Initialize selected variant
     const firstActiveVariant =
       product.variants.find((v: Variant) => v.isActive) || product.variants[0];
     setSelectedVariant(firstActiveVariant ?? null);
@@ -108,7 +107,7 @@ export default function ProductDetailPage() {
     const firstImg = firstActiveVariant?.variantsImageUrls[0]?.url?.trim();
     setSelectedImage(firstImg || "");
 
-    // Update document meta
+    // Update document title and meta description
     const metaTitle =
       firstActiveVariant?.variantMetaTitle ||
       product.metaTitle ||
@@ -139,8 +138,7 @@ export default function ProductDetailPage() {
   }, [selectedVariant]);
 
   const subtotal = useMemo(() => {
-    const basePrice =
-      selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
+    const basePrice = selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
     return basePrice * quantity;
   }, [quantity, selectedVariant, product]);
 
@@ -173,7 +171,6 @@ export default function ProductDetailPage() {
   const handleMouseEnter = () => setShowMagnifier(true);
   const handleMouseLeave = () => setShowMagnifier(false);
 
-  // Loading / Error states
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 flex items-center justify-center h-96">
@@ -190,7 +187,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  // All unique image URLs
   const allImageUrls = Array.from(
     new Set(
       product.variants.flatMap((v: Variant) =>
@@ -199,7 +195,6 @@ export default function ProductDetailPage() {
     )
   ).filter(Boolean);
 
-  // Product description fallback
   const productDescription =
     selectedVariant?.variantMetaDescription ||
     product.variants[0]?.variantMetaDescription ||
@@ -207,7 +202,6 @@ export default function ProductDetailPage() {
     product.shortDescription ||
     "No description available.";
 
-  // Specifications
   const specs: Record<string, string> = {
     Brand: product.brand || "N/A",
     Category: product.productCategory || "N/A",
@@ -221,9 +215,10 @@ export default function ProductDetailPage() {
       <PromotionalBanner />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Gallery */}
-          <div className="lg:col-span-6 lg:sticky lg:top-8">
+        {/* Flex layout: sticky left, scrollable right */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left: Image Gallery - Sticky on desktop */}
+          <div className="w-full lg:w-1/2 lg:sticky lg:top-8 self-start">
             <div className="flex gap-4">
               <div className="flex flex-col gap-3">
                 {(allImageUrls as string[]).map((img, i) => (
@@ -250,7 +245,6 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex-1 relative">
-                {/* Main Image with Magnifier */}
                 <div className="relative w-full h-[520px] rounded-xl overflow-hidden bg-neutral-100">
                   <Image
                     src={selectedImage || "/placeholder.jpg"}
@@ -272,9 +266,7 @@ export default function ProductDetailPage() {
                         top: cursorPos.y - 96,
                         backgroundImage: `url(${selectedImage})`,
                         backgroundSize: `${520 * 2}px ${520 * 2}px`,
-                        backgroundPosition: `-${cursorPos.x * 2}px -${
-                          cursorPos.y * 2
-                        }px`,
+                        backgroundPosition: `-${cursorPos.x * 2}px -${cursorPos.y * 2}px`,
                       }}
                     />
                   )}
@@ -326,8 +318,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Product Info & Actions */}
-          <div className="lg:col-span-6 flex flex-col gap-6">
+          {/* Right: Product Info - Scrollable */}
+          <div className="w-full lg:w-1/2 flex flex-col gap-6">
             <div>
               <h1 className="text-3xl font-extrabold">{product.productName}</h1>
               <div className="flex items-center gap-3 mt-2">
@@ -349,24 +341,21 @@ export default function ProductDetailPage() {
                   <div className="text-2xl font-bold">
                     ₹{(selectedVariant?.finalPrice || 0).toLocaleString()}
                   </div>
-                  {selectedVariant?.actualPrice !==
-                    selectedVariant?.finalPrice && (
+                  {selectedVariant?.actualPrice !== selectedVariant?.finalPrice && (
                     <div className="text-sm text-muted-foreground line-through">
                       ₹{(selectedVariant?.actualPrice || 0).toLocaleString()}
                     </div>
                   )}
-                  {selectedVariant?.discountPercent &&
-                    selectedVariant.discountPercent > 0 && (
-                      <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
-                        {selectedVariant.discountPercent}% off
-                      </div>
-                    )}
+                  {selectedVariant?.discountPercent && selectedVariant.discountPercent > 0 && (
+                    <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                      {selectedVariant.discountPercent}% off
+                    </div>
+                  )}
                 </div>
               </div>
 
               <p className="mt-4 text-muted-foreground max-w-prose">
-                {productDescription.split(".")[0] ||
-                  "No description available."}
+                {productDescription.split('.')[0] || "No description available."}
               </p>
             </div>
 
@@ -449,9 +438,7 @@ export default function ProductDetailPage() {
               <Button
                 className="flex-1 flex items-center justify-center gap-2 py-4"
                 onClick={handleAddToCart}
-                disabled={
-                  !selectedVariant || selectedVariant.stockQuantity <= 0
-                }
+                disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
               >
                 <ShoppingCart /> Add to Bag — ₹{subtotal.toLocaleString()}
               </Button>
@@ -471,7 +458,7 @@ export default function ProductDetailPage() {
 
             <Separator />
 
-            {/* Always-visible sections (no tabs) */}
+            {/* Always-visible content sections */}
             <div className="space-y-8 mt-6">
               {/* Details */}
               <section>
@@ -494,12 +481,37 @@ export default function ProductDetailPage() {
                 </div>
               </section>
 
+              {/* Reviews */}
+              <section>
+                <h2 className="text-xl font-bold mb-3">Customer Reviews (213)</h2>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold">Customer {i}</div>
+                          <div className="text-sm text-muted-foreground">
+                            2 days ago
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="text-amber-400" />{" "}
+                          <span className="font-medium">4.{i}</span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Great product! Highly recommended.
+                      </p>
+                    </div>
+                  ))}
+                  <Button variant="ghost">Write a review</Button>
+                </div>
+              </section>
+
               {/* FAQs */}
               {product.faqs && product.faqs.length > 0 && (
                 <section>
-                  <h2 className="text-xl font-bold mb-3">
-                    Frequently Asked Questions
-                  </h2>
+                  <h2 className="text-xl font-bold mb-3">Frequently Asked Questions</h2>
                   <Accordion type="multiple" className="w-full">
                     {product.faqs.map((faq: FAQ, index: number) => (
                       <AccordionItem key={index} value={`faq-${index}`}>
@@ -518,7 +530,7 @@ export default function ProductDetailPage() {
 
             <Separator />
 
-            {/* Shipping, Returns, Seller */}
+            {/* Additional Accordions */}
             <div className="mt-4">
               <Accordion type="single" collapsible>
                 <AccordionItem value="shipping">
