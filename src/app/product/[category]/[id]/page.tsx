@@ -175,9 +175,14 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
+     <>
+     <PromotionalBanner/>
+     <Navbar/>
       <div className="container mx-auto px-4 py-8 flex items-center justify-center h-96">
         Loading product...
       </div>
+      <Footer/>
+     </>
     );
   }
 
