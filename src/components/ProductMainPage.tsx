@@ -48,7 +48,7 @@ const ProductsMainPage = () => {
                 href={`/product/${product.productCategory}/${product._id}`}
                 className="group block"
               >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-[500px]">
                   <div className="aspect-square overflow-hidden bg-gray-100">
                     <img
                       src={imageUrl}
