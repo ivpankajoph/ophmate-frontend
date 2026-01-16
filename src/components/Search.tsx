@@ -309,7 +309,7 @@ export default function EcommerceSearchUI() {
         <div className="mt-8 text-center">
           <p className="text-gray-600 text-lg">
             Welcome to{" "}
-            <span className="font-semibold text-orange-600">ShopHub</span>, Your
+            <span className="font-semibold text-orange-600">OPH-mart</span>, Your
             Premium E-Commerce Platform
           </p>
         </div>
