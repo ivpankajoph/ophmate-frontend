@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, Image, Sparkles, TrendingUp, Package, Zap, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  Image,
+  Sparkles,
+  TrendingUp,
+  Package,
+  Zap,
+  ChevronRight,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
-type TabType = 'category' | 'subcategory' | 'wholesale' | 'retail';
+type TabType = "category" | "subcategory" | "wholesale" | "retail";
 
 interface Subcategory {
   _id: string;
@@ -30,8 +38,8 @@ interface ApiResponse {
 
 export default function EcommerceSearchUI() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('category');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>("category");
+  const [searchQuery, setSearchQuery] = useState("");
   const [aiSearchEnabled, setAiSearchEnabled] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -45,13 +53,15 @@ export default function EcommerceSearchUI() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8080/api/categories/get-category');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/get-category`
+      );
       const result: ApiResponse = await response.json();
       if (result.success) {
         setCategories(result.data);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
     } finally {
       setLoading(false);
     }
@@ -66,14 +76,14 @@ export default function EcommerceSearchUI() {
   };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchQuery, {
+    console.log("Searching for:", searchQuery, {
       tab: activeTab,
-      aiEnabled: aiSearchEnabled
+      aiEnabled: aiSearchEnabled,
     });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
@@ -100,67 +110,87 @@ export default function EcommerceSearchUI() {
 
         {/* Categories Horizontal Scrollable Bar */}
         <div className="mb-32 bg-white rounded-2xl shadow-lg p-6 relative">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Browse Categories</h2>
-          
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Browse Categories
+          </h2>
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
           ) : (
             <>
-              <div className="relative" 
+              <div
+                className="relative"
                 onMouseEnter={() => setIsScrolling(false)}
                 onMouseLeave={() => setIsScrolling(true)}
               >
-                <div className="overflow-x-auto scrollbar-visible pb-4" id="categories-scroll">
-                  <div className={`flex gap-4 ${isScrolling ? 'animate-scroll-seamless' : ''}`}>
-                    {[...categories, ...categories, ...categories].map((category, index) => (
-                      <div
-                        key={`${category._id}-${index}`}
-                        className="flex-shrink-0 relative"
-                        onMouseEnter={() => setHoveredCategory(category._id)}
-                        onMouseLeave={() => setHoveredCategory(null)}
-                      >
-                        <button
-                          onClick={() => handleCategoryClick(category._id)}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all min-w-[140px] ${
-                            hoveredCategory === category._id
-                              ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-xl scale-105'
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          }`}
+                <div
+                  className="overflow-x-auto scrollbar-visible pb-4"
+                  id="categories-scroll"
+                >
+                  <div
+                    className={`flex gap-4 ${
+                      isScrolling ? "animate-scroll-seamless" : ""
+                    }`}
+                  >
+                    {[...categories, ...categories, ...categories].map(
+                      (category, index) => (
+                        <div
+                          key={`${category._id}-${index}`}
+                          className="flex-shrink-0 relative"
+                          onMouseEnter={() => setHoveredCategory(category._id)}
+                          onMouseLeave={() => setHoveredCategory(null)}
                         >
-                          <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow-md">
-                            <img
-                              src={category.image_url || '/placeholder.png'}
-                              alt={category.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <span className="font-semibold text-sm text-center">{category.name}</span>
-                        </button>
-                      </div>
-                    ))}
+                          <button
+                            onClick={() => handleCategoryClick(category._id)}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all min-w-[140px] ${
+                              hoveredCategory === category._id
+                                ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-xl scale-105"
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow-md">
+                              <img
+                                src={category.image_url || "/placeholder.png"}
+                                alt={category.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="font-semibold text-sm text-center">
+                              {category.name}
+                            </span>
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Subcategories Dropdown - Appears below category bar */}
               {hoveredCategory && (
-                <div 
+                <div
                   className="absolute left-0 right-0 top-full -mt-12 bg-white rounded-xl shadow-2xl border-2 border-orange-300 z-[100] animate-fadeIn mx-6"
                   onMouseEnter={() => setHoveredCategory(hoveredCategory)}
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
                   <div className="p-6">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
-                      <span>{categories.find(c => c._id === hoveredCategory)?.name} - Subcategories</span>
+                      <span>
+                        {
+                          categories.find((c) => c._id === hoveredCategory)
+                            ?.name
+                        }{" "}
+                        - Subcategories
+                      </span>
                       <ChevronRight className="w-5 h-5 text-orange-500" />
                     </h3>
-                    
+
                     <div className="max-h-80 overflow-y-auto scrollbar-thin">
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         {categories
-                          .find(c => c._id === hoveredCategory)
+                          .find((c) => c._id === hoveredCategory)
                           ?.subcategories?.map((sub) => (
                             <button
                               key={sub._id}
@@ -199,11 +229,11 @@ export default function EcommerceSearchUI() {
             </>
           )}
         </div>
-   <h1 className='text-4xl flex justify-center mb-10'>Search Anything you want............</h1>
-        <div className="bg-white rounded-3xl shadow-2xl border-4 border-orange-400 overflow-hidden">
-
+        <h1 className="text-4xl flex justify-center -mt-20 mb-10">
+          Search Anything you want............
+        </h1>
+        <div className="bg-white rounded-3xl shadow-2xl border-4 border-orange-400 overflow-hidden w-fit justify-center mx-auto">
           <div className="p-8">
-         
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 relative">
                 <input
@@ -211,7 +241,13 @@ export default function EcommerceSearchUI() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Search ${activeTab === 'wholesale' ? 'wholesale' : activeTab === 'retail' ? 'retail' : ''} products...`}
+                  placeholder={`Search ${
+                    activeTab === "wholesale"
+                      ? "wholesale"
+                      : activeTab === "retail"
+                      ? "retail"
+                      : ""
+                  } products...`}
                   className="w-full px-6 py-4 pr-32 text-lg border-2 border-gray-300 rounded-2xl focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100 transition-all"
                 />
                 <button className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-orange-600 transition-colors">
@@ -238,12 +274,12 @@ export default function EcommerceSearchUI() {
                   <div
                     onClick={() => setAiSearchEnabled(!aiSearchEnabled)}
                     className={`relative w-14 h-7 rounded-full transition-all ${
-                      aiSearchEnabled ? 'bg-orange-500' : 'bg-gray-300'
+                      aiSearchEnabled ? "bg-orange-500" : "bg-gray-300"
                     }`}
                   >
                     <div
                       className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                        aiSearchEnabled ? 'translate-x-7' : 'translate-x-0'
+                        aiSearchEnabled ? "translate-x-7" : "translate-x-0"
                       }`}
                     />
                   </div>
@@ -272,7 +308,9 @@ export default function EcommerceSearchUI() {
         {/* Welcome Message */}
         <div className="mt-8 text-center">
           <p className="text-gray-600 text-lg">
-            Welcome to <span className="font-semibold text-orange-600">ShopHub</span>, Your Premium E-Commerce Platform
+            Welcome to{" "}
+            <span className="font-semibold text-orange-600">ShopHub</span>, Your
+            Premium E-Commerce Platform
           </p>
         </div>
       </div>
