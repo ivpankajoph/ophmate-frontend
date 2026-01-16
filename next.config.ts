@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
         hostname: "flagcdn.com",
         pathname: "/**",
       },
+
+       {
+        protocol: "https",
+        hostname: "cdn.example.com",
+        pathname: "/**",
+      },
+
       {
         protocol: "https",
         hostname: "phpstack-1522038-5968955.cloudwaysapps.com",

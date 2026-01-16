@@ -67,6 +67,8 @@ interface ApiResponse {
     description: string;
     image_url: string;
     meta_keywords?: string[];
+    meta_title?: string;
+    meta_description?: string;
   };
 }
 
@@ -202,6 +204,49 @@ export default function SubCategoryDetailPage() {
   const handleProductClick = (categoryId: string, productId: string) => {
     router.push(`/product/${categoryId}/${productId}`);
   };
+
+  useEffect(() => {
+    if (!category) return;
+  
+    const metaTitle =
+      category.meta_title?.trim() || category.name || "Category";
+  
+    const metaDescription =
+      category.meta_description?.trim() ||
+      category.description ||
+      "";
+  
+    // ✅ Set browser tab title
+    document.title = metaTitle;
+  
+    // ✅ Set meta description safely
+    let metaTag = document.head.querySelector(
+      'meta[name="description"]'
+    ) as HTMLMetaElement | null;
+  
+    if (!metaTag) {
+      metaTag = document.createElement("meta");
+      metaTag.name = "description";
+      document.head.appendChild(metaTag);
+    }
+  
+    metaTag.content = metaDescription;
+  
+    // ✅ Optional: keywords
+    if (category.meta_keywords?.length) {
+      let keywordTag = document.head.querySelector(
+        'meta[name="keywords"]'
+      ) as HTMLMetaElement | null;
+  
+      if (!keywordTag) {
+        keywordTag = document.createElement("meta");
+        keywordTag.name = "keywords";
+        document.head.appendChild(keywordTag);
+      }
+  
+      keywordTag.content = category.meta_keywords.join(",");
+    }
+  }, [category]);
 
   if (loading) {
     return (

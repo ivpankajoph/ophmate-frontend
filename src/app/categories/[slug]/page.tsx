@@ -67,6 +67,8 @@ interface ApiResponse {
     description: string;
     image_url: string;
     meta_keywords?: string[];
+    meta_title?: string;
+    meta_description?: string;
   };
 }
 
@@ -202,6 +204,49 @@ export default function CategoryDetailPage() {
   const handleProductClick = (categoryId: string, productId: string) => {
     router.push(`/product/${categoryId}/${productId}`);
   };
+useEffect(() => {
+  if (!category) return;
+
+  const metaTitle =
+    category.meta_title?.trim() || category.name || "Category";
+
+  const metaDescription =
+    category.meta_description?.trim() ||
+    category.description ||
+    "";
+
+  // ✅ Set browser tab title
+  document.title = metaTitle;
+
+  // ✅ Set meta description safely
+  let metaTag = document.head.querySelector(
+    'meta[name="description"]'
+  ) as HTMLMetaElement | null;
+
+  if (!metaTag) {
+    metaTag = document.createElement("meta");
+    metaTag.name = "description";
+    document.head.appendChild(metaTag);
+  }
+
+  metaTag.content = metaDescription;
+
+  // ✅ Optional: keywords
+  if (category.meta_keywords?.length) {
+    let keywordTag = document.head.querySelector(
+      'meta[name="keywords"]'
+    ) as HTMLMetaElement | null;
+
+    if (!keywordTag) {
+      keywordTag = document.createElement("meta");
+      keywordTag.name = "keywords";
+      document.head.appendChild(keywordTag);
+    }
+
+    keywordTag.content = category.meta_keywords.join(",");
+  }
+}, [category]);
+
 
   if (loading) {
     return (
@@ -214,7 +259,9 @@ export default function CategoryDetailPage() {
               <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p className="text-gray-700 text-lg font-medium">Loading amazing products...</p>
+            <p className="text-gray-700 text-lg font-medium">
+              Loading amazing products...
+            </p>
           </div>
         </div>
         <Footer />
@@ -251,31 +298,30 @@ export default function CategoryDetailPage() {
       </>
     );
   }
-const metaTitle = category?.name || "Category";
-const metaDescription = category?.description || "";
+  const metaTitle = category?.meta_title || "Category";
+  const metaDescription = category?.meta_description || "";
   return (
     <>
-    <>
-  <Head>
-    <title>{metaTitle}</title>
-    <meta name="description" content={metaDescription} />
-    <meta name="keywords" content={category?.meta_keywords?.join(",") || ""} />
+      <Head>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta
+          name="keywords"
+          content={category?.meta_keywords?.join(",") || ""}
+        />
 
-    {/* Open Graph / Facebook */}
-    <meta property="og:title" content={metaTitle} />
-    <meta property="og:description" content={metaDescription} />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content={category?.image_url} />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content={category?.image_url} />
 
-    {/* Twitter */}
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={metaTitle} />
-    <meta name="twitter:description" content={metaDescription} />
-    <meta name="twitter:image" content={category?.image_url} />
-  </Head>
-
-  {/* ...rest of your component */}
-</>
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={category?.image_url} />
+      </Head>
 
       <PromotionalBanner />
       <Navbar />
@@ -284,15 +330,18 @@ const metaDescription = category?.description || "";
         {/* Modern Category Hero */}
         <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url(${category?.image_url})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'blur(20px)',
-            }}></div>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${category?.image_url})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                filter: "blur(20px)",
+              }}
+            ></div>
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-          
+
           <div className="relative max-w-7xl mx-auto px-6 py-20">
             <div className="flex items-center gap-3 text-gray-300 text-sm mb-6">
               <Link href="/" className="hover:text-white transition-colors">
@@ -301,7 +350,7 @@ const metaDescription = category?.description || "";
               <span>›</span>
               <span className="text-white font-medium">{category?.name}</span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="max-w-2xl">
                 <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
@@ -313,7 +362,9 @@ const metaDescription = category?.description || "";
                 <div className="flex items-center gap-6 mt-8">
                   <div className="flex items-center gap-2 text-white">
                     <Package className="w-5 h-5 text-blue-400" />
-                    <span className="font-semibold">{filteredAndSortedProducts.length}</span>
+                    <span className="font-semibold">
+                      {filteredAndSortedProducts.length}
+                    </span>
                     <span className="text-gray-300">Products</span>
                   </div>
                   <div className="flex items-center gap-2 text-white">
@@ -342,7 +393,7 @@ const metaDescription = category?.description || "";
                   <Filter className="w-4 h-4" />
                   Filters
                 </button>
-                
+
                 <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
                   <button
                     onClick={() => setViewMode("grid")}
@@ -368,7 +419,9 @@ const metaDescription = category?.description || "";
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 font-medium">Sort by:</span>
+                <span className="text-sm text-gray-600 font-medium">
+                  Sort by:
+                </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -386,7 +439,11 @@ const metaDescription = category?.description || "";
 
           <div className="flex gap-8">
             {/* Sidebar Filters */}
-            <div className={`w-80 flex-shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
+            <div
+              className={`w-80 flex-shrink-0 ${
+                showMobileFilters ? "block" : "hidden lg:block"
+              }`}
+            >
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 sticky top-4 overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b">
                   <h3 className="font-bold text-xl text-gray-900">Filters</h3>
@@ -479,15 +536,21 @@ const metaDescription = category?.description || "";
                 <>
                   <div className="mb-6">
                     <p className="text-gray-600">
-                      Showing <span className="font-semibold text-gray-900">{filteredAndSortedProducts.length}</span> results
+                      Showing{" "}
+                      <span className="font-semibold text-gray-900">
+                        {filteredAndSortedProducts.length}
+                      </span>{" "}
+                      results
                     </p>
                   </div>
 
-                  <div className={
-                    viewMode === "grid"
-                      ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                      : "space-y-6"
-                  }>
+                  <div
+                    className={
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        : "space-y-6"
+                    }
+                  >
                     {filteredAndSortedProducts.map((item, index) => (
                       <div
                         key={`${item.product._id}-${item.variant._id}`}
@@ -537,14 +600,17 @@ const metaDescription = category?.description || "";
                               {item.product.brand}
                             </span>
                           </div>
-                          
+
                           <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
                             {item.product.productName}
                           </h3>
 
                           {item.variant?.variantAttributes?.color && (
                             <p className="text-sm text-gray-600 mb-3">
-                              Color: <span className="font-medium capitalize">{item.variant?.variantAttributes?.color}</span>
+                              Color:{" "}
+                              <span className="font-medium capitalize">
+                                {item.variant?.variantAttributes?.color}
+                              </span>
                             </p>
                           )}
 
@@ -566,7 +632,10 @@ const metaDescription = category?.description || "";
                               </div>
                               {item.discount > 0 && (
                                 <p className="text-xs text-green-600 font-medium mt-1">
-                                  Save ₹{(item.originalPrice - item.displayPrice).toLocaleString()}
+                                  Save ₹
+                                  {(
+                                    item.originalPrice - item.displayPrice
+                                  ).toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -582,12 +651,13 @@ const metaDescription = category?.description || "";
                             </button>
                           </div>
 
-                          {item.variant.stockQuantity > 0 && item.variant.stockQuantity < 10 && (
-                            <p className="text-xs text-orange-600 font-medium mt-3 flex items-center gap-1">
-                              <Zap className="w-3 h-3" />
-                              Only {item.variant.stockQuantity} left in stock
-                            </p>
-                          )}
+                          {item.variant.stockQuantity > 0 &&
+                            item.variant.stockQuantity < 10 && (
+                              <p className="text-xs text-orange-600 font-medium mt-3 flex items-center gap-1">
+                                <Zap className="w-3 h-3" />
+                                Only {item.variant.stockQuantity} left in stock
+                              </p>
+                            )}
                         </div>
                       </div>
                     ))}
