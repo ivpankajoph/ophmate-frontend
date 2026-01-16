@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar/Navbar";
 import Category from "@/components/Category";
 import ProductsMainPage from "@/components/ProductMainPage";
+import EcommerceSearchUI from "@/components/Search";
 
 declare global {
   interface Window {
@@ -32,7 +33,8 @@ export default function Home() {
     <>
       <PromotionalBanner />
       <Navbar />
-      <FullWidthBanner />
+      <EcommerceSearchUI/>
+      {/* <FullWidthBanner /> */}
       <Category/>
       <ProductsMainPage/>
       {/* <EcommerceHeroPage /> */}

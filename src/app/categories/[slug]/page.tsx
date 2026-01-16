@@ -20,6 +20,7 @@ import {
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
+import Head from "next/head";
 
 interface Variant {
   _id: string;
@@ -65,6 +66,7 @@ interface ApiResponse {
     slug: string;
     description: string;
     image_url: string;
+    meta_keywords?: string[];
   };
 }
 
@@ -249,9 +251,32 @@ export default function CategoryDetailPage() {
       </>
     );
   }
-
+const metaTitle = category?.name || "Category";
+const metaDescription = category?.description || "";
   return (
     <>
+    <>
+  <Head>
+    <title>{metaTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <meta name="keywords" content={category?.meta_keywords?.join(",") || ""} />
+
+    {/* Open Graph / Facebook */}
+    <meta property="og:title" content={metaTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={category?.image_url} />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={metaTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={category?.image_url} />
+  </Head>
+
+  {/* ...rest of your component */}
+</>
+
       <PromotionalBanner />
       <Navbar />
 
