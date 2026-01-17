@@ -2,11 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Star, Heart, ShoppingCart, Truck, RefreshCw } from "lucide-react";
+import { Star, Heart, ShoppingCart, Truck, RefreshCw, Package, TrendingDown, Award, Shield, Zap, Users, ChevronRight, Info, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionItem,
@@ -22,59 +23,32 @@ import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import MightInterested from "@/components/MightInterested";
 import Link from "next/link";
-
-// Types
-type VariantImage = {
-  url: string;
-  publicId: string;
-};
-
-type Variant = {
-  _id: string;
-  variantSku: string;
-  variantAttributes: {
-    color: string;
-    country: string;
-  };
-  actualPrice: number;
-  discountPercent: number;
-  finalPrice: number;
-  stockQuantity: number;
-  variantsImageUrls: VariantImage[];
-  isActive: boolean;
-  variantMetaTitle: string;
-  variantMetaDescription: string;
-  variantMetaKeywords: string[];
-  variantCanonicalUrl: string;
-};
-
-type FAQ = {
-  question: string;
-  answer: string;
-};
-
-type Product = {
-  _id: string;
-  productName: string;
-  productCategory: string;
-  brand: string;
-  variants: Variant[];
-  shortDescription?: string;
-  description?: string;
-  defaultImages?: { url: string; publicId: string }[];
-  isAvailable?: boolean;
-  metaTitle?: string;
-  metaDescription?: string;
-  faqs?: FAQ[];
-  vendor?: {
-    name?: string;
-    vendor_id?: string;
-  };
-};
+import { FAQ, Variant } from "../../type/type";
 
 const getColorFromVariant = (variant: Variant): string => {
   return variant?.variantAttributes?.color || "Unknown";
 };
+
+// Wholesale pricing tiers
+const wholesaleTiers = [
+  { min: 2, max: 499, discount: 10, label: "Starter Pack" },
+  { min: 500, max: 9999, discount: 17, label: "Business Pack" },
+  { min: 10000, max: null, discount: 44, label: "Enterprise Pack" },
+];
+
+const retailBenefits = [
+  { icon: Truck, text: "Free shipping over ₹75" },
+  { icon: RefreshCw, text: "30-day easy returns" },
+  { icon: Shield, text: "1-year warranty" },
+  { icon: Zap, text: "Fast delivery in 3-7 days" },
+];
+
+const wholesaleBenefits = [
+  { icon: TrendingDown, text: "Bulk pricing discounts" },
+  { icon: Users, text: "Dedicated account manager" },
+  { icon: Award, text: "Priority support" },
+  { icon: Package, text: "Custom packaging options" },
+];
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,15 +63,14 @@ export default function ProductDetailPage() {
   const [wishlisted, setWishlisted] = useState(false);
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [pricingMode, setPricingMode] = useState<"retail" | "wholesale">("retail");
 
-  // Fetch product
   useEffect(() => {
     if (id) {
       dispatch(fetchProductById(id));
     }
   }, [id, dispatch]);
 
-  // Set meta tags & initialize variant/image
   useEffect(() => {
     if (!product) return;
 
@@ -108,7 +81,6 @@ export default function ProductDetailPage() {
     const firstImg = firstActiveVariant?.variantsImageUrls[0]?.url?.trim();
     setSelectedImage(firstImg || "");
 
-    // Update document title and meta description
     const metaTitle =
       firstActiveVariant?.variantMetaTitle ||
       product.metaTitle ||
@@ -131,18 +103,50 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
-  // Update image when variant changes
   useEffect(() => {
     if (selectedVariant?.variantsImageUrls?.[0]?.url) {
       setSelectedImage(selectedVariant.variantsImageUrls[0].url.trim());
     }
   }, [selectedVariant]);
 
+  useEffect(() => {
+    if (pricingMode === "wholesale" && quantity < 2) {
+      setQuantity(2);
+    }
+  }, [pricingMode]);
+
+  const calculateWholesalePrice = (basePrice: number, qty: number) => {
+    const tier = wholesaleTiers.find(
+      (t) => qty >= t.min && (t.max === null || qty <= t.max)
+    );
+    if (!tier) return basePrice;
+    return basePrice * (1 - tier.discount / 100);
+  };
+
+  const getCurrentTier = () => {
+    return wholesaleTiers.find(
+      (t) => quantity >= t.min && (t.max === null || quantity <= t.max)
+    );
+  };
+
   const subtotal = useMemo(() => {
     const basePrice =
       selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
+    
+    if (pricingMode === "wholesale") {
+      return calculateWholesalePrice(basePrice, quantity) * quantity;
+    }
     return basePrice * quantity;
-  }, [quantity, selectedVariant, product]);
+  }, [quantity, selectedVariant, product, pricingMode]);
+
+  const savings = useMemo(() => {
+    const basePrice = selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
+    if (pricingMode === "wholesale") {
+      const regularTotal = basePrice * quantity;
+      return regularTotal - subtotal;
+    }
+    return 0;
+  }, [quantity, selectedVariant, product, pricingMode, subtotal]);
 
   const onThumbKey = (
     e: React.KeyboardEvent<HTMLButtonElement>,
@@ -179,7 +183,10 @@ export default function ProductDetailPage() {
         <PromotionalBanner />
         <Navbar />
         <div className="container mx-auto px-4 py-8 flex items-center justify-center h-96">
-          Loading product...
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg font-medium">Loading product...</p>
+          </div>
         </div>
         <Footer />
       </>
@@ -189,7 +196,11 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className="container mx-auto px-4 py-8 flex items-center justify-center h-96">
-        Failed to load product. Please try again.
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <p className="text-xl font-semibold">Failed to load product</p>
+          <p className="text-muted-foreground mt-2">Please try again later</p>
+        </div>
       </div>
     );
   }
@@ -216,14 +227,17 @@ export default function ProductDetailPage() {
     ...(selectedVariant?.variantAttributes || {}),
   };
 
+  const basePrice = selectedVariant?.finalPrice || 0;
+  const actualPrice = selectedVariant?.actualPrice || 0;
+  const currentTier = getCurrentTier();
+
   return (
     <>
       <PromotionalBanner />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        {/* Flex layout: sticky left, scrollable right */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left: Image Gallery - Sticky on desktop */}
+          {/* Left: Image Gallery */}
           <div className="w-full lg:w-1/2 lg:sticky lg:top-8 self-start">
             <div className="flex gap-4">
               <div className="flex flex-col gap-3">
@@ -233,10 +247,10 @@ export default function ProductDetailPage() {
                     aria-label={`View product image ${i + 1}`}
                     onClick={() => setSelectedImage(img)}
                     onKeyDown={(e) => onThumbKey(e, img)}
-                    className={`w-20 h-20 rounded-md overflow-hidden border ${
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
                       selectedImage === img
-                        ? "ring-2 ring-indigo-500"
-                        : "border-neutral-200"
+                        ? "ring-2 ring-indigo-500 border-indigo-300 scale-105"
+                        : "border-neutral-200 hover:border-indigo-200"
                     }`}
                   >
                     <Image
@@ -244,14 +258,14 @@ export default function ProductDetailPage() {
                       alt="thumb"
                       width={80}
                       height={80}
-                      className="object-cover"
+                      className="object-cover w-full h-full"
                     />
                   </button>
                 ))}
               </div>
 
               <div className="flex-1 relative">
-                <div className="relative w-full h-[520px] rounded-xl overflow-hidden bg-neutral-100">
+                <div className="relative w-full h-[520px] rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100 shadow-xl">
                   <Image
                     src={selectedImage || "/placeholder.jpg"}
                     alt={product.productName}
@@ -263,10 +277,9 @@ export default function ProductDetailPage() {
                     onMouseLeave={handleMouseLeave}
                   />
 
-                  {/* Magnifying Glass */}
                   {showMagnifier && (
                     <div
-                      className="absolute w-48 h-48 rounded-full border-2 border-white shadow-xl overflow-hidden pointer-events-none z-10"
+                      className="absolute w-48 h-48 rounded-full border-4 border-white shadow-2xl overflow-hidden pointer-events-none z-10"
                       style={{
                         left: cursorPos.x - 96,
                         top: cursorPos.y - 96,
@@ -279,113 +292,237 @@ export default function ProductDetailPage() {
                     />
                   )}
 
-                  {/* Stock Badge */}
-                  <div className="absolute top-4 left-4">
-                    <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white">
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg">
                       {(selectedVariant?.stockQuantity ?? 0) > 0
-                        ? "In stock"
-                        : "Out of stock"}
+                        ? "✓ In Stock"
+                        : "Out of Stock"}
                     </Badge>
-                  </div>
-
-                  {/* Mobile Thumbnails */}
-                  <div className="absolute bottom-4 left-4 right-4 hidden md:flex gap-2 justify-center">
-                    {(allImageUrls as string[]).map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedImage(img)}
-                        className={`w-16 h-16 rounded-md overflow-hidden border ${
-                          selectedImage === img
-                            ? "ring-2 ring-indigo-500"
-                            : "border-neutral-200"
-                        }`}
-                      >
-                        <Image
-                          src={img || "/placeholder.jpg"}
-                          alt="mini"
-                          width={64}
-                          height={64}
-                          className="object-cover"
-                        />
-                      </button>
-                    ))}
+                    {selectedVariant?.discountPercent && selectedVariant.discountPercent > 0 && (
+                      <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">
+                        {selectedVariant.discountPercent}% OFF
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-3 flex gap-3">
+                <div className="mt-4 flex gap-3">
                   <Button
                     variant="outline"
+                    className={`flex-1 transition-all ${wishlisted ? 'bg-pink-50 border-pink-300 text-pink-600' : ''}`}
                     onClick={() => setWishlisted((s) => !s)}
                   >
-                    <Heart className="mr-2" />{" "}
-                    {wishlisted ? "Wishlisted" : "Add to favorites"}
+                    <Heart className={`mr-2 ${wishlisted ? 'fill-current' : ''}`} />{" "}
+                    {wishlisted ? "Added to Favorites" : "Add to Favorites"}
                   </Button>
-                  <Button variant="ghost">Share</Button>
+                  <Button variant="outline" className="flex-1">
+                    Share
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right: Product Info - Scrollable */}
+          {/* Right: Product Info */}
           <div className="w-full lg:w-1/2 flex flex-col gap-6">
             <div>
-              <h1 className="text-3xl font-extrabold">{product.productName}</h1>
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex items-center gap-1">
-                  <Star className="text-amber-400" />
-                  <span className="font-semibold">4.6</span>
-                  <span className="text-sm text-muted-foreground">
+              <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                {product.productName}
+              </h1>
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
+                  <Star className="text-amber-400 fill-amber-400 w-5 h-5" />
+                  <span className="font-bold text-amber-900">4.6</span>
+                  <span className="text-sm text-amber-700">
                     (213 reviews)
                   </span>
                 </div>
                 <Separator orientation="vertical" className="h-6" />
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground font-mono bg-neutral-100 px-3 py-1 rounded">
                   SKU: {selectedVariant?.variantSku || "N/A"}
                 </div>
               </div>
-
-              <div className="mt-4">
-                <div className="flex items-baseline gap-3">
-                  <div className="text-2xl font-bold">
-                    ₹{(selectedVariant?.finalPrice || 0).toLocaleString()}
-                  </div>
-                  {selectedVariant?.actualPrice !==
-                    selectedVariant?.finalPrice && (
-                    <div className="text-sm text-muted-foreground line-through">
-                      ₹{(selectedVariant?.actualPrice || 0).toLocaleString()}
-                    </div>
-                  )}
-                  {selectedVariant?.discountPercent &&
-                    selectedVariant.discountPercent > 0 && (
-                      <div className="text-sm bg-red-100 text-red-800 px-2 py-0.5 rounded">
-                        {selectedVariant.discountPercent}% off
-                      </div>
-                    )}
-                </div>
-              </div>
-
-              <p className="mt-4 text-muted-foreground max-w-prose">
-                {productDescription.split(".")[0] ||
-                  "No description available."}
-              </p>
             </div>
 
+            {/* Pricing Tabs */}
+            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 p-1 rounded-2xl shadow-lg">
+              <Tabs 
+                value={pricingMode} 
+                onValueChange={(v) => setPricingMode(v as "retail" | "wholesale")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 bg-white p-1 rounded-xl">
+                  <TabsTrigger 
+                    value="retail"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white rounded-lg transition-all"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Retail
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="wholesale"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500 data-[state=active]:text-white rounded-lg transition-all"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Wholesale
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Retail Pricing */}
+                <TabsContent value="retail" className="mt-4">
+                  <div className="bg-white rounded-xl p-6 shadow-md border-2 border-blue-100">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Single Item Price</p>
+                        <div className="flex items-baseline gap-3">
+                          <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            ₹{basePrice.toLocaleString()}
+                          </div>
+                          {actualPrice !== basePrice && (
+                            <div className="text-xl text-muted-foreground line-through">
+                              ₹{actualPrice.toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {selectedVariant?.discountPercent && selectedVariant.discountPercent > 0 && (
+                        <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full font-bold text-lg shadow-lg">
+                          Save {selectedVariant.discountPercent}%
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      {retailBenefits.map((benefit, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm bg-blue-50 px-3 py-2 rounded-lg">
+                          <benefit.icon className="w-4 h-4 text-blue-600" />
+                          <span className="text-blue-900">{benefit.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 text-sm text-blue-900">
+                        <Info className="w-4 h-4" />
+                        <span className="font-medium">Perfect for personal use or small quantities</span>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Wholesale Pricing */}
+                <TabsContent value="wholesale" className="mt-4">
+                  <div className="bg-white rounded-xl p-6 shadow-md border-2 border-orange-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Package className="text-orange-600 w-6 h-6" />
+                      <h3 className="font-bold text-xl bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                        Bulk Order Pricing
+                      </h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                      {wholesaleTiers.map((tier, idx) => {
+                        const tierPrice = basePrice * (1 - tier.discount / 100);
+                        const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                        
+                        return (
+                          <div 
+                            key={idx}
+                            className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                              isActive 
+                                ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg scale-105' 
+                                : 'border-gray-200 bg-white hover:border-orange-200 hover:shadow-md'
+                            }`}
+                            onClick={() => setQuantity(tier.min)}
+                          >
+                            {isActive && (
+                              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                Active
+                              </div>
+                            )}
+                            <div className="text-xs font-semibold text-orange-600 mb-1">
+                              {tier.label}
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-2">
+                              {tier.min} - {tier.max || '10000+'} pcs
+                            </div>
+                            <div className="text-2xl font-bold text-orange-600 mb-1">
+                              ₹{tierPrice.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-through mb-2">
+                              ₹{basePrice.toFixed(2)}
+                            </div>
+                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                              {tier.discount}% OFF
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {currentTier && (
+                      <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 rounded-xl shadow-lg mb-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm opacity-90 mb-1">Your Price ({quantity} pieces)</p>
+                            <div className="text-3xl font-bold">
+                              ₹{calculateWholesalePrice(basePrice, quantity).toFixed(2)}
+                              <span className="text-sm font-normal ml-2 opacity-90">per piece</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm opacity-90">You Save</p>
+                            <p className="text-2xl font-bold">₹{savings.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {wholesaleBenefits.map((benefit, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm bg-orange-50 px-3 py-2 rounded-lg">
+                          <benefit.icon className="w-4 h-4 text-orange-600" />
+                          <span className="text-orange-900">{benefit.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-orange-900">
+                          <Info className="w-4 h-4" />
+                          <span className="font-medium">Sample available: ₹{(basePrice * 0.85).toFixed(2)}</span>
+                        </div>
+                        <Button size="sm" variant="outline" className="border-orange-300 text-orange-600 hover:bg-orange-50">
+                          Get Sample
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <p className="text-muted-foreground leading-relaxed">
+              {productDescription.split(".")[0] || "No description available."}
+            </p>
+
             {/* Variants */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
               <div>
-                <div className="text-sm font-medium mb-2">Color</div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="text-sm font-semibold mb-3 text-neutral-700">Select Color</div>
+                <div className="flex gap-3 flex-wrap">
                   {product.variants.map((v: Variant) => (
                     <button
                       key={v._id}
                       aria-pressed={selectedVariant?._id === v._id}
                       onClick={() => setSelectedVariant(v)}
                       disabled={!v.isActive}
-                      className={`px-3 py-2 rounded-md border ${
+                      className={`group relative px-4 py-3 rounded-xl border-2 transition-all ${
                         selectedVariant?._id === v._id
-                          ? "ring-2 ring-indigo-500 bg-indigo-50"
-                          : "bg-white"
-                      } text-sm flex items-center gap-2 ${
+                          ? "ring-2 ring-indigo-500 border-indigo-400 bg-indigo-50 shadow-lg scale-105"
+                          : "bg-white border-neutral-200 hover:border-indigo-200 hover:shadow-md"
+                      } text-sm flex items-center gap-3 ${
                         !v.isActive ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
@@ -393,17 +530,24 @@ export default function ProductDetailPage() {
                         <Image
                           src={v.variantsImageUrls[0].url.trim()}
                           alt={getColorFromVariant(v)}
-                          width={36}
-                          height={36}
-                          className="object-cover rounded-sm"
+                          width={40}
+                          height={40}
+                          className="object-cover rounded-lg shadow-sm"
                         />
                       )}
-                      <span>
-                        {getColorFromVariant(v).charAt(0).toUpperCase() +
-                          getColorFromVariant(v).slice(1)}
-                      </span>
-                      {v.stockQuantity <= 0 && (
-                        <span className="text-xs text-red-500">Out</span>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">
+                          {getColorFromVariant(v).charAt(0).toUpperCase() +
+                            getColorFromVariant(v).slice(1)}
+                        </span>
+                        {v.stockQuantity <= 0 && (
+                          <span className="text-xs text-red-500 font-semibold">Out of Stock</span>
+                        )}
+                      </div>
+                      {selectedVariant?._id === v._id && (
+                        <div className="absolute -top-1 -right-1 bg-indigo-500 text-white rounded-full p-1">
+                          <Check className="w-3 h-3" />
+                        </div>
                       )}
                     </button>
                   ))}
@@ -411,132 +555,183 @@ export default function ProductDetailPage() {
               </div>
 
               <div>
-                <div className="text-sm font-medium mb-2">Quantity</div>
-                <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold mb-3 text-neutral-700">Quantity</div>
+                <div className="flex items-center gap-3">
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="w-12 h-12 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+                    onClick={() => setQuantity((q) => Math.max(pricingMode === "wholesale" ? 2 : 1, q - 1))}
                   >
-                    -
+                    <span className="text-xl">-</span>
                   </Button>
                   <Input
                     value={String(quantity)}
-                    onChange={(e) =>
-                      setQuantity(Math.max(1, Number(e.target.value) || 1))
-                    }
-                    className="w-20 text-center"
+                    onChange={(e) => {
+                      const min = pricingMode === "wholesale" ? 2 : 1;
+                      setQuantity(Math.max(min, Number(e.target.value) || min));
+                    }}
+                    className="w-24 text-center text-xl font-bold border-2 rounded-xl"
                   />
                   <Button
                     variant="outline"
                     size="icon"
+                    className="w-12 h-12 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all"
                     onClick={() => setQuantity((q) => q + 1)}
                   >
-                    +
+                    <span className="text-xl">+</span>
                   </Button>
                 </div>
 
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Available:{" "}
-                  {(selectedVariant?.stockQuantity ?? 0) > 0
-                    ? "In stock"
-                    : "Out of stock"}
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  {pricingMode === "wholesale" && (
+                    <Badge variant="outline" className="border-orange-300 text-orange-600">
+                      MOQ: 2 pieces
+                    </Badge>
+                  )}
+                  <Badge className={`${(selectedVariant?.stockQuantity ?? 0) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {(selectedVariant?.stockQuantity ?? 0) > 0 ? "✓ In Stock" : "Out of Stock"}
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <Button
-                className="flex-1 flex items-center justify-center gap-2 py-4"
-                onClick={handleAddToCart}
-                disabled={
-                  !selectedVariant || selectedVariant.stockQuantity <= 0
-                }
-              >
-                <ShoppingCart /> Add to Bag — ₹{subtotal.toLocaleString()}
-              </Button>
-              <Button variant="outline" className="flex-1 py-4">
-                Buy it now
-              </Button>
+            {/* Action Buttons */}
+            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 p-6 rounded-2xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    ₹{subtotal.toLocaleString()}
+                  </p>
+                  {pricingMode === "wholesale" && savings > 0 && (
+                    <p className="text-sm text-green-600 font-semibold">You save ₹{savings.toFixed(2)}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Quantity</p>
+                  <p className="text-2xl font-bold">{quantity} pcs</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                  onClick={handleAddToCart}
+                  disabled={
+                    !selectedVariant || 
+                    selectedVariant.stockQuantity <= 0 ||
+                    (pricingMode === "wholesale" && quantity < 2)
+                  }
+                >
+                  <ShoppingCart className="mr-2" /> Add to Bag
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-14 text-lg font-semibold border-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+                >
+                  {pricingMode === "wholesale" ? "Request Quote" : "Buy Now"}
+                  <ChevronRight className="ml-2" />
+                </Button>
+              </div>
             </div>
 
-            <div className="flex gap-6 mt-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Truck /> <span>Free shipping over ₹75</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                <Truck className="text-green-600 w-6 h-6 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-900">Free Shipping</p>
+                  <p className="text-xs text-green-700">On orders over ₹75</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <RefreshCw /> <span>30 days return</span>
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <RefreshCw className="text-blue-600 w-6 h-6 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Easy Returns</p>
+                  <p className="text-xs text-blue-700">30-day return policy</p>
+                </div>
               </div>
             </div>
 
             <Separator />
 
-            {/* Always-visible content sections */}
+            {/* Product Details Sections */}
             <div className="space-y-8 mt-6">
-              {/* Details */}
-              <section>
-                <h2 className="text-xl font-bold mb-3">Product Details</h2>
-                <div className="prose max-w-none">
+              <section className="bg-white rounded-xl p-6 shadow-md border">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Info className="text-indigo-600" />
+                  Product Details
+                </h2>
+                <div className="prose max-w-none text-muted-foreground leading-relaxed">
                   <p>{productDescription}</p>
                 </div>
               </section>
 
-              {/* Specifications */}
-              <section>
-                <h2 className="text-xl font-bold mb-3">Specifications</h2>
-                <div className="grid grid-cols-2 gap-3 max-w-md">
+              <section className="bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl p-6 shadow-md border">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Award className="text-indigo-600" />
+                  Specifications
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {Object.entries(specs).map(([k, v]) => (
-                    <div key={k} className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">{k}</span>
-                      <span className="text-sm font-medium">{v}</span>
+                    <div key={k} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                      <span className="text-sm font-medium text-neutral-600">{k}</span>
+                      <span className="text-sm font-bold text-neutral-900">{v}</span>
                     </div>
                   ))}
                 </div>
               </section>
 
-              {/* Reviews */}
-              <section>
-                <h2 className="text-xl font-bold mb-3">
-                  Customer Reviews (213)
-                </h2>
+              <section className="bg-white rounded-xl p-6 shadow-md border">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Star className="text-amber-500 fill-amber-500" />
+                    Customer Reviews
+                  </h2>
+                  <Badge className="bg-amber-100 text-amber-800 text-lg px-3 py-1">
+                    4.6 ★ (213)
+                  </Badge>
+                </div>
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-semibold">Customer {i}</div>
-                          <div className="text-sm text-muted-foreground">
-                            2 days ago
+                    <div key={i} className="p-4 border-2 rounded-xl hover:shadow-md transition-shadow bg-gradient-to-br from-white to-neutral-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold">
+                            C{i}
+                          </div>
+                          <div>
+                            <div className="font-semibold">Customer {i}</div>
+                            <div className="text-xs text-muted-foreground">2 days ago</div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="text-amber-400" />{" "}
-                          <span className="font-medium">4.{i}</span>
+                        <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full">
+                          <Star className="text-amber-400 fill-amber-400 w-4 h-4" />
+                          <span className="font-bold text-amber-900">4.{i}</span>
                         </div>
                       </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Great product! Highly recommended.
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Great product! Highly recommended. The quality exceeded my expectations and delivery was fast.
                       </p>
                     </div>
                   ))}
-                  <Button variant="ghost">Write a review</Button>
+                  <Button variant="outline" className="w-full h-12 border-2 hover:bg-indigo-50 hover:border-indigo-300 font-semibold">
+                    Write a Review
+                  </Button>
                 </div>
               </section>
 
-              {/* FAQs */}
               {product.faqs && product.faqs.length > 0 && (
-                <section>
-                  <h2 className="text-xl font-bold mb-3">
-                    Frequently Asked Questions
-                  </h2>
+                <section className="bg-white rounded-xl p-6 shadow-md border">
+                  <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
                   <Accordion type="multiple" className="w-full">
                     {product.faqs.map((faq: FAQ, index: number) => (
-                      <AccordionItem key={index} value={`faq-${index}`}>
-                        <AccordionTrigger className="text-left">
+                      <AccordionItem key={index} value={`faq-${index}`} className="border-b-2">
+                        <AccordionTrigger className="text-left font-semibold hover:text-indigo-600 transition-colors">
                           {faq.question}
                         </AccordionTrigger>
                         <AccordionContent>
-                          <p className="text-muted-foreground">{faq.answer}</p>
+                          <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -547,36 +742,51 @@ export default function ProductDetailPage() {
 
             <Separator />
 
-            {/* Additional Accordions */}
-            <div className="mt-4">
+            <div className="bg-white rounded-xl shadow-md border overflow-hidden">
               <Accordion type="single" collapsible>
-                <AccordionItem value="shipping">
-                  <AccordionTrigger>Shipping & Delivery</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground">
-                      Standard shipping 3-7 business days. Expedited options
-                      available at checkout.
+                <AccordionItem value="shipping" className="border-b-2">
+                  <AccordionTrigger className="px-6 py-4 hover:bg-neutral-50 font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Truck className="text-indigo-600" />
+                      Shipping & Delivery
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {pricingMode === "wholesale" 
+                        ? "Bulk orders ship within 5-10 business days. Contact us for expedited shipping options and custom delivery arrangements."
+                        : "Standard shipping 3-7 business days. Expedited options available at checkout. Free shipping on orders over ₹75."}
                     </p>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="returns">
-                  <AccordionTrigger>Returns & Warranty</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground">
-                      30-day returns. 1-year limited warranty on manufacturing
-                      defects.
+                <AccordionItem value="returns" className="border-b-2">
+                  <AccordionTrigger className="px-6 py-4 hover:bg-neutral-50 font-semibold">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="text-indigo-600" />
+                      Returns & Warranty
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      30-day hassle-free returns. 1-year limited warranty on manufacturing defects. Full refund or replacement guaranteed.
                     </p>
                   </AccordionContent>
                 </AccordionItem>
                 {product.vendor?._id && (
                   <AccordionItem value="seller_details">
-                    <AccordionTrigger>Seller Details</AccordionTrigger>
-                    <AccordionContent>
+                    <AccordionTrigger className="px-6 py-4 hover:bg-neutral-50 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <Package className="text-indigo-600" />
+                        Seller Details
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
                       <Link
                         href={`/vendor/catalog/${product.vendor._id}`}
-                        className="text-sm text-muted-foreground hover:underline"
+                        className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold hover:underline flex items-center gap-1"
                       >
                         {product.vendor.name || "N/A"}
+                        <ChevronRight className="w-4 h-4" />
                       </Link>
                     </AccordionContent>
                   </AccordionItem>
@@ -588,14 +798,29 @@ export default function ProductDetailPage() {
 
         <MightInterested />
 
-        <div className="fixed left-0 right-0 bottom-4 md:hidden px-4">
-          <div className="max-w-3xl mx-auto bg-white/95 backdrop-blur rounded-full p-2 flex gap-3 items-center shadow-lg">
-            <div className="flex-1 text-sm font-medium">
-              {product.productName} • ₹{subtotal.toLocaleString()}
+        {/* Mobile Floating Bar */}
+        <div className="fixed left-0 right-0 bottom-0 md:hidden z-50">
+          <div className="bg-white/95 backdrop-blur-xl border-t-2 border-indigo-200 shadow-2xl p-4">
+            <div className="flex gap-3 items-center max-w-3xl mx-auto">
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  ₹{subtotal.toLocaleString()}
+                </p>
+              </div>
+              <Button 
+                onClick={handleAddToCart}
+                className="flex-1 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg"
+                disabled={
+                  !selectedVariant || 
+                  selectedVariant.stockQuantity <= 0 ||
+                  (pricingMode === "wholesale" && quantity < 2)
+                }
+              >
+                <ShoppingCart className="mr-2 w-5 h-5" />
+                Add to Bag
+              </Button>
             </div>
-            <Button onClick={handleAddToCart} className="py-3">
-              Add to bag
-            </Button>
           </div>
         </div>
       </div>
