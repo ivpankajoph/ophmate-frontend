@@ -64,7 +64,7 @@ export default function VendorRegistrationPage() {
 
   const handleOtpKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
+    index: number,
   ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus();
@@ -93,10 +93,9 @@ export default function VendorRegistrationPage() {
     try {
       await dispatch(sendOtp(phone));
 
-      sessionStorage.setItem("vendor_phone", phone)
+      sessionStorage.setItem("vendor_phone", phone);
 
       Swal.fire("Success", "OTP sent successfully", "success");
-
     } catch (err) {
       console.log(err, "error");
       Swal.fire("Error", "Something went wrong", "error");
@@ -132,7 +131,7 @@ export default function VendorRegistrationPage() {
     try {
       await dispatch(verifyOtp({ phone, otp: otpString })).unwrap();
       Swal.fire("Success", "OTP verified successfully", "success");
-      
+
       router.push("/vendor/registration/personal-details");
     } catch (error) {
       console.error("Error verifying OTP:", error);
@@ -141,7 +140,7 @@ export default function VendorRegistrationPage() {
   };
 
   const isOtpComplete = otp.join("").length === 6;
-  const temp_otp = sessionStorage.getItem("vendor_otp")
+  const temp_otp = sessionStorage.getItem("vendor_otp");
   return (
     <>
       <PromotionalBanner />
@@ -295,8 +294,8 @@ export default function VendorRegistrationPage() {
           <h3 className="text-3xl font-bold">Why Join Us?</h3>
           <p className="text-muted-foreground text-lg">
             We help vendors reach customers across India with zero setup hassle.
-            Our platform offers advanced analytics, easy payment settlements, and
-            a powerful dashboard to track growth.
+            Our platform offers advanced analytics, easy payment settlements,
+            and a powerful dashboard to track growth.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mt-10">

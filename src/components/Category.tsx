@@ -68,7 +68,6 @@ const CategoryCard = ({ category }: { category: Category }) => (
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchCategories()
       .then(setCategories)

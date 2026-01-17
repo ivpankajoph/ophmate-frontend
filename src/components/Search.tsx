@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Image,
@@ -42,7 +42,20 @@ export default function EcommerceSearchUI() {
   const [searchQuery, setSearchQuery] = useState("");
   const [aiSearchEnabled, setAiSearchEnabled] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
+    null
+  );
+  const [hoveredCategoryKey, setHoveredCategoryKey] = useState<string | null>(
+    null
+  );
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const [dropdownAnchor, setDropdownAnchor] = useState<HTMLElement | null>(
+    null
+  );
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(true);
   const [isScrolling, setIsScrolling] = useState(true);
 
@@ -82,11 +95,58 @@ export default function EcommerceSearchUI() {
     });
   };
 
+  const updateDropdownPosition = (target: HTMLElement | null) => {
+    if (!target) {
+      return;
+    }
+    const rect = target.getBoundingClientRect();
+    setDropdownPosition({
+      left: rect.left,
+      top: rect.bottom + 8,
+    });
+  };
+
+  const clearHideTimeout = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleDropdownHide = () => {
+    clearHideTimeout();
+    hideTimeoutRef.current = setTimeout(() => {
+      setHoveredCategoryId(null);
+      setHoveredCategoryKey(null);
+      setDropdownPosition(null);
+      setDropdownAnchor(null);
+    }, 120);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
     }
   };
+
+  useEffect(() => {
+    if (!dropdownAnchor) {
+      return;
+    }
+
+    const handlePositionUpdate = () => {
+      updateDropdownPosition(dropdownAnchor);
+    };
+
+    handlePositionUpdate();
+    window.addEventListener("scroll", handlePositionUpdate, true);
+    window.addEventListener("resize", handlePositionUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", handlePositionUpdate, true);
+      window.removeEventListener("resize", handlePositionUpdate);
+    };
+  }, [dropdownAnchor]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
@@ -126,7 +186,7 @@ export default function EcommerceSearchUI() {
                 onMouseLeave={() => setIsScrolling(true)}
               >
                 <div
-                  className="overflow-x-auto scrollbar-visible pb-4"
+                  className="overflow-x-auto overflow-y-visible scrollbar-visible pb-4"
                   id="categories-scroll"
                 >
                   <div
@@ -135,51 +195,72 @@ export default function EcommerceSearchUI() {
                     }`}
                   >
                     {[...categories, ...categories, ...categories].map(
-                      (category, index) => (
-                        <div
-                          key={`${category._id}-${index}`}
-                          className="flex-shrink-0 relative"
-                          onMouseEnter={() => setHoveredCategory(category._id)}
-                          onMouseLeave={() => setHoveredCategory(null)}
-                        >
-                          <button
-                            onClick={() => handleCategoryClick(category._id)}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all min-w-[140px] ${
-                              hoveredCategory === category._id
-                                ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-xl scale-105"
-                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                            }`}
+                      (category, index) => {
+                        const categoryKey = `${category._id}-${index}`;
+
+                        return (
+                          <div
+                            key={categoryKey}
+                            className="flex-shrink-0 relative"
+                            onMouseEnter={(event) => {
+                              clearHideTimeout();
+                              setHoveredCategoryId(category._id);
+                              setHoveredCategoryKey(categoryKey);
+                              setDropdownAnchor(event.currentTarget);
+                            }}
+                            onMouseLeave={() => {
+                              scheduleDropdownHide();
+                            }}
                           >
-                            <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow-md">
-                              <img
-                                src={category.image_url || "/placeholder.png"}
-                                alt={category.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <span className="font-semibold text-sm text-center">
-                              {category.name}
-                            </span>
-                          </button>
-                        </div>
-                      )
+                            <button
+                              onClick={() => handleCategoryClick(category._id)}
+                              className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all min-w-[140px] ${
+                                hoveredCategoryKey === categoryKey
+                                  ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-xl scale-105"
+                                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                              }`}
+                            >
+                              <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow-md">
+                                <img
+                                  src={
+                                    category.image_url || "/placeholder.png"
+                                  }
+                                  alt={category.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <span className="font-semibold text-sm text-center">
+                                {category.name}
+                              </span>
+                            </button>
+
+                          </div>
+                        );
+                      }
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Subcategories Dropdown - Appears below category bar */}
-              {hoveredCategory && (
+              {hoveredCategoryId && hoveredCategoryKey && dropdownPosition && (
                 <div
-                  className="absolute left-0 right-0 top-full -mt-12 bg-white rounded-xl shadow-2xl border-2 border-orange-300 z-[100] animate-fadeIn mx-6"
-                  onMouseEnter={() => setHoveredCategory(hoveredCategory)}
-                  onMouseLeave={() => setHoveredCategory(null)}
+                  className="fixed z-[200] w-80 bg-white rounded-xl shadow-2xl border-2 border-orange-300 animate-fadeIn"
+                  style={{
+                    left: dropdownPosition.left,
+                    top: dropdownPosition.top,
+                  }}
+                  onMouseEnter={() => {
+                    clearHideTimeout();
+                  }}
+                  onMouseLeave={() => {
+                    scheduleDropdownHide();
+                  }}
                 >
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                  <div className="p-4">
+                    <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center justify-between">
                       <span>
                         {
-                          categories.find((c) => c._id === hoveredCategory)
+                          categories.find((c) => c._id === hoveredCategoryId)
                             ?.name
                         }{" "}
                         - Subcategories
@@ -188,9 +269,9 @@ export default function EcommerceSearchUI() {
                     </h3>
 
                     <div className="max-h-80 overflow-y-auto scrollbar-thin">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      <div className="flex flex-col gap-2">
                         {categories
-                          .find((c) => c._id === hoveredCategory)
+                          .find((c) => c._id === hoveredCategoryId)
                           ?.subcategories?.map((sub) => (
                             <button
                               key={sub._id}
@@ -198,10 +279,10 @@ export default function EcommerceSearchUI() {
                                 e.stopPropagation();
                                 handleSubcategoryClick(sub._id);
                               }}
-                              className="flex flex-col items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-orange-100 hover:shadow-md transition-all group"
+                              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-100 hover:shadow-md transition-all group text-left"
                             >
                               {sub.image_url && (
-                                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                                   <img
                                     src={sub.image_url}
                                     alt={sub.name}
@@ -209,12 +290,12 @@ export default function EcommerceSearchUI() {
                                   />
                                 </div>
                               )}
-                              <div className="text-center">
+                              <div>
                                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 block">
                                   {sub.name}
                                 </span>
                                 {sub.description && (
-                                  <span className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                  <span className="text-xs text-gray-500 line-clamp-2 mt-1 block">
                                     {sub.description}
                                   </span>
                                 )}
