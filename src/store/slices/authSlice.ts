@@ -27,7 +27,8 @@ export const sendOtp = createAsyncThunk<
   { rejectValue: string }
 >('auth/sendOtp', async (phone, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${BASE_URL}/vendor/send-otp`, { phone })
+    const goodPhone = `91${phone}`
+    const response = await axios.post(`${BASE_URL}/vendor/send-otp`, { goodPhone })
     console.log("sdadas",response,response.data)
     sessionStorage.setItem("vendor_otp",response.data.otp)
     return response.data

@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const { product, loading, error } = useSelector(
-    (state: any) => state.product
+    (state: any) => state.product,
   );
 
   const [selectedImage, setSelectedImage] = useState<string>("");
@@ -146,7 +146,7 @@ export default function ProductDetailPage() {
 
   const onThumbKey = (
     e: React.KeyboardEvent<HTMLButtonElement>,
-    img: string
+    img: string,
   ) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -158,8 +158,8 @@ export default function ProductDetailPage() {
     if (!selectedVariant || !product) return;
     alert(
       `Added ${quantity} × ${product.productName} (${getColorFromVariant(
-        selectedVariant
-      )}) to cart — ₹${subtotal.toFixed(2)}`
+        selectedVariant,
+      )}) to cart — ₹${subtotal.toFixed(2)}`,
     );
   };
 
@@ -197,9 +197,9 @@ export default function ProductDetailPage() {
   const allImageUrls = Array.from(
     new Set(
       product.variants.flatMap((v: Variant) =>
-        v.variantsImageUrls.map((img) => img.url.trim())
-      )
-    )
+        v.variantsImageUrls.map((img) => img.url.trim()),
+      ),
+    ),
   ).filter(Boolean);
 
   const productDescription =
@@ -588,7 +588,6 @@ export default function ProductDetailPage() {
 
         <MightInterested />
 
-        {/* Sticky mobile CTA */}
         <div className="fixed left-0 right-0 bottom-4 md:hidden px-4">
           <div className="max-w-3xl mx-auto bg-white/95 backdrop-blur rounded-full p-2 flex gap-3 items-center shadow-lg">
             <div className="flex-1 text-sm font-medium">

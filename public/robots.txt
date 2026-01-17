@@ -1,0 +1,14 @@
+# *
+User-agent: *
+Allow: /
+
+# *
+User-agent: *
+Disallow: /admin
+Disallow: /vendor
+
+# Host
+Host: https://ophmate-frontend.vercel.app
+
+# Sitemaps
+Sitemap: https://ophmate-frontend.vercel.app/sitemap.xml

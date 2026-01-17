@@ -227,7 +227,6 @@ export default function VendorRegistrationPage() {
                     >
                       Edit number
                     </Button>
-                    <p>Your Temporary otp is : {temp_otp}</p>
                   </div>
 
                   {/* OTP Boxes */}
