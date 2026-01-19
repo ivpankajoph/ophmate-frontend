@@ -1,55 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, X, Plus, Minus } from "lucide-react"
-
-interface CartItem {
-  id: string
-  name: string
-  image: string
-  price: number
-  quantity: number
-  color?: string
-  size?: string
-}
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "@/store"
+import { fetchCart, removeCartItem, updateCartItem } from "@/store/slices/customerCartSlice"
+import Link from "next/link"
+import { toastError, toastSuccess } from "@/lib/toast"
 
 export default function CartDrawer() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Acme Drawstring Bag",
-      image: "/bag.png", // Replace with your actual image
-      price: 6,
-      quantity: 1,
-      color: "White",
-      size: "6 x 8 inch",
-    },
-  ])
+  const dispatch = useDispatch<AppDispatch>()
+  const cart = useSelector((state: RootState) => state.customerCart.cart)
+  const loading = useSelector((state: RootState) => state.customerCart.loading)
+  const token = useSelector((state: RootState) => state.customerAuth.token)
 
-  const updateQuantity = (id: string, amount: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(1, item.quantity + amount) }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    )
+  const cartItems = cart?.items || []
+
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchCart())
+    }
+  }, [dispatch, token])
+
+  const updateQuantity = async (id: string, amount: number, current: number) => {
+    const nextQty = Math.max(1, current + amount)
+    try {
+      await dispatch(updateCartItem({ itemId: id, quantity: nextQty })).unwrap()
+      toastSuccess("Cart updated")
+    } catch (error: any) {
+      toastError(error || "Failed to update cart")
+    }
   }
 
-  const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id))
+  const removeItem = async (id: string) => {
+    try {
+      await dispatch(removeCartItem({ itemId: id })).unwrap()
+      toastSuccess("Item removed")
+    } catch (error: any) {
+      toastError(error || "Failed to remove item")
+    }
   }
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  )
+  const subtotal = cart?.subtotal || 0
 
   return (
     <Sheet>
@@ -75,21 +71,28 @@ export default function CartDrawer() {
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-          {cartItems.length === 0 ? (
+          {!token ? (
+            <div className="text-center text-muted-foreground mt-10">
+              <p className="mb-4">Please login to view your cart.</p>
+              <Button asChild>
+                <Link href="/login">Go to Login</Link>
+              </Button>
+            </div>
+          ) : cartItems.length === 0 ? (
             <p className="text-center text-muted-foreground mt-10">
-              Your cart is empty 🛒
+              {loading ? "Loading cart..." : "Your cart is empty 🛒"}
             </p>
           ) : (
-            cartItems.map((item) => (
+            cartItems.map((item: any) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="flex items-center gap-4 border rounded-lg p-3 hover:bg-muted/30 transition-colors"
               >
                 {/* Image */}
                 <div className="relative h-16 w-16 flex-shrink-0">
                   <Image
-                    src={item.image}
-                    alt={item.name}
+                    src={item.image_url || "/placeholder.png"}
+                    alt={item.product_name}
                     fill
                     className="object-cover rounded-md"
                   />
@@ -99,14 +102,14 @@ export default function CartDrawer() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium text-sm line-clamp-1">
-                      {item.name}
+                      {item.product_name}
                     </h4>
-                    <button onClick={() => removeItem(item.id)}>
+                    <button onClick={() => removeItem(item._id)}>
                       <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {item.color} / {item.size}
+                    {Object.values(item.variant_attributes || {}).join(" / ")}
                   </p>
 
                   {/* Quantity + Price */}
@@ -115,7 +118,7 @@ export default function CartDrawer() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => updateQuantity(item._id, -1, item.quantity)}
                         className="h-6 w-6"
                       >
                         <Minus className="h-3 w-3" />
@@ -124,14 +127,14 @@ export default function CartDrawer() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => updateQuantity(item._id, 1, item.quantity)}
                         className="h-6 w-6"
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                     <span className="text-sm font-medium whitespace-nowrap">
-                      ${(item.price * item.quantity).toFixed(2)} USD
+                      ₹{(item.total_price || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -153,11 +156,15 @@ export default function CartDrawer() {
           <Separator />
           <div className="flex justify-between font-semibold text-base">
             <span>Total</span>
-            <span>${subtotal.toFixed(2)} USD</span>
+            <span>₹{subtotal.toFixed(2)}</span>
           </div>
 
-          <Button className="mt-4 w-full py-6 text-base font-semibold rounded-full">
-            Proceed to Checkout
+          <Button
+            className="mt-4 w-full py-6 text-base font-semibold rounded-full"
+            asChild
+            disabled={!token || cartItems.length === 0}
+          >
+            <Link href="/checkout">Proceed to Checkout</Link>
           </Button>
         </div>
       </SheetContent>

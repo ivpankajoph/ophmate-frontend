@@ -6,6 +6,10 @@ import vendorReducer from './slices/vendorSlice'
 import productReducer from './slices/productSlice'
 import alltemplateReducer from './slices/alltemplateslice'
 import vendorprofileReducer from './slices/vendorProfileSlice'
+import customerAuthReducer from "./slices/customerAuthSlice"
+import customerCartReducer from "./slices/customerCartSlice"
+import customerAddressReducer from "./slices/customerAddressSlice"
+import customerOrderReducer from "./slices/customerOrderSlice"
 
 const rootReducer = combineReducers({
   banner: bannerReducer,
@@ -14,7 +18,11 @@ const rootReducer = combineReducers({
   vendor:vendorReducer,
   product:productReducer,
   alltemplatepage:alltemplateReducer,
-  vendorprofilepage:vendorprofileReducer
+  vendorprofilepage:vendorprofileReducer,
+  customerAuth: customerAuthReducer,
+  customerCart: customerCartReducer,
+  customerAddress: customerAddressReducer,
+  customerOrder: customerOrderReducer
 })
 
 export type RootState = ReturnType<typeof rootReducer>

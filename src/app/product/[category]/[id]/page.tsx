@@ -30,9 +30,11 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store";
-import { useParams } from "next/navigation";
+import { AppDispatch, RootState } from "@/store";
+import { useParams, useRouter } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
+import { addCartItem } from "@/store/slices/customerCartSlice";
+import { toastError, toastSuccess } from "@/lib/toast";
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
@@ -68,6 +70,8 @@ const wholesaleBenefits = [
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const token = useSelector((state: RootState) => state.customerAuth.token);
   const { product, loading, error } = useSelector(
     (state: any) => state.product,
   );
@@ -176,13 +180,24 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedVariant || !product) return;
-    alert(
-      `Added ${quantity} × ${product.productName} (${getColorFromVariant(
-        selectedVariant,
-      )}) to cart — ₹${subtotal.toFixed(2)}`,
-    );
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    try {
+      await dispatch(
+        addCartItem({
+          product_id: product._id,
+          variant_id: selectedVariant._id,
+          quantity,
+        }),
+      ).unwrap();
+      toastSuccess("Added to cart");
+    } catch (error: any) {
+      toastError(error || "Failed to add to cart");
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

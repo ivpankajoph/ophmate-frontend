@@ -15,10 +15,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
 import CartDrawer from "../cart/CartDrawer"
 import Image from "next/image"
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "@/store"
+import { logoutCustomer } from "@/store/slices/customerAuthSlice"
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
   const [search, setSearch] = useState("")
+  const dispatch = useDispatch<AppDispatch>()
+  const token = useSelector((state: RootState) => state.customerAuth.token)
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -92,16 +97,25 @@ export default function Navbar() {
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/profile">Profile</Link>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href="/profile">Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/orders">My Orders</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/cart">View Cart</Link>
+            </DropdownMenuItem>
+            {token ? (
+              <DropdownMenuItem onClick={() => dispatch(logoutCustomer())}>
+                Logout
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/orders">My Orders</Link>
-              </DropdownMenuItem>
+            ) : (
               <DropdownMenuItem asChild>
                 <Link href="/login">Sign In</Link>
               </DropdownMenuItem>
+            )}
           
 
             </DropdownMenuContent>
