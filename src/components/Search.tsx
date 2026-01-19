@@ -67,7 +67,7 @@ export default function EcommerceSearchUI() {
     try {
       setLoading(true);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/get-category`
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/getall`
       );
       const result: ApiResponse = await response.json();
       if (result.success) {
@@ -152,7 +152,7 @@ export default function EcommerceSearchUI() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header Navigation */}
-        <nav className="flex items-center justify-center gap-8 mb-8">
+        {/* <nav className="flex items-center justify-center gap-8 mb-8">
           <button className="flex items-center gap-2 px-6 py-3 text-gray-700 hover:text-orange-600 transition-colors font-medium">
             <Sparkles className="w-5 h-5" />
             AI Mode
@@ -166,7 +166,7 @@ export default function EcommerceSearchUI() {
           <button className="px-6 py-3 text-gray-700 hover:text-orange-600 transition-colors font-medium">
             Worldwide
           </button>
-        </nav>
+        </nav> */}
 
         {/* Categories Horizontal Scrollable Bar */}
         <div className="mb-32 bg-white rounded-2xl shadow-lg p-6 relative">
@@ -447,7 +447,7 @@ export default function EcommerceSearchUI() {
           }
         }
         .animate-scroll-seamless {
-          animation: scroll-seamless 40s linear infinite;
+          animation: scroll-seamless 100s linear infinite;
           width: max-content;
         }
       `}</style>

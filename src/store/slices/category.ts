@@ -21,7 +21,7 @@ export const getAllCategories = createAsyncThunk(
   'categories/getAll',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${BASE_URL}/categories/get-category`, {})
+      const res = await axios.get(`${BASE_URL}/categories/getall`, {})
       return res.data.data 
     } catch (err: any) {
       return rejectWithValue(

@@ -18,7 +18,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const fetchCategories = async (): Promise<Category[]> => {
   try {
-    const res = await fetch(`${API_BASE_URL}/categories/get-category`);
+    const res = await fetch(`${API_BASE_URL}/categories/getall`);
     const data = await res.json();
     return data.success ? data.data : [];
   } catch (error) {
