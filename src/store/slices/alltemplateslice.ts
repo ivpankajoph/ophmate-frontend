@@ -5,12 +5,14 @@ import axios from "axios";
 
 interface TemplateState {
   data: any | null;
+  products: any[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: TemplateState = {
   data: null,
+  products: [],
   loading: false,
   error: null,
 };
@@ -21,10 +23,17 @@ export const fetchAlltemplatepageTemplate = createAsyncThunk(
   "template/fetchAlltemplatepageTemplate",
   async (vendor_id: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/templates/template-all?vendor_id=${vendor_id}`
-      );
-      return response.data;
+      try {
+        const response = await axios.get(
+          `${BASE_URL}/templates/${vendor_id}/preview`
+        );
+        return response.data;
+      } catch {
+        const response = await axios.get(
+          `${BASE_URL}/templates/template-all?vendor_id=${vendor_id}`
+        );
+        return response.data;
+      }
     } catch (error: any) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -37,6 +46,7 @@ const templateSlice = createSlice({
   reducers: {
     clearTemplate: (state) => {
       state.data = null;
+      state.products = [];
       state.loading = false;
       state.error = null;
     },
@@ -51,11 +61,20 @@ const templateSlice = createSlice({
         fetchAlltemplatepageTemplate.fulfilled,
         (state, action: PayloadAction<any>) => {
           state.loading = false;
-          if (action.payload?.data) {
-            state.data = action.payload.data;
+          const payload = action.payload;
+          const template =
+            payload?.data?.template || payload?.data || payload?.template || null;
+          const products = Array.isArray(payload?.data?.products)
+            ? payload.data.products
+            : [];
+          if (template) {
+            state.data = template;
+            state.products = products;
+            state.error = null;
           } else {
             state.data = null;
-            state.error = action.payload?.message || "Template not found";
+            state.products = [];
+            state.error = payload?.message || "Template not found";
           }
         }
       )
@@ -65,6 +84,7 @@ const templateSlice = createSlice({
         (state, action: PayloadAction<any>) => {
           state.loading = false;
           state.data = null;
+          state.products = [];
           state.error = action.payload;
         }
       );

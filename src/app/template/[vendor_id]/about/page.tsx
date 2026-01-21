@@ -1,7 +1,7 @@
 "use client";
 
-import { JSX, useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { JSX } from "react";
+import { useSelector } from "react-redux";
 
 import { Leaf, Users, Award, Heart } from "lucide-react";
 
@@ -49,7 +49,7 @@ export default function AboutPage() {
         <div
           className="relative h-96 bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${aboutpage.hero?.backgroundImage}')`,
+            backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('${aboutpage.hero?.backgroundImage}')`,
           }}
         >
           <div className="absolute inset-0 flex items-center justify-center text-center text-white">
@@ -98,7 +98,7 @@ export default function AboutPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {values.map((value: any, index: number) => (
                   <div key={index} className="text-center">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center template-accent-soft template-accent">
                       {iconMap[value.icon] || <Leaf size={40} />}
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -133,7 +133,7 @@ export default function AboutPage() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       {member.name}
                     </h3>
-                    <p className="text-green-600 font-medium">{member.role}</p>
+                    <p className="font-medium template-accent">{member.role}</p>
                   </div>
                 ))}
               </div>
@@ -142,7 +142,7 @@ export default function AboutPage() {
 
           {/* Stats Section */}
           {stats?.length > 0 && (
-            <div className="mt-20 bg-gradient-to-br from-green-50 to-yellow-50 rounded-2xl p-12">
+            <div className="mt-20 rounded-2xl p-12 template-accent-gradient">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 {stats.map((item: any, i: number) => (
                   <div key={i}>
@@ -160,7 +160,7 @@ export default function AboutPage() {
         {/* Scroll to Top Button */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-8 right-8 bg-green-500 hover:bg-green-600 text-white w-12 h-12 rounded-md shadow-lg flex items-center justify-center transition-all transform hover:scale-105 z-50"
+          className="fixed bottom-8 right-8 text-white w-12 h-12 rounded-md shadow-lg flex items-center justify-center transition-all transform hover:scale-105 z-50 template-accent-bg template-accent-bg-hover"
         >
           <svg
             className="w-6 h-6"

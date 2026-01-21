@@ -1,18 +1,73 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import dynamic from "next/dynamic";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
 import { useSelector } from "react-redux";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 
 const DynamicMap = dynamic(() => import("@/app/template/components/MapComponent"), { ssr: false });
 
 export default function ContactPage() {
   const contactData = useSelector((state: any) => state?.vendorprofilepage?.vendor);
+  const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
   const templateData = useSelector(
     (state: any) => state?.alltemplatepage?.data?.components?.contact_page
   );
+  const params = useParams();
+  const vendor_id = params.vendor_id as string;
+
+  const categories = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; label: string; count: number }
+    >();
+    const normalizeLabel = (value: unknown) =>
+      typeof value === "string" ? value.trim() : "";
+    const normalizeId = (value: unknown) =>
+      typeof value === "string" ? value.trim() : "";
+
+    products.forEach((product: any) => {
+      const rawCategory =
+        product?.productCategory?._id ||
+        product?.productCategory ||
+        product?.productCategoryName ||
+        product?.productCategory?.name ||
+        product?.productCategory?.title ||
+        product?.productCategory?.categoryName;
+
+      const label =
+        normalizeLabel(product?.productCategoryName) ||
+        normalizeLabel(product?.productCategory?.name) ||
+        normalizeLabel(product?.productCategory?.title) ||
+        normalizeLabel(product?.productCategory?.categoryName) ||
+        normalizeLabel(product?.productCategory);
+
+      const id = normalizeId(rawCategory) || label;
+      if (!id) return;
+
+      const existing = map.get(id);
+      if (existing) {
+        existing.count += 1;
+        if (!existing.label && label) existing.label = label;
+      } else {
+        map.set(id, {
+          id,
+          label: label || "Category",
+          count: 1,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [products]);
+
+  const toCategorySlug = (value: string) =>
+    encodeURIComponent(value.toLowerCase().replace(/\s+/g, "-"));
 
     if (!contactData) {
       return <><h1>work in progress</h1></>;
@@ -39,12 +94,50 @@ export default function ContactPage() {
 
 
       <div className="min-h-screen bg-white">
+        <div className="group fixed right-6 top-1/2 z-50 -translate-y-1/2">
+          <button className="rounded-full bg-white px-5 py-3 text-sm font-semibold shadow-lg transition hover:shadow-xl template-accent">
+            Browse Categories
+          </button>
+          <div className="pointer-events-none absolute right-full top-1/2 mr-4 w-64 -translate-y-1/2 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+            <div className="max-h-80 overflow-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+              <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Browse
+              </p>
+              <div className="flex flex-col gap-2">
+                {categories.length > 0 ? (
+                  categories.map((category) => {
+                    const isObjectId = /^[a-f\d]{24}$/i.test(category.id);
+                    const categoryPath = isObjectId
+                      ? category.id
+                      : toCategorySlug(category.label);
+                    return (
+                      <Link
+                        key={category.id}
+                        href={`/template/${vendor_id}/category/${categoryPath}`}
+                        className="flex items-center justify-between rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition hover:border-slate-200 hover:bg-slate-50"
+                      >
+                        <span className="truncate">{category.label}</span>
+                        <span className="text-xs text-slate-400">
+                          {category.count}
+                        </span>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    No categories
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Hero */}
         <div
           className="relative h-96 bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),
+            backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)),
              url('${templateData?.hero?.backgroundImage}')`,
           }}
         >
@@ -99,7 +192,7 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg"
+                className="w-full text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg template-accent-bg template-accent-bg-hover"
               >
                 <Send size={20} /> Send Message
               </button>
@@ -119,7 +212,7 @@ function InfoCard({ Icon, title, details }: any) {
   return (
     <div className="bg-gray-50 rounded-lg p-6 text-center shadow-md">
       <div className="w-14 h-14 mx-auto mb-3 bg-white rounded-full flex justify-center items-center shadow">
-        <Icon size={22} className="text-green-600" />
+        <Icon size={22} className="template-accent" />
       </div>
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="text-gray-700">{details}</p>

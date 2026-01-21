@@ -60,7 +60,7 @@ export default function Footer() {
                 <a
                   key={i}
                   href="#"
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 template-accent-soft template-accent"
                 >
                   <Icon size={20} />
                 </a>
@@ -84,7 +84,7 @@ export default function Footer() {
                 <li key={item.name}>
                   <Link
                     href={item.path}
-                    className="opacity-75 hover:opacity-100 transition"
+                    className="opacity-75 hover:opacity-100 transition template-accent-hover"
                   >
                     {item.name}
                   </Link>
@@ -170,9 +170,9 @@ export default function Footer() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 md:w-80 px-4 py-3 rounded-md border focus:outline-none focus:ring transition-all"
+              className="flex-1 md:w-80 px-4 py-3 rounded-md border transition-all template-focus-accent"
             />
-            <button className="px-5 py-3 rounded-md font-semibold transition-all">
+            <button className="px-5 py-3 rounded-md font-semibold text-white transition-all template-accent-bg template-accent-bg-hover">
               Subscribe
             </button>
           </div>
@@ -193,7 +193,7 @@ export default function Footer() {
                   href={`/template/${vendor_id}/${link
                     .toLowerCase()
                     .replace(/ /g, "-")}`}
-                  className="hover:opacity-100 transition"
+                  className="hover:opacity-100 transition template-accent-hover"
                 >
                   {link}
                 </Link>
@@ -206,7 +206,7 @@ export default function Footer() {
       {/* Back to Top */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-6 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105 z-50"
+        className="fixed bottom-6 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105 z-50 text-white template-accent-bg template-accent-bg-hover"
       >
         <svg
           className="w-6 h-6"

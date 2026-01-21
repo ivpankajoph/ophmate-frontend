@@ -9,11 +9,9 @@ import {
   Truck,
   RefreshCw,
   Package,
-  TrendingDown,
   Award,
   Shield,
   Zap,
-  Users,
   ChevronRight,
   Info,
   Check,
@@ -22,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionItem,
@@ -46,26 +43,14 @@ const getColorFromVariant = (variant: Variant): string => {
   return variant?.variantAttributes?.color || "Unknown";
 };
 
-// Wholesale pricing tiers
-const wholesaleTiers = [
-  { min: 2, max: 499, discount: 10, label: "Starter Pack" },
-  { min: 500, max: 9999, discount: 17, label: "Business Pack" },
-  { min: 10000, max: null, discount: 44, label: "Enterprise Pack" },
-];
 
 const retailBenefits = [
-  { icon: Truck, text: "Free shipping over ₹75" },
+  { icon: Truck, text: "Free shipping over Rs. 75" },
   { icon: RefreshCw, text: "30-day easy returns" },
   { icon: Shield, text: "1-year warranty" },
   { icon: Zap, text: "Fast delivery in 3-7 days" },
 ];
 
-const wholesaleBenefits = [
-  { icon: TrendingDown, text: "Bulk pricing discounts" },
-  { icon: Users, text: "Dedicated account manager" },
-  { icon: Award, text: "Priority support" },
-  { icon: Package, text: "Custom packaging options" },
-];
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -82,9 +67,6 @@ export default function ProductDetailPage() {
   const [wishlisted, setWishlisted] = useState(false);
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const [pricingMode, setPricingMode] = useState<"retail" | "wholesale">(
-    "retail",
-  );
 
   useEffect(() => {
     if (id) {
@@ -130,46 +112,6 @@ export default function ProductDetailPage() {
     }
   }, [selectedVariant]);
 
-  useEffect(() => {
-    if (pricingMode === "wholesale" && quantity < 2) {
-      setQuantity(2);
-    }
-  }, [pricingMode]);
-
-  const calculateWholesalePrice = (basePrice: number, qty: number) => {
-    const tier = wholesaleTiers.find(
-      (t) => qty >= t.min && (t.max === null || qty <= t.max),
-    );
-    if (!tier) return basePrice;
-    return basePrice * (1 - tier.discount / 100);
-  };
-
-  const getCurrentTier = () => {
-    return wholesaleTiers.find(
-      (t) => quantity >= t.min && (t.max === null || quantity <= t.max),
-    );
-  };
-
-  const subtotal = useMemo(() => {
-    const basePrice =
-      selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
-
-    if (pricingMode === "wholesale") {
-      return calculateWholesalePrice(basePrice, quantity) * quantity;
-    }
-    return basePrice * quantity;
-  }, [quantity, selectedVariant, product, pricingMode]);
-
-  const savings = useMemo(() => {
-    const basePrice =
-      selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
-    if (pricingMode === "wholesale") {
-      const regularTotal = basePrice * quantity;
-      return regularTotal - subtotal;
-    }
-    return 0;
-  }, [quantity, selectedVariant, product, pricingMode, subtotal]);
-
   const onThumbKey = (
     e: React.KeyboardEvent<HTMLButtonElement>,
     img: string,
@@ -179,6 +121,12 @@ export default function ProductDetailPage() {
       setSelectedImage(img);
     }
   };
+
+  const subtotal = useMemo(() => {
+    const basePrice =
+      selectedVariant?.finalPrice ?? product?.variants?.[0]?.finalPrice ?? 0;
+    return basePrice * quantity;
+  }, [quantity, selectedVariant, product]);
 
   const handleAddToCart = async () => {
     if (!selectedVariant || !product) return;
@@ -267,7 +215,6 @@ export default function ProductDetailPage() {
 
   const basePrice = selectedVariant?.finalPrice || 0;
   const actualPrice = selectedVariant?.actualPrice || 0;
-  const currentTier = getCurrentTier();
 
   return (
     <>
@@ -332,9 +279,9 @@ export default function ProductDetailPage() {
 
                   <div className="absolute top-4 left-4 flex gap-2">
                     <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg">
-                      {(selectedVariant?.stockQuantity ?? 0) > 0
-                        ? "✓ In Stock"
-                        : "Out of Stock"}
+                    {(selectedVariant?.stockQuantity ?? 0) > 0
+                      ? "In Stock"
+                      : "Out of Stock"}
                     </Badge>
                     {selectedVariant?.discountPercent &&
                       selectedVariant.discountPercent > 0 && (
@@ -383,201 +330,42 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Pricing Tabs */}
-            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 p-1 rounded-2xl shadow-lg">
-              <Tabs
-                value={pricingMode}
-                onValueChange={(v) =>
-                  setPricingMode(v as "retail" | "wholesale")
-                }
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-2 bg-white p-1 rounded-xl">
-                  <TabsTrigger
-                    value="retail"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white rounded-lg transition-all"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Retail
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="wholesale"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500 data-[state=active]:text-white rounded-lg transition-all"
-                  >
-                    <Package className="w-4 h-4 mr-2" />
-                    Wholesale
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Retail Pricing */}
-                <TabsContent value="retail" className="mt-4">
-                  <div className="bg-white rounded-xl p-6 shadow-md border-2 border-blue-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Single Item Price
-                        </p>
-                        <div className="flex items-baseline gap-3">
-                          <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            ₹{basePrice.toLocaleString()}
-                          </div>
-                          {actualPrice !== basePrice && (
-                            <div className="text-xl text-muted-foreground line-through">
-                              ₹{actualPrice.toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {selectedVariant?.discountPercent &&
-                        selectedVariant.discountPercent > 0 && (
-                          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full font-bold text-lg shadow-lg">
-                            Save {selectedVariant.discountPercent}%
-                          </div>
-                        )}
+            {/* Pricing */}
+            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 p-6 rounded-2xl shadow-lg border">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Item Price</p>
+                  <div className="flex items-baseline gap-3">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      Rs. {basePrice.toLocaleString()}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-6">
-                      {retailBenefits.map((benefit, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 text-sm bg-blue-50 px-3 py-2 rounded-lg"
-                        >
-                          <benefit.icon className="w-4 h-4 text-blue-600" />
-                          <span className="text-blue-900">{benefit.text}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-2 text-sm text-blue-900">
-                        <Info className="w-4 h-4" />
-                        <span className="font-medium">
-                          Perfect for personal use or small quantities
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Wholesale Pricing */}
-                <TabsContent value="wholesale" className="mt-4">
-                  <div className="bg-white rounded-xl p-6 shadow-md border-2 border-orange-100">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Package className="text-orange-600 w-6 h-6" />
-                      <h3 className="font-bold text-xl bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                        Bulk Order Pricing
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                      {wholesaleTiers.map((tier, idx) => {
-                        const tierPrice = basePrice * (1 - tier.discount / 100);
-                        const isActive =
-                          quantity >= tier.min &&
-                          (tier.max === null || quantity <= tier.max);
-
-                        return (
-                          <div
-                            key={idx}
-                            className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                              isActive
-                                ? "border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg scale-105"
-                                : "border-gray-200 bg-white hover:border-orange-200 hover:shadow-md"
-                            }`}
-                            onClick={() => setQuantity(tier.min)}
-                          >
-                            {isActive && (
-                              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                                Active
-                              </div>
-                            )}
-                            <div className="text-xs font-semibold text-orange-600 mb-1">
-                              {tier.label}
-                            </div>
-                            <div className="text-xs text-muted-foreground mb-2">
-                              {tier.min} - {tier.max || "10000+"} pcs
-                            </div>
-                            <div className="text-2xl font-bold text-orange-600 mb-1">
-                              ₹{tierPrice.toFixed(2)}
-                            </div>
-                            <div className="text-xs text-muted-foreground line-through mb-2">
-                              ₹{basePrice.toFixed(2)}
-                            </div>
-                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                              {tier.discount}% OFF
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {currentTier && (
-                      <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 rounded-xl shadow-lg mb-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm opacity-90 mb-1">
-                              Your Price ({quantity} pieces)
-                            </p>
-                            <div className="text-3xl font-bold">
-                              ₹
-                              {calculateWholesalePrice(
-                                basePrice,
-                                quantity,
-                              ).toFixed(2)}
-                              <span className="text-sm font-normal ml-2 opacity-90">
-                                per piece
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm opacity-90">You Save</p>
-                            <p className="text-2xl font-bold">
-                              ₹{savings.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
+                    {actualPrice !== basePrice && (
+                      <div className="text-xl text-muted-foreground line-through">
+                        Rs. {actualPrice.toLocaleString()}
                       </div>
                     )}
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      {wholesaleBenefits.map((benefit, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 text-sm bg-orange-50 px-3 py-2 rounded-lg"
-                        >
-                          <benefit.icon className="w-4 h-4 text-orange-600" />
-                          <span className="text-orange-900">
-                            {benefit.text}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-orange-900">
-                          <Info className="w-4 h-4" />
-                          <span className="font-medium">
-                            Sample available: ₹{(basePrice * 0.85).toFixed(2)}
-                          </span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-orange-300 text-orange-600 hover:bg-orange-50"
-                        >
-                          Get Sample
-                        </Button>
-                      </div>
-                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </div>
+                </div>
+                {selectedVariant?.discountPercent &&
+                  selectedVariant.discountPercent > 0 && (
+                    <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full font-bold text-lg shadow-lg">
+                      Save {selectedVariant.discountPercent}%
+                    </div>
+                  )}
+              </div>
 
-            <p className="text-muted-foreground leading-relaxed">
-              {productDescription.split(".")[0] || "No description available."}
-            </p>
+              <div className="grid grid-cols-2 gap-3 mt-6">
+                {retailBenefits.map((benefit, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 text-sm bg-blue-50 px-3 py-2 rounded-lg"
+                  >
+                    <benefit.icon className="w-4 h-4 text-blue-600" />
+                    <span className="text-blue-900">{benefit.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Variants */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
@@ -641,7 +429,7 @@ export default function ProductDetailPage() {
                     className="w-12 h-12 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all"
                     onClick={() =>
                       setQuantity((q) =>
-                        Math.max(pricingMode === "wholesale" ? 2 : 1, q - 1),
+                        Math.max(1, q - 1),
                       )
                     }
                   >
@@ -650,7 +438,7 @@ export default function ProductDetailPage() {
                   <Input
                     value={String(quantity)}
                     onChange={(e) => {
-                      const min = pricingMode === "wholesale" ? 2 : 1;
+                      const min = 1;
                       setQuantity(Math.max(min, Number(e.target.value) || min));
                     }}
                     className="w-24 text-center text-xl font-bold border-2 rounded-xl"
@@ -666,19 +454,11 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm">
-                  {pricingMode === "wholesale" && (
-                    <Badge
-                      variant="outline"
-                      className="border-orange-300 text-orange-600"
-                    >
-                      MOQ: 2 pieces
-                    </Badge>
-                  )}
                   <Badge
                     className={`${(selectedVariant?.stockQuantity ?? 0) > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                   >
                     {(selectedVariant?.stockQuantity ?? 0) > 0
-                      ? "✓ In Stock"
+                      ? "In Stock"
                       : "Out of Stock"}
                   </Badge>
                 </div>
@@ -691,13 +471,8 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Amount</p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    ₹{subtotal.toLocaleString()}
+                    Rs. {subtotal.toLocaleString()}
                   </p>
-                  {pricingMode === "wholesale" && savings > 0 && (
-                    <p className="text-sm text-green-600 font-semibold">
-                      You save ₹{savings.toFixed(2)}
-                    </p>
-                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Quantity</p>
@@ -709,11 +484,7 @@ export default function ProductDetailPage() {
                 <Button
                   className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
                   onClick={handleAddToCart}
-                  disabled={
-                    !selectedVariant ||
-                    selectedVariant.stockQuantity <= 0 ||
-                    (pricingMode === "wholesale" && quantity < 2)
-                  }
+                  disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
                 >
                   <ShoppingCart className="mr-2" /> Add to Bag
                 </Button>
@@ -721,7 +492,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   className="flex-1 h-14 text-lg font-semibold border-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
                 >
-                  {pricingMode === "wholesale" ? "Request Quote" : "Buy Now"}
+                  Buy Now
                   <ChevronRight className="ml-2" />
                 </Button>
               </div>
@@ -731,18 +502,14 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
                 <Truck className="text-green-600 w-6 h-6 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-green-900">
-                    Free Shipping
-                  </p>
-                  <p className="text-xs text-green-700">On orders over ₹75</p>
+                  <p className="text-sm font-semibold text-green-900">Free Shipping</p>
+                  <p className="text-xs text-green-700">On orders over Rs. 175</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
                 <RefreshCw className="text-blue-600 w-6 h-6 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-blue-900">
-                    Easy Returns
-                  </p>
+                  <p className="text-sm font-semibold text-blue-900">Easy Returns</p>
                   <p className="text-xs text-blue-700">30-day return policy</p>
                 </div>
               </div>
@@ -874,9 +641,6 @@ export default function ProductDetailPage() {
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-4">
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {pricingMode === "wholesale"
-                        ? "Bulk orders ship within 5-10 business days. Contact us for expedited shipping options and custom delivery arrangements."
-                        : "Standard shipping 3-7 business days. Expedited options available at checkout. Free shipping on orders over ₹75."}
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -936,9 +700,7 @@ export default function ProductDetailPage() {
                 className="flex-1 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg"
                 disabled={
                   !selectedVariant ||
-                  selectedVariant.stockQuantity <= 0 ||
-                  (pricingMode === "wholesale" && quantity < 2)
-                }
+                  selectedVariant.stockQuantity <= 0}
               >
                 <ShoppingCart className="mr-2 w-5 h-5" />
                 Add to Bag
@@ -951,3 +713,15 @@ export default function ProductDetailPage() {
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

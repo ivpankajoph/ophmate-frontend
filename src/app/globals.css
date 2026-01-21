@@ -126,3 +126,73 @@
   width: 100% !important;
   height: 100% !important;
 }
+
+.template-theme {
+  --template-color: #0f172a;
+  --template-banner-color: #0f172a;
+  --template-font-scale: 1;
+}
+
+.template-accent {
+  color: var(--template-color);
+}
+
+.template-accent-bg {
+  background-color: var(--template-color);
+}
+
+.template-accent-bg-hover:hover {
+  background-color: color-mix(in srgb, var(--template-color) 85%, black);
+}
+
+.template-accent-border {
+  border-color: var(--template-color);
+}
+
+.template-accent-soft {
+  background-color: color-mix(in srgb, var(--template-color) 12%, white);
+}
+
+.template-accent-soft-strong {
+  background-color: color-mix(in srgb, var(--template-color) 20%, white);
+}
+
+.template-accent-soft-hover:hover {
+  background-color: color-mix(in srgb, var(--template-color) 14%, white);
+}
+
+.template-accent-gradient {
+  background-color: #f8fafc;
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--template-color) 10%, white),
+    color-mix(in srgb, var(--template-banner-color) 10%, white)
+  );
+}
+
+.template-accent-hover {
+  transition: color 0.2s ease;
+}
+
+.template-accent-hover:hover {
+  color: var(--template-color);
+}
+
+.template-accent-group {
+  transition: color 0.2s ease;
+}
+
+.group:hover .template-accent-group {
+  color: var(--template-color);
+}
+
+.template-focus-accent:focus {
+  border-color: var(--template-color);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--template-color) 35%, transparent);
+  outline: none;
+}
+
+.template-accent-input {
+  accent-color: var(--template-color);
+}

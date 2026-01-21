@@ -8,7 +8,7 @@ const Hero2 = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Feature 1 - Secure Payment */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-6 template-accent-soft template-accent">
                 <svg
                   className="w-10 h-10 lg:w-12 lg:h-12"
                   fill="currentColor"
@@ -37,7 +37,7 @@ const Hero2 = () => {
 
             {/* Feature 2 - Free Shipping */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-6 template-accent-soft template-accent">
                 <svg
                   className="w-10 h-10 lg:w-12 lg:h-12"
                   fill="currentColor"
@@ -83,7 +83,7 @@ const Hero2 = () => {
 
             {/* Feature 3 - Delivered with Care */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-6 template-accent-soft template-accent">
                 <svg
                   className="w-10 h-10 lg:w-12 lg:h-12"
                   fill="currentColor"
@@ -107,7 +107,7 @@ const Hero2 = () => {
 
             {/* Feature 4 - Excellent Service */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-6 template-accent-soft template-accent">
                 <svg
                   className="w-10 h-10 lg:w-12 lg:h-12"
                   fill="none"

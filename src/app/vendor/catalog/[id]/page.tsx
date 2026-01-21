@@ -54,9 +54,62 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
 
   const [vendor, setVendor] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const [subcategories, setSubcategories] = useState<
+    Array<{ _id?: string; name?: string; category_id?: { _id?: string } | string }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("newest");
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("all");
+
+  const isObjectId = (value?: string) => !!value && /^[a-f\d]{24}$/i.test(value);
+
+  const toSlug = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+
+  const getCategoryLabel = (product: any) => {
+    if (product?.productCategoryName) return product.productCategoryName;
+    if (typeof product?.productCategory === "string") {
+      return categoryMap[product.productCategory] || product.productCategory;
+    }
+    return product?.productCategory?.name || "Uncategorized";
+  };
+
+  const getCategoryKey = (product: any) => {
+    const raw = product?.productCategory;
+    if (typeof raw === "string") {
+      if (categoryMap[raw] || isObjectId(raw)) return raw;
+      return toSlug(raw);
+    }
+    const id = raw?._id;
+    if (id) return id;
+    const label = getCategoryLabel(product);
+    return label ? toSlug(label) : "uncategorized";
+  };
+
+  const getProductCategoryPath = (product: any) => {
+    const key = getCategoryKey(product);
+    if (isObjectId(key)) return key;
+    const label = getCategoryLabel(product);
+    return label ? toSlug(label) : "uncategorized";
+  };
+
+  const getProductSubcategoryIds = (product: any) => {
+    const raw =
+      product?.productSubCategories ??
+      product?.productSubCategory ??
+      product?.subCategory ??
+      product?.subcategory;
+    if (Array.isArray(raw)) return raw.map(String);
+    if (typeof raw === "string") return [raw];
+    return [];
+  };
 
   useEffect(() => {
     if (!vendorId) return;
@@ -64,13 +117,54 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
     const fetchVendor = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `${NEXT_PUBLIC_API_URL}/users/${vendorId}/products`
-        );
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
+        const [vendorRes, categoriesRes, subcategoriesRes] = await Promise.all([
+          fetch(`${NEXT_PUBLIC_API_URL}/vendors/catalog/${vendorId}`),
+          fetch(`${NEXT_PUBLIC_API_URL}/categories/getall`),
+          fetch(`${NEXT_PUBLIC_API_URL}/subcategories/getall`),
+        ]);
+
+        if (!vendorRes.ok) throw new Error("Failed to fetch vendor products");
+        const data = await vendorRes.json();
         setVendor(data.vendor);
-        setProducts(data.products);
+        setProducts(data.products || []);
+
+        if (Array.isArray(data.categories)) {
+          const map: Record<string, string> = {};
+          data.categories.forEach((item: any) => {
+            const key = item?._id || item?.id;
+            const value =
+              item?.name || item?.title || item?.categoryName || item?.label;
+            if (key && value) map[key] = value;
+          });
+          setCategoryMap(map);
+        } else if (categoriesRes.ok) {
+          const categoriesData = await categoriesRes.json();
+          const list =
+            categoriesData?.data ||
+            categoriesData?.categories ||
+            categoriesData?.category ||
+            [];
+          if (Array.isArray(list)) {
+            const map: Record<string, string> = {};
+            list.forEach((item: any) => {
+              const key = item?._id || item?.id;
+              const value =
+                item?.name || item?.title || item?.categoryName || item?.label;
+              if (key && value) map[key] = value;
+            });
+            setCategoryMap(map);
+          }
+        }
+
+        if (Array.isArray(data.subcategories)) {
+          setSubcategories(data.subcategories);
+        } else if (subcategoriesRes.ok) {
+          const subData = await subcategoriesRes.json();
+          const list = subData?.data || subData?.subcategories || [];
+          if (Array.isArray(list)) {
+            setSubcategories(list);
+          }
+        }
       } catch (err) {
         console.error("Error fetching vendor:", err);
       } finally {
@@ -80,12 +174,78 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
     fetchVendor();
   }, [vendorId]);
 
+  const categoryItems = useMemo(() => {
+    const map = new Map<
+      string,
+      { key: string; label: string; count: number; isId: boolean }
+    >();
+    products.forEach((product) => {
+      const label = getCategoryLabel(product) || "Uncategorized";
+      const key = getCategoryKey(product);
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          label,
+          count: 1,
+          isId: isObjectId(key),
+        });
+      } else {
+        const existing = map.get(key)!;
+        existing.count += 1;
+        if (!existing.label && label) existing.label = label;
+      }
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [products, categoryMap]);
+
+  const categoryFilteredProducts = useMemo(() => {
+    if (selectedCategory === "all") return products;
+    return products.filter(
+      (product) => getCategoryKey(product) === selectedCategory
+    );
+  }, [products, selectedCategory]);
+
+  const subcategoryItems = useMemo(() => {
+    const pool = categoryFilteredProducts.length
+      ? categoryFilteredProducts
+      : products;
+    const availableIds = new Set<string>();
+    pool.forEach((product) => {
+      getProductSubcategoryIds(product).forEach((id) => availableIds.add(id));
+    });
+    return subcategories
+      .filter((sub) => sub?._id && availableIds.has(String(sub._id)))
+      .map((sub) => ({
+        id: String(sub._id),
+        label: sub.name || "Subcategory",
+        categoryId:
+          typeof sub.category_id === "string"
+            ? sub.category_id
+            : sub.category_id?._id || "",
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [categoryFilteredProducts, products, subcategories]);
+
   const filteredAndSorted = useMemo(() => {
     let result = [...products];
 
     if (query.trim()) {
       const q = query.toLowerCase();
       result = result.filter((p) => p.productName.toLowerCase().includes(q));
+    }
+
+    if (selectedCategory !== "all") {
+      result = result.filter(
+        (product) => getCategoryKey(product) === selectedCategory
+      );
+    }
+
+    if (selectedSubcategory !== "all") {
+      result = result.filter((product) =>
+        getProductSubcategoryIds(product).includes(selectedSubcategory)
+      );
     }
 
     if (sort === "price_low_high") {
@@ -100,7 +260,7 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
     }
 
     return result;
-  }, [products, query, sort]);
+  }, [products, query, sort, selectedCategory, selectedSubcategory]);
 
   if (loading) return <VendorSkeleton />;
 
@@ -173,6 +333,78 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
           </div>
         </div>
 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setSelectedSubcategory("all");
+                }}
+                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                  selectedCategory === "all"
+                    ? "border-indigo-500 bg-indigo-500 text-white"
+                    : "border-gray-200 text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                All Categories
+              </button>
+              {categoryItems.map((category) => (
+                <button
+                  key={category.key}
+                  onClick={() => {
+                    setSelectedCategory(category.key);
+                    setSelectedSubcategory("all");
+                  }}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                    selectedCategory === category.key
+                      ? "border-indigo-500 bg-indigo-500 text-white"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {category.label} ({category.count})
+                </button>
+              ))}
+              {categoryItems.length === 0 && (
+                <span className="rounded-full border border-dashed border-gray-300 px-4 py-1.5 text-xs text-gray-500">
+                  No categories yet
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setSelectedSubcategory("all")}
+                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                  selectedSubcategory === "all"
+                    ? "border-gray-900 bg-gray-900 text-white"
+                    : "border-gray-200 text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                All Subcategories
+              </button>
+              {subcategoryItems.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setSelectedSubcategory(sub.id)}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                    selectedSubcategory === sub.id
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+              {subcategoryItems.length === 0 && (
+                <span className="rounded-full border border-dashed border-gray-300 px-4 py-1.5 text-xs text-gray-500">
+                  No subcategories yet
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Product Carousel */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
           {filteredAndSorted.length === 0 ? (
@@ -217,13 +449,13 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
                       whileTap={{ scale: 0.98 }}
                     >
                       <Link
-                        href={`/product/${product.productCategory}/${product._id}`}
+                        href={`/product/${getProductCategoryPath(product)}/${product._id}`}
                         className="block h-full"
                       >
                         <Card className="h-full flex flex-col overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 rounded-xl">
                           <div className="relative w-full h-48 bg-gray-100">
                             <Image
-                              src={getImageUrl(product.default_images?.[0])}
+                              src={getImageUrl(product.defaultImages?.[0]?.url || product.defaultImages?.[0])}
                               alt={product.productName}
                               fill
                               className="object-cover transition-transform duration-300"
@@ -236,7 +468,7 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
                           </CardHeader>
                           <CardContent className="p-4 pt-0">
                             <p className="text-xs text-gray-500">
-                              {product.productCategory || "Uncategorized"}
+                              {getCategoryLabel(product) || "Uncategorized"}
                             </p>
                           </CardContent>
                         </Card>

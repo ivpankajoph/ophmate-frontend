@@ -156,7 +156,7 @@ export default function UserLogin() {
             <TabsTrigger value="register">Sign Up</TabsTrigger>
             <TabsTrigger value="otp">OTP Login</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="login">
             <Card className="shadow-lg">
               <CardHeader className="text-center">

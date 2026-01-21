@@ -1,20 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { AppDispatch, RootState } from "@/store";
+import { RootState } from "@/store";
+import { useParams } from "next/navigation";
 
 
 
 export default function LandingPageDev() {
-  const searchParams = useSearchParams();
-  const vendorId = searchParams.get("vendor_id") || "";
-
-  const dispatch = useDispatch<AppDispatch>();
-
   // ✅ FIXED SELECTOR (correct data path based on your Redux DevTools screenshot)
   const { homepage, loading, error } = useSelector(
     (state: RootState) => ({
@@ -24,6 +18,8 @@ export default function LandingPageDev() {
       error: (state as any)?.alltemplatepage?.error,
     })
   );
+  const params = useParams();
+  const vendor_id = params.vendor_id as string;
 
 //   useEffect(() => {
 //     if (vendorId) {
@@ -45,7 +41,7 @@ export default function LandingPageDev() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${bannerImage})`,
+          backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 55%, transparent), color-mix(in srgb, var(--template-banner-color) 55%, transparent)), url(${bannerImage})`,
         }}
       />
 
@@ -62,8 +58,8 @@ export default function LandingPageDev() {
               "Discover the Beauty of Nature at Your Fingertips"}
           </h1>
 
-          <Link href="/all-products">
-            <button className="bg-green-500 hover:bg-green-600 text-white px-10 cursor-pointer py-4 rounded-full text-lg lg:text-xl font-semibold transition-all transform hover:scale-105 shadow-lg">
+          <Link href={`/template/${vendor_id}/all-products`}>
+            <button className="text-white px-10 cursor-pointer py-4 rounded-full text-lg lg:text-xl font-semibold transition-all transform hover:scale-105 shadow-lg template-accent-bg template-accent-bg-hover">
               {homepage?.button_header || "Shop all Products"}
             </button>
           </Link>
@@ -80,7 +76,7 @@ export default function LandingPageDev() {
                       key={idx}
                       className="flex flex-col items-center text-center"
                     >
-                      <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                      <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-6 template-accent-soft template-accent">
                         {feature.icon ? (
                           <img
                             src={feature.icon}

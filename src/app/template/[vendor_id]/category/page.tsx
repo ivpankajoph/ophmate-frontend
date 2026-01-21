@@ -1,7 +1,11 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, SlidersHorizontal, Grid3x3, List, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
+import { useParams } from 'next/navigation';
+import axios from 'axios';
+import { NEXT_PUBLIC_API_URL } from '@/config/variables';
 
 
 export default function ShopCategoriesPage() {
@@ -9,44 +13,92 @@ export default function ShopCategoriesPage() {
   const [sortBy, setSortBy] = useState('default');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const categories = [
-    {
-      id: 'all',
-      name: 'All Plants',
-      count: 48,
-      image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      id: 'houseplants',
-      name: 'Houseplants',
-      count: 15,
-      image: 'https://media.istockphoto.com/id/1296673634/photo/water-needed.webp?a=1&b=1&s=612x612&w=0&k=20&c=kbVZt07Gwf_zFemty3aXMCf475NPrvZ3lRXMlLn8K2g='
-    },
-    {
-      id: 'outdoor',
-      name: 'Outdoor Plants',
-      count: 12,
-      image: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      id: 'succulents',
-      name: 'Succulents',
-      count: 10,
-      image: 'https://plus.unsplash.com/premium_photo-1669868623476-2f5ee8973db9?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8U3VjY3VsZW50c3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600'
-    },
-    {
-      id: 'desert',
-      name: 'Desert Bloom',
-      count: 8,
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      id: 'tropical',
-      name: 'Tropical Plants',
-      count: 3,
-      image: 'https://images.unsplash.com/photo-1554569258-670a25302596?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dHJvcGljYWwlMjBwbGFudHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600'
-    }
-  ];
+  const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
+  const params = useParams();
+  const vendor_id = params.vendor_id as string;
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await axios.get(`${NEXT_PUBLIC_API_URL}/categories/getall`);
+        const list = res.data?.data || [];
+        const map = list.reduce((acc: Record<string, string>, item: any) => {
+          if (item?._id && item?.name) acc[item._id] = item.name;
+          return acc;
+        }, {});
+        setCategoryMap(map);
+      } catch {
+        setCategoryMap({});
+      }
+    };
+
+    load();
+  }, []);
+
+  const categories = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; name: string; count: number; image?: string }
+    >();
+
+    const normalize = (value: unknown) =>
+      typeof value === 'string' ? value.trim() : '';
+
+    products.forEach((product: any) => {
+      const categoryObject =
+        typeof product?.productCategory === 'string'
+          ? undefined
+          : product?.productCategory;
+
+      const rawId =
+        categoryObject?._id ||
+        (typeof product?.productCategory === 'string'
+          ? product.productCategory
+          : '') ||
+        product?.productCategoryName ||
+        categoryObject?.name ||
+        categoryObject?.title ||
+        categoryObject?.categoryName;
+
+      const label =
+        normalize(product?.productCategoryName) ||
+        normalize(categoryObject?.name) ||
+        normalize(categoryObject?.title) ||
+        normalize(categoryObject?.categoryName) ||
+        normalize(
+          typeof product?.productCategory === 'string'
+            ? product.productCategory
+            : ''
+        ) ||
+        (rawId ? categoryMap[rawId] : '') ||
+        '';
+
+      const id = normalize(rawId) || label;
+      if (!id) return;
+
+      const image = product?.defaultImages?.[0]?.url || product?.images?.[0];
+      const existing = map.get(id);
+      if (existing) {
+        existing.count += 1;
+        if (!existing.image && image) existing.image = image;
+      } else {
+        map.set(id, {
+          id,
+          name: label || 'Category',
+          count: 1,
+          image,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [products, categoryMap]);
+
+  const toCategorySlug = (value: string) =>
+    encodeURIComponent(value.toLowerCase().replace(/\s+/g, '-'));
 
   return (
    <>
@@ -56,7 +108,7 @@ export default function ShopCategoriesPage() {
       <div 
         className="relative h-80 bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=1920&q=80')`
+          backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=1920&q=80')`
         }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
@@ -81,7 +133,7 @@ export default function ShopCategoriesPage() {
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg template-focus-accent"
                   />
                   <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
                 </div>
@@ -100,7 +152,7 @@ export default function ShopCategoriesPage() {
                       onClick={() => setSelectedCategory(cat.id)}
                       className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center justify-between ${
                         selectedCategory === cat.id
-                          ? 'bg-green-100 text-green-700 font-medium'
+                          ? 'template-accent-soft template-accent font-medium'
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
@@ -118,26 +170,26 @@ export default function ShopCategoriesPage() {
                 </h3>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 text-green-500 rounded" />
+                    <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
                     <span className="text-gray-600">Under $50</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 text-green-500 rounded" />
+                    <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
                     <span className="text-gray-600">$50 - $100</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 text-green-500 rounded" />
+                    <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
                     <span className="text-gray-600">$100 - $150</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 text-green-500 rounded" />
+                    <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
                     <span className="text-gray-600">Over $150</span>
                   </label>
                 </div>
               </div>
 
               {/* Filter Button */}
-              <button className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors">
+              <button className="w-full text-white py-3 rounded-lg font-semibold transition-colors template-accent-bg template-accent-bg-hover">
                 Apply Filters
               </button>
             </div>
@@ -147,7 +199,7 @@ export default function ShopCategoriesPage() {
           <div className="lg:col-span-3">
             {/* Toolbar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="text-gray-600">
+                <div className="text-gray-600">
                 Showing <span className="font-semibold">{categories.length}</span> categories
               </div>
               <div className="flex items-center gap-4">
@@ -156,7 +208,7 @@ export default function ShopCategoriesPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:border-green-500 cursor-pointer"
+                    className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2 cursor-pointer template-focus-accent"
                   >
                     <option value="default">Default sorting</option>
                     <option value="name">Name: A to Z</option>
@@ -170,7 +222,7 @@ export default function ShopCategoriesPage() {
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded ${
-                      viewMode === 'grid' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                      viewMode === 'grid' ? 'text-white template-accent-bg' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Grid3x3 size={20} />
@@ -178,7 +230,7 @@ export default function ShopCategoriesPage() {
                   <button
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded ${
-                      viewMode === 'list' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                      viewMode === 'list' ? 'text-white template-accent-bg' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <List size={20} />
@@ -189,36 +241,44 @@ export default function ShopCategoriesPage() {
 
             {/* Category Cards */}
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
-              {categories.map((category) => (
-              <Link href='/all- products'>
-                  <div
-                  key={category.id}
-                  className={`relative bg-white rounded-lg shadow-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow ${
-                    viewMode === 'list' ? 'flex' : ''
-                  }`}
-                >
-                  <div
-                    className={`relative overflow-hidden bg-gray-100 ${
-                      viewMode === 'list' ? 'w-48' : 'h-56'
-                    }`}
-                    style={{
-                      backgroundImage: `url(${category.image})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
+              {categories.map((category) => {
+                const isObjectId = /^[a-f\d]{24}$/i.test(category.id);
+                const categoryPath = isObjectId
+                  ? category.id
+                  : toCategorySlug(category.name);
+                return (
+                  <Link
+                    key={category.id}
+                    href={`/template/${vendor_id}/category/${categoryPath}`}
                   >
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all"></div>
-                  </div>
+                    <div
+                      className={`relative bg-white rounded-lg shadow-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow ${
+                        viewMode === 'list' ? 'flex' : ''
+                      }`}
+                    >
+                      <div
+                        className={`relative overflow-hidden bg-gray-100 ${
+                          viewMode === 'list' ? 'w-48' : 'h-56'
+                        }`}
+                        style={{
+                          backgroundImage: `url(${category.image || 'https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=800&q=80'})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all"></div>
+                      </div>
 
-                  <div className={`p-4 text-center ${viewMode === 'list' ? 'flex-1 flex flex-col justify-center' : ''}`}>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">{category.count} Products</p>
-                  </div>
-                </div>
-              </Link>
-              ))}
+                      <div className={`p-4 text-center ${viewMode === 'list' ? 'flex-1 flex flex-col justify-center' : ''}`}>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 template-accent-group">
+                          {category.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">{category.count} Products</p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -227,7 +287,7 @@ export default function ShopCategoriesPage() {
       {/* Scroll to Top Button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 bg-green-500 hover:bg-green-600 text-white w-12 h-12 rounded-md shadow-lg flex items-center justify-center transition-all transform hover:scale-105 z-50"
+        className="fixed bottom-8 right-8 text-white w-12 h-12 rounded-md shadow-lg flex items-center justify-center transition-all transform hover:scale-105 z-50 template-accent-bg template-accent-bg-hover"
       >
         <svg
           className="w-6 h-6"

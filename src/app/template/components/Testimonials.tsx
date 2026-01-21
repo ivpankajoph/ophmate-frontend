@@ -23,7 +23,7 @@ export default function CustomerTestimonials() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-yellow-50 py-16 lg:py-20">
+    <div className="py-16 lg:py-20 template-accent-gradient">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="mb-12 lg:mb-16">
@@ -41,7 +41,7 @@ export default function CustomerTestimonials() {
           <div className="lg:col-span-1 lg:row-span-1">
             <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm h-full">
               {/* Quote Icon */}
-              <div className="text-green-500 text-5xl font-serif mb-6">"</div>
+              <div className="text-5xl font-serif mb-6 template-accent">"</div>
               
               {/* Testimonial Text */}
               <p className="text-gray-700 text-base lg:text-lg mb-6 leading-relaxed">
@@ -67,7 +67,7 @@ export default function CustomerTestimonials() {
             {/* Second Testimonial */}
             <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm">
               {/* Quote Icon */}
-              <div className="text-green-500 text-5xl font-serif mb-6">"</div>
+              <div className="text-5xl font-serif mb-6 template-accent">"</div>
               
               {/* Testimonial Text */}
               <p className="text-gray-700 text-base lg:text-lg mb-6 leading-relaxed">
@@ -90,7 +90,7 @@ export default function CustomerTestimonials() {
             {/* Third Testimonial */}
             <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm">
               {/* Quote Icon */}
-              <div className="text-green-500 text-5xl font-serif mb-6">"</div>
+              <div className="text-5xl font-serif mb-6 template-accent">"</div>
               
               {/* Testimonial Text */}
               <p className="text-gray-700 text-base lg:text-lg mb-6 leading-relaxed">

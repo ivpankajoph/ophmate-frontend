@@ -24,7 +24,7 @@ export default function PremierDestination2() {
   console.log("Home Page Description Data:", data);
 
   return (
-    <div className="bg-linear-to-br from-green-50 to-yellow-50 py-16 lg:py-20">
+    <div className="py-16 lg:py-20 template-accent-gradient">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           

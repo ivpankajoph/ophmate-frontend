@@ -1,123 +1,48 @@
 "use client"
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Star, Search } from "lucide-react";
+import { useSelector } from "react-redux";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 
 export default function AllProducts() {
-  const products = [
-    {
-      id: 1,
-      name: "Emerald Fern",
-      category: "Indoor Plants",
-      price: 120.0,
-      image:
-        "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&q=80&w=676",
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      name: "Golden Pothos",
-      category: "Hanging Plants",
-      price: 85.0,
-      image:
-        "https://plus.unsplash.com/premium_photo-1676478746990-4ef5c8ef234a?auto=format&fit=crop&q=60&w=600",
-      rating: 4.8,
-    },
-    {
-      id: 3,
-      name: "Starlight Succulent",
-      category: "Indoor Plants",
-      price: 95.0,
-      image:
-        "https://images.unsplash.com/photo-1617111490936-07b47eafdcd4?auto=format&fit=crop&q=80&w=676",
-      rating: 0,
-    },
-    {
-      id: 4,
-      name: "Snake Plant",
-      category: "Low Maintenance",
-      price: 110.0,
-      image:
-        "https://images.unsplash.com/photo-1600334129128-685c5582fd35?auto=format&fit=crop&q=80&w=676",
-      rating: 4.7,
-    },
-    {
-      id: 5,
-      name: "Aloe Vera",
-      category: "Medicinal Plants",
-      price: 75.0,
-      image:
-        "https://images.unsplash.com/photo-1471899236350-e3016bf1e69e?auto=format&fit=crop&q=60&w=600",
-      rating: 4.6,
-    },
-    {
-      id: 6,
-      name: "Peace Lily",
-      category: "Flowering Plants",
-      price: 130.0,
-      image:
-        "https://plus.unsplash.com/premium_vector-1712614779372-248dd015213b?auto=format&fit=crop&q=60&w=352&dpr=2&h=367",
-      rating: 4.9,
-    },
-    {
-      id: 7,
-      name: "Spider Plant",
-      category: "Air Purifying",
-      price: 90.0,
-      image:
-        "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&q=60&w=600",
-      rating: 4.2,
-    },
-    {
-      id: 8,
-      name: "ZZ Plant",
-      category: "Low Maintenance",
-      price: 105.0,
-      image:
-        "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?auto=format&fit=crop&q=60&w=600",
-      rating: 4.4,
-    },
-    {
-      id: 9,
-      name: "Jade Plant",
-      category: "Succulents",
-      price: 115.0,
-      image:
-        "https://plus.unsplash.com/premium_photo-1683121484963-a491b935780b?auto=format&fit=crop&q=60&w=600",
-      rating: 4.5,
-    },
-    {
-      id: 10,
-      name: "Boston Fern",
-      category: "Hanging Plants",
-      price: 100.0,
-      image:
-        "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&q=60&w=600",
-      rating: 4.3,
-    },
-  ];
+  const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
+  const params = useParams();
+  const vendor_id = params.vendor_id as string;
 
-  const categories = [
-    "All",
-    "Indoor Plants",
-    "Hanging Plants",
-    "Low Maintenance",
-    "Medicinal Plants",
-    "Flowering Plants",
-    "Air Purifying",
-    "Succulents",
-  ];
+  const categories = useMemo(() => {
+    const list = new Set<string>();
+    products.forEach((product: any) => {
+      const label =
+        product?.productCategoryName ||
+        product?.productCategory?.name ||
+        product?.productCategory?.title ||
+        product?.productCategory?.categoryName ||
+        product?.productCategory;
+      if (typeof label === "string" && label.trim()) list.add(label.trim());
+    });
+    return ["All", ...Array.from(list).sort()];
+  }, [products]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Filtered products based on search + category
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product: any) => {
+    const name = (product?.productName || "").toLowerCase();
+    const category =
+      (product?.productCategoryName ||
+        product?.productCategory?.name ||
+        product?.productCategory?.title ||
+        product?.productCategory?.categoryName ||
+        product?.productCategory ||
+        "") + "";
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      name.includes(searchTerm.toLowerCase()) ||
+      category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      selectedCategory === "All" || product.category === selectedCategory;
+      selectedCategory === "All" || category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -138,7 +63,7 @@ export default function AllProducts() {
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 template-focus-accent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -156,8 +81,8 @@ export default function AllProducts() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                   selectedCategory === cat
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-green-100"
+                    ? "text-white template-accent-bg"
+                    : "bg-gray-100 text-gray-700 template-accent-soft-hover"
                 }`}
               >
                 {cat}
@@ -169,15 +94,25 @@ export default function AllProducts() {
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="group cursor-pointer">
+            {filteredProducts.map((product: any) => (
+              <Link
+                key={product._id}
+                href={`/template/${vendor_id}/product/${product._id}`}
+                className="group cursor-pointer"
+              >
                 {/* Product Image */}
                 <div className="relative overflow-hidden bg-gray-100 mb-4 aspect-square rounded-xl">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {product?.defaultImages?.[0]?.url ? (
+                    <img
+                      src={product.defaultImages[0].url}
+                      alt={product.productName}
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">
+                      No Image
+                    </div>
+                  )}
                 </div>
 
                 {/* Rating Stars */}
@@ -187,7 +122,7 @@ export default function AllProducts() {
                       key={index}
                       size={16}
                       className={
-                        index < Math.round(product.rating)
+                        index < Math.round(product?.rating || 0)
                           ? "text-yellow-400 fill-yellow-400"
                           : "text-gray-300"
                       }
@@ -197,15 +132,19 @@ export default function AllProducts() {
 
                 {/* Product Info */}
                 <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-1">
-                  {product.name}
+                  {product.productName || "Untitled Product"}
                 </h3>
                 <p className="text-gray-500 text-sm lg:text-base mb-2">
-                  {product.category}
+                  {product?.productCategoryName ||
+                    product?.productCategory?.name ||
+                    product?.productCategory?.title ||
+                    product?.productCategory?.categoryName ||
+                    "Category"}
                 </p>
                 <p className="text-gray-900 text-lg lg:text-xl font-semibold">
-                  ${product.price.toFixed(2)}
+                  ₹{product?.variants?.[0]?.finalPrice || "--"}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
