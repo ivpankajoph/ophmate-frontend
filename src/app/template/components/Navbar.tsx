@@ -27,6 +27,10 @@ export default function Navbar() {
   const { homepage } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
   }));
+  const customPages =
+    (homepage as any)?.components?.custom_pages?.filter(
+      (page: any) => page?.isPublished !== false
+    ) || [];
 
   // Get vendor_id from dynamic route
   const params = useParams();
@@ -107,6 +111,15 @@ export default function Navbar() {
             className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
           >
             {item}
+          </Link>
+        ))}
+        {customPages.map((page: any) => (
+          <Link
+            key={page.id || page.slug || page.title}
+            href={`/template/${vendor_id}/page/${page.slug || page.id}`}
+            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+          >
+            {page.title || "Page"}
           </Link>
         ))}
 
@@ -223,6 +236,16 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item}
+              </Link>
+            ))}
+            {customPages.map((page: any) => (
+              <Link
+                key={page.id || page.slug || page.title}
+                href={`/template/${vendor_id}/page/${page.slug || page.id}`}
+                className="text-lg font-medium transition-all hover:opacity-75 template-accent-hover"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {page.title || "Page"}
               </Link>
             ))}
             <Link

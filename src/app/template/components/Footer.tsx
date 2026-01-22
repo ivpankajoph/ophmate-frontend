@@ -21,6 +21,10 @@ export default function Footer() {
   const { homepage } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
   }));
+  const customPages =
+    (homepage as any)?.components?.custom_pages?.filter(
+      (page: any) => page?.isPublished !== false
+    ) || [];
 
   // Get vendor_id dynamically
   const params = useParams();
@@ -80,6 +84,10 @@ export default function Footer() {
                 { name: "About Us", path: `/template/${vendor_id}/about` },
                 { name: "Contact", path: `/template/${vendor_id}/contact` },
                 { name: "FAQs", path: `/template/${vendor_id}/faqs` },
+                ...customPages.map((page: any) => ({
+                  name: page.title || "Page",
+                  path: `/template/${vendor_id}/page/${page.slug || page.id}`,
+                })),
               ].map((item) => (
                 <li key={item.name}>
                   <Link
