@@ -17,12 +17,15 @@ import { RootState } from "@/store";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
+import { clearTemplateAuth, getTemplateAuth } from "./templateAuth";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const { homepage } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
@@ -55,6 +58,33 @@ export default function Navbar() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (!vendor_id) return;
+    const auth = getTemplateAuth(String(vendor_id));
+    setIsLoggedIn(!!auth?.token);
+    if (!auth?.token) {
+      setCartCount(0);
+      return;
+    }
+    const loadCart = async () => {
+      try {
+        const res = await fetch(
+          `${NEXT_PUBLIC_API_URL}/template-users/cart`,
+          {
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setCartCount(data?.cart?.total_quantity || 0);
+      } catch {
+        setCartCount(0);
+      }
+    };
+    loadCart();
+  }, [vendor_id]);
 
   const subcategoriesByCategory = useMemo(() => {
     return subcategories.reduce<Record<string, any[]>>((acc, sub) => {
@@ -113,6 +143,35 @@ export default function Navbar() {
             {item}
           </Link>
         ))}
+        <Link
+          href={`/template/${vendor_id}/cart`}
+          className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+        >
+          Cart
+        </Link>
+        {isLoggedIn ? (
+          <>
+            <Link
+              href={`/template/${vendor_id}/orders`}
+              className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+            >
+              Orders
+            </Link>
+            <Link
+              href={`/template/${vendor_id}/profile`}
+              className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+            >
+              Profile
+            </Link>
+          </>
+        ) : (
+          <Link
+            href={`/template/${vendor_id}/login`}
+            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+          >
+            Login
+          </Link>
+        )}
         {customPages.map((page: any) => (
           <Link
             key={page.id || page.slug || page.title}
@@ -201,15 +260,27 @@ export default function Navbar() {
             <Icon size={22} />
           </a>
         ))}
-        <a
-          href="#"
+        <Link
+          href={`/template/${vendor_id}/cart`}
           className="relative transition-opacity hover:opacity-75 template-accent"
         >
           <ShoppingBag size={22} />
           <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white template-accent-bg">
-            0
+            {cartCount}
           </span>
-        </a>
+        </Link>
+        {isLoggedIn && (
+          <button
+            onClick={() => {
+              clearTemplateAuth(String(vendor_id));
+              setIsLoggedIn(false);
+              setCartCount(0);
+            }}
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+          >
+            Logout
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu Toggle */}
@@ -266,15 +337,48 @@ export default function Navbar() {
                   <Icon size={22} />
                 </a>
               ))}
-              <a
-                href="#"
+              <Link
+                href={`/template/${vendor_id}/cart`}
                 className="relative transition-opacity hover:opacity-75 template-accent"
               >
                 <ShoppingBag size={22} />
                 <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white template-accent-bg">
-                  0
+                  {cartCount}
                 </span>
-              </a>
+              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href={`/template/${vendor_id}/orders`}
+                    className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+                  >
+                    Orders
+                  </Link>
+                  <Link
+                    href={`/template/${vendor_id}/profile`}
+                    className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      clearTemplateAuth(String(vendor_id));
+                      setIsLoggedIn(false);
+                      setCartCount(0);
+                    }}
+                    className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href={`/template/${vendor_id}/login`}
+                  className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         </div>

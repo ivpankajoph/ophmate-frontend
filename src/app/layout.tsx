@@ -6,6 +6,7 @@ import ReduxProvider from "@/providers/ReduxProvider";
 import VendorProvider from "@/providers/VendorProvider";
 import Script from "next/script";
 import GoogleAnalytics from "@/components/google-analytics/GoogleAnalytics";
+import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,10 @@ export default function RootLayout({
       >
         <VendorProvider>
           <GoogleAnalytics />
-          <ReduxProvider>{children}</ReduxProvider>
+          <ReduxProvider>
+            <AnalyticsTracker />
+            {children}
+          </ReduxProvider>
         </VendorProvider>
       </body>
     </html>

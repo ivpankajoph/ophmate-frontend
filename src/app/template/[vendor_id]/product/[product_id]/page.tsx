@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { Minus, Plus, Search } from "lucide-react";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
+import { getTemplateAuth, templateApiFetch } from "@/app/template/components/templateAuth";
+
 
 type Product = {
   _id: string;
@@ -11,16 +13,19 @@ type Product = {
   shortDescription?: string;
   description?: string;
   defaultImages?: Array<{ url: string }>;
-  variants?: Array<{ finalPrice?: number }>;
+  variants?: Array<{ _id: string; finalPrice?: number }>;
 };
 
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.product_id as string;
+  const vendorId = params.vendor_id as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+  const [adding, setAdding] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!productId) return;
@@ -71,6 +76,36 @@ export default function ProductDetailPage() {
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : prev));
+
+  const handleAddToCart = async () => {
+    setMessage("");
+    const auth = getTemplateAuth(vendorId);
+    if (!auth) {
+      window.location.href = `/template/${vendorId}/login?next=/template/${vendorId}/product/${productId}`;
+      return;
+    }
+    const variantId = product?.variants?.[0]?._id;
+    if (!variantId) {
+      setMessage("Variant not available");
+      return;
+    }
+    setAdding(true);
+    try {
+      await templateApiFetch(vendorId, "/cart", {
+        method: "POST",
+        body: JSON.stringify({
+          product_id: productId,
+          variant_id: variantId,
+          quantity,
+        }),
+      });
+      setMessage("Added to cart");
+    } catch (error: any) {
+      setMessage(error.message || "Failed to add to cart");
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -134,10 +169,17 @@ export default function ProductDetailPage() {
                 </button>
               </div>
 
-              <button className="flex-1 text-white px-8 h-12 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 template-accent-bg template-accent-bg-hover">
-                Add to cart
+              <button
+                onClick={handleAddToCart}
+                disabled={adding}
+                className="flex-1 text-white px-8 h-12 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 template-accent-bg template-accent-bg-hover disabled:opacity-60"
+              >
+                {adding ? "Adding..." : "Add to cart"}
               </button>
             </div>
+            {message && (
+              <div className="text-sm text-slate-500">{message}</div>
+            )}
 
             <div className="border-t border-gray-200 pt-6">
               <p className="text-gray-600">
