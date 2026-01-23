@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Minus, Plus, Search } from "lucide-react";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { getTemplateAuth, templateApiFetch } from "@/app/template/components/templateAuth";
+import { trackAddToCart } from "@/lib/analytics-events";
 
 
 type Product = {
@@ -98,6 +99,14 @@ export default function ProductDetailPage() {
           variant_id: variantId,
           quantity,
         }),
+      });
+      trackAddToCart({
+        vendorId,
+        userId: auth?.user?.id,
+        productId,
+        productName: product?.productName,
+        productPrice: price,
+        quantity,
       });
       setMessage("Added to cart");
     } catch (error: any) {

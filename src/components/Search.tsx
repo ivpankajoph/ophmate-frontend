@@ -1,92 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import {
-  Search,
-  Image,
-  Sparkles,
-  TrendingUp,
-  Package,
-  Zap,
-  ChevronRight,
-} from "lucide-react";
+import React, { useState } from "react";
+import { Search, Image, Sparkles, TrendingUp, Package, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type TabType = "category" | "subcategory" | "wholesale" | "retail";
-
-interface Subcategory {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image_url?: string;
-}
-
-interface Category {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image_url?: string;
-  subcategories?: Subcategory[];
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: Category[];
-}
 
 export default function EcommerceSearchUI() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("category");
   const [searchQuery, setSearchQuery] = useState("");
   const [aiSearchEnabled, setAiSearchEnabled] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
-    null
-  );
-  const [hoveredCategoryKey, setHoveredCategoryKey] = useState<string | null>(
-    null
-  );
-  const [dropdownPosition, setDropdownPosition] = useState<{
-    left: number;
-    top: number;
-  } | null>(null);
-  const [dropdownAnchor, setDropdownAnchor] = useState<HTMLElement | null>(
-    null
-  );
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isScrolling, setIsScrolling] = useState(true);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/getall`
-      );
-      const result: ApiResponse = await response.json();
-      if (result.success) {
-        setCategories(result.data);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCategoryClick = (categoryId: string) => {
-    router.push(`/categories/${categoryId}`);
-  };
-
-  const handleSubcategoryClick = (subcategoryId: string) => {
-    router.push(`/sub-categories/${subcategoryId}`);
-  };
 
   const handleSearch = () => {
     console.log("Searching for:", searchQuery, {
@@ -95,61 +19,14 @@ export default function EcommerceSearchUI() {
     });
   };
 
-  const updateDropdownPosition = (target: HTMLElement | null) => {
-    if (!target) {
-      return;
-    }
-    const rect = target.getBoundingClientRect();
-    setDropdownPosition({
-      left: rect.left,
-      top: rect.bottom + 8,
-    });
-  };
-
-  const clearHideTimeout = () => {
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-  };
-
-  const scheduleDropdownHide = () => {
-    clearHideTimeout();
-    hideTimeoutRef.current = setTimeout(() => {
-      setHoveredCategoryId(null);
-      setHoveredCategoryKey(null);
-      setDropdownPosition(null);
-      setDropdownAnchor(null);
-    }, 120);
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
     }
   };
 
-  useEffect(() => {
-    if (!dropdownAnchor) {
-      return;
-    }
-
-    const handlePositionUpdate = () => {
-      updateDropdownPosition(dropdownAnchor);
-    };
-
-    handlePositionUpdate();
-    window.addEventListener("scroll", handlePositionUpdate, true);
-    window.addEventListener("resize", handlePositionUpdate);
-
-    return () => {
-      window.removeEventListener("scroll", handlePositionUpdate, true);
-      window.removeEventListener("resize", handlePositionUpdate);
-    };
-  }, [dropdownAnchor]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 mt-32">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header Navigation */}
         {/* <nav className="flex items-center justify-center gap-8 mb-8">
@@ -168,148 +45,6 @@ export default function EcommerceSearchUI() {
           </button>
         </nav> */}
 
-        {/* Categories Horizontal Scrollable Bar */}
-        <div className="mb-32 bg-white rounded-2xl shadow-lg p-6 relative">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Browse Categories
-          </h2>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-            </div>
-          ) : (
-            <>
-              <div
-                className="relative"
-                onMouseEnter={() => setIsScrolling(false)}
-                onMouseLeave={() => setIsScrolling(true)}
-              >
-                <div
-                  className="overflow-x-auto overflow-y-visible scrollbar-visible pb-4"
-                  id="categories-scroll"
-                >
-                  <div
-                    className={`flex gap-4 ${
-                      isScrolling ? "animate-scroll-seamless" : ""
-                    }`}
-                  >
-                    {[...categories, ...categories, ...categories].map(
-                      (category, index) => {
-                        const categoryKey = `${category._id}-${index}`;
-
-                        return (
-                          <div
-                            key={categoryKey}
-                            className="flex-shrink-0 relative"
-                            onMouseEnter={(event) => {
-                              clearHideTimeout();
-                              setHoveredCategoryId(category._id);
-                              setHoveredCategoryKey(categoryKey);
-                              setDropdownAnchor(event.currentTarget);
-                            }}
-                            onMouseLeave={() => {
-                              scheduleDropdownHide();
-                            }}
-                          >
-                            <button
-                              onClick={() => handleCategoryClick(category._id)}
-                              className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all min-w-[140px] ${
-                                hoveredCategoryKey === categoryKey
-                                  ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-xl scale-105"
-                                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                              }`}
-                            >
-                              <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow-md">
-                                <img
-                                  src={
-                                    category.image_url || "/placeholder.png"
-                                  }
-                                  alt={category.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <span className="font-semibold text-sm text-center">
-                                {category.name}
-                              </span>
-                            </button>
-
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {hoveredCategoryId && hoveredCategoryKey && dropdownPosition && (
-                <div
-                  className="fixed z-[200] w-80 bg-white rounded-xl shadow-2xl border-2 border-orange-300 animate-fadeIn"
-                  style={{
-                    left: dropdownPosition.left,
-                    top: dropdownPosition.top,
-                  }}
-                  onMouseEnter={() => {
-                    clearHideTimeout();
-                  }}
-                  onMouseLeave={() => {
-                    scheduleDropdownHide();
-                  }}
-                >
-                  <div className="p-4">
-                    <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center justify-between">
-                      <span>
-                        {
-                          categories.find((c) => c._id === hoveredCategoryId)
-                            ?.name
-                        }{" "}
-                        - Subcategories
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-orange-500" />
-                    </h3>
-
-                    <div className="max-h-80 overflow-y-auto scrollbar-thin">
-                      <div className="flex flex-col gap-2">
-                        {categories
-                          .find((c) => c._id === hoveredCategoryId)
-                          ?.subcategories?.map((sub) => (
-                            <button
-                              key={sub._id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSubcategoryClick(sub._id);
-                              }}
-                              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-100 hover:shadow-md transition-all group text-left"
-                            >
-                              {sub.image_url && (
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                  <img
-                                    src={sub.image_url}
-                                    alt={sub.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                  />
-                                </div>
-                              )}
-                              <div>
-                                <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 block">
-                                  {sub.name}
-                                </span>
-                                {sub.description && (
-                                  <span className="text-xs text-gray-500 line-clamp-2 mt-1 block">
-                                    {sub.description}
-                                  </span>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
         <h1 className="text-4xl flex justify-center -mt-20 mb-10">
           Search Anything you want............
         </h1>
@@ -396,61 +131,6 @@ export default function EcommerceSearchUI() {
         </div>
       </div>
 
-      <style jsx>{`
-        .scrollbar-visible::-webkit-scrollbar {
-          height: 8px;
-        }
-        .scrollbar-visible::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .scrollbar-visible::-webkit-scrollbar-thumb {
-          background: #fb923c;
-          border-radius: 10px;
-        }
-        .scrollbar-visible::-webkit-scrollbar-thumb:hover {
-          background: #f97316;
-        }
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 6px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #fb923c;
-          border-radius: 10px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #f97316;
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes scroll-seamless {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(calc(-100% / 3));
-          }
-        }
-        .animate-scroll-seamless {
-          animation: scroll-seamless 100s linear infinite;
-          width: max-content;
-        }
-      `}</style>
     </div>
   );
 }

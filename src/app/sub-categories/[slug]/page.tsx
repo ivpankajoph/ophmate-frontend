@@ -1,4 +1,4 @@
-// app/categories/[slug]/page.tsx
+// app/sub-categories/[slug]/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -57,29 +57,37 @@ interface Product {
   productCategory: string;
 }
 
-interface ApiResponse {
+interface SubCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+}
+
+interface ProductsResponse {
   success: boolean;
   products: Product[];
-  category: {
-    _id: string;
-    name: string;
-    slug: string;
-    description: string;
-    image_url: string;
-    meta_keywords?: string[];
-    meta_title?: string;
-    meta_description?: string;
-  };
+  subCategory: SubCategory;
+}
+
+interface SubCategoryResponse {
+  success: boolean;
+  data: SubCategory;
 }
 
 export default function SubCategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const categoryId = params.slug as string;
+  const categorySlug = params.slug as string;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categoryData, setCategoryData] = useState<ApiResponse | null>(null);
+  const [subCategory, setSubCategory] = useState<SubCategory | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("relevance");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
@@ -88,13 +96,13 @@ export default function SubCategoryDetailPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
-    const fetchCategoryProducts = async () => {
+    const fetchSubCategoryProducts = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${categoryId}`,
+        const subCategoryResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/subcategories/slug/${categorySlug}`,
           {
             method: "GET",
             headers: {
@@ -103,29 +111,55 @@ export default function SubCategoryDetailPage() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.statusText}`);
+        if (!subCategoryResponse.ok) {
+          throw new Error(
+            `Failed to fetch subcategory: ${subCategoryResponse.statusText}`
+          );
         }
 
-        const data: ApiResponse = await response.json();
-        setCategoryData(data);
+        const subCategoryData: SubCategoryResponse =
+          await subCategoryResponse.json();
+
+        if (!subCategoryData?.data?._id) {
+          throw new Error("Subcategory not found");
+        }
+
+        setSubCategory(subCategoryData.data);
+
+        const productsResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${subCategoryData.data._id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!productsResponse.ok) {
+          throw new Error(
+            `Failed to fetch products: ${productsResponse.statusText}`
+          );
+        }
+
+        const productsData: ProductsResponse = await productsResponse.json();
+        setProducts(productsData?.products || []);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load category"
+          err instanceof Error ? err.message : "Failed to load subcategory"
         );
-        console.error("Error fetching category products:", err);
+        console.error("Error fetching subcategory products:", err);
+        setSubCategory(null);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (categoryId) {
-      fetchCategoryProducts();
+    if (categorySlug) {
+      fetchSubCategoryProducts();
     }
-  }, [categoryId]);
-
-  const category = categoryData?.category;
-  const products = categoryData?.products || [];
+  }, [categorySlug]);
 
   // Get all unique brands
   const allBrands = React.useMemo(() => {
@@ -206,14 +240,14 @@ export default function SubCategoryDetailPage() {
   };
 
   useEffect(() => {
-    if (!category) return;
+    if (!subCategory) return;
   
     const metaTitle =
-      category.meta_title?.trim() || category.name || "Category";
+      subCategory.metaTitle?.trim() || subCategory.name || "Subcategory";
   
     const metaDescription =
-      category.meta_description?.trim() ||
-      category.description ||
+      subCategory.metaDescription?.trim() ||
+      subCategory.description ||
       "";
   
     // ✅ Set browser tab title
@@ -233,7 +267,7 @@ export default function SubCategoryDetailPage() {
     metaTag.content = metaDescription;
   
     // ✅ Optional: keywords
-    if (category.meta_keywords?.length) {
+    if (subCategory.metaKeywords?.length) {
       let keywordTag = document.head.querySelector(
         'meta[name="keywords"]'
       ) as HTMLMetaElement | null;
@@ -244,9 +278,9 @@ export default function SubCategoryDetailPage() {
         document.head.appendChild(keywordTag);
       }
   
-      keywordTag.content = category.meta_keywords.join(",");
+      keywordTag.content = subCategory.metaKeywords.join(",");
     }
-  }, [category]);
+  }, [subCategory]);
 
   if (loading) {
     return (
@@ -267,7 +301,7 @@ export default function SubCategoryDetailPage() {
     );
   }
 
-  if (error || !categoryData) {
+  if (error || !subCategory) {
     return (
       <>
         <PromotionalBanner />
@@ -277,10 +311,10 @@ export default function SubCategoryDetailPage() {
             <div className="bg-white rounded-3xl shadow-xl p-12">
               <Package className="w-20 h-20 mx-auto mb-6 text-gray-400" />
               <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                {error || "Category not found"}
+                {error || "Subcategory not found"}
               </h3>
               <p className="text-gray-600 mb-8 text-lg">
-                Unable to load category details. Let's get you back on track.
+                Unable to load subcategory details. Let's get you back on track.
               </p>
               <Link
                 href="/"
@@ -296,27 +330,30 @@ export default function SubCategoryDetailPage() {
       </>
     );
   }
-const metaTitle = category?.name || "Category";
-const metaDescription = category?.description || "";
+const metaTitle = subCategory?.name || "Subcategory";
+const metaDescription = subCategory?.description || "";
   return (
     <>
     <>
   <Head>
     <title>{metaTitle}</title>
     <meta name="description" content={metaDescription} />
-    <meta name="keywords" content={category?.meta_keywords?.join(",") || ""} />
+    <meta
+      name="keywords"
+      content={subCategory?.metaKeywords?.join(",") || ""}
+    />
 
     {/* Open Graph / Facebook */}
     <meta property="og:title" content={metaTitle} />
     <meta property="og:description" content={metaDescription} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={category?.image_url} />
+    <meta property="og:image" content={subCategory?.image_url} />
 
     {/* Twitter */}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={metaTitle} />
     <meta name="twitter:description" content={metaDescription} />
-    <meta name="twitter:image" content={category?.image_url} />
+    <meta name="twitter:image" content={subCategory?.image_url} />
   </Head>
 
   {/* ...rest of your component */}
@@ -330,7 +367,7 @@ const metaDescription = category?.description || "";
         <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0" style={{
-              backgroundImage: `url(${category?.image_url})`,
+              backgroundImage: `url(${subCategory?.image_url})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               filter: 'blur(20px)',
@@ -344,16 +381,16 @@ const metaDescription = category?.description || "";
                 Home
               </Link>
               <span>›</span>
-              <span className="text-white font-medium">{category?.name}</span>
+              <span className="text-white font-medium">{subCategory?.name}</span>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="max-w-2xl">
                 <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-                  {category?.name}
+                  {subCategory?.name}
                 </h1>
                 <p className="text-xl text-gray-300 leading-relaxed">
-                  {category?.description}
+                  {subCategory?.description}
                 </p>
                 <div className="flex items-center gap-6 mt-8">
                   <div className="flex items-center gap-2 text-white">

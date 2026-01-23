@@ -9,6 +9,7 @@ import Navbar from "@/components/navbar/Navbar";
 import Category from "@/components/Category";
 import ProductsMainPage from "@/components/ProductMainPage";
 import EcommerceSearchUI from "@/components/Search";
+import CategoryMegaBar from "@/components/CategoryMegaBar";
 
 declare global {
   interface Window {
@@ -33,6 +34,7 @@ export default function Home() {
     <>
       <PromotionalBanner />
       <Navbar />
+      <CategoryMegaBar />
       <EcommerceSearchUI/>
       {/* <FullWidthBanner /> */}
       <Category/>

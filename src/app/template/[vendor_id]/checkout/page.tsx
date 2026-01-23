@@ -6,6 +6,7 @@ import {
   getTemplateAuth,
   templateApiFetch,
 } from "../../components/templateAuth";
+import { trackCheckout, trackPurchase } from "@/lib/analytics-events";
 
 type Address = {
   _id: string;
@@ -84,6 +85,22 @@ export default function TemplateCheckoutPage() {
     load();
   }, [vendorId]);
 
+  useEffect(() => {
+    if (!auth || !cart) return;
+    trackCheckout({
+      vendorId,
+      userId: auth?.user?.id,
+      cartTotal: cart.subtotal,
+      metadata: {
+        items: cart.items?.map((item) => ({
+          name: item.product_name,
+          quantity: item.quantity,
+          total_price: item.total_price,
+        })),
+      },
+    });
+  }, [auth, cart, vendorId]);
+
   const handleCreateAddress = async (event: React.FormEvent) => {
     event.preventDefault();
     setCreating(true);
@@ -122,12 +139,25 @@ export default function TemplateCheckoutPage() {
     setCreating(true);
     setError("");
     try {
-      await templateApiFetch(vendorId, "/orders", {
+      const orderRes = await templateApiFetch(vendorId, "/orders", {
         method: "POST",
         body: JSON.stringify({
           address_id: selectedAddress,
           payment_method: "cod",
         }),
+      });
+      trackPurchase({
+        vendorId,
+        userId: auth?.user?.id,
+        cartTotal: total,
+        orderId: orderRes?.order?._id || orderRes?.order?.order_number,
+        metadata: {
+          items: cart?.items?.map((item) => ({
+            name: item.product_name,
+            quantity: item.quantity,
+            total_price: item.total_price,
+          })),
+        },
       });
       router.push(`/template/${vendorId}/orders`);
     } catch (err: any) {

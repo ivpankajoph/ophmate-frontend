@@ -1,5 +1,4 @@
 import axios, { AxiosInstance } from "axios";
-import { store } from "@/store";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 
 const BASE_URL = NEXT_PUBLIC_API_URL;
@@ -11,11 +10,16 @@ const userApi: AxiosInstance = axios.create({
 });
 
 userApi.interceptors.request.use(
-  (config) => {
-    const state = store.getState() as any;
-    const token = state.customerAuth?.token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    try {
+      const storeModule = await import("@/store");
+      const state = storeModule.store.getState() as any;
+      const token = state.customerAuth?.token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      // Ignore when store isn't initialized yet.
     }
     return config;
   },

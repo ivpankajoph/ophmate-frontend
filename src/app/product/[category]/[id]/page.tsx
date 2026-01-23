@@ -32,6 +32,7 @@ import { useParams, useRouter } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
 import { addCartItem } from "@/store/slices/customerCartSlice";
 import { toastError, toastSuccess } from "@/lib/toast";
+import { trackAddToCart } from "@/lib/analytics-events";
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
@@ -57,6 +58,7 @@ export default function ProductDetailPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const token = useSelector((state: RootState) => state.customerAuth.token);
+  const user = useSelector((state: RootState) => state.customerAuth.user);
   const { product, loading, error } = useSelector(
     (state: any) => state.product,
   );
@@ -142,6 +144,14 @@ export default function ProductDetailPage() {
           quantity,
         }),
       ).unwrap();
+      trackAddToCart({
+        vendorId: product?.vendor?._id,
+        userId: user?._id || user?.id || "",
+        productId: product._id,
+        productName: product.productName,
+        productPrice: selectedVariant.finalPrice || 0,
+        quantity,
+      });
       toastSuccess("Added to cart");
     } catch (error: any) {
       toastError(error || "Failed to add to cart");

@@ -1,0 +1,79 @@
+import { NEXT_PUBLIC_API_URL } from "@/config/variables";
+
+const API_BASE =
+  NEXT_PUBLIC_API_URL && NEXT_PUBLIC_API_URL.endsWith("/v1")
+    ? NEXT_PUBLIC_API_URL
+    : `${NEXT_PUBLIC_API_URL}/v1`;
+
+const getStorageId = (key: string, storage: Storage) => {
+  try {
+    const existing = storage.getItem(key);
+    if (existing) return existing;
+    const generated =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    storage.setItem(key, generated);
+    return generated;
+  } catch (error) {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+};
+
+const getSessionId = () =>
+  typeof window === "undefined"
+    ? ""
+    : getStorageId("oph_session_id", sessionStorage);
+
+const getVisitorId = () =>
+  typeof window === "undefined"
+    ? ""
+    : getStorageId("oph_visitor_id", localStorage);
+
+type AnalyticsPayload = {
+  eventType: "add_to_cart" | "checkout" | "purchase";
+  vendorId?: string;
+  userId?: string;
+  productId?: string;
+  productName?: string;
+  productPrice?: number;
+  quantity?: number;
+  cartTotal?: number;
+  orderId?: string;
+  metadata?: Record<string, unknown>;
+};
+
+const sendAnalyticsEvent = async (payload: AnalyticsPayload) => {
+  if (!API_BASE || typeof window === "undefined") return;
+
+  const body = {
+    ...payload,
+    sessionId: getSessionId(),
+    visitorId: getVisitorId(),
+    path: window.location.pathname,
+    fullUrl: window.location.href,
+    pageTitle: document.title,
+    referrer: document.referrer || "",
+  };
+
+  try {
+    await fetch(`${API_BASE}/analytics/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      keepalive: true,
+    });
+  } catch (error) {
+    // Analytics should not block user flows.
+  }
+};
+
+export const trackAddToCart = (payload: Omit<AnalyticsPayload, "eventType">) =>
+  sendAnalyticsEvent({ ...payload, eventType: "add_to_cart" });
+
+export const trackCheckout = (payload: Omit<AnalyticsPayload, "eventType">) =>
+  sendAnalyticsEvent({ ...payload, eventType: "checkout" });
+
+export const trackPurchase = (payload: Omit<AnalyticsPayload, "eventType">) =>
+  sendAnalyticsEvent({ ...payload, eventType: "purchase" });
+

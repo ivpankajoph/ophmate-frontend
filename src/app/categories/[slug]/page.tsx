@@ -57,29 +57,37 @@ interface Product {
   productCategory: string;
 }
 
-interface ApiResponse {
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+}
+
+interface ProductsResponse {
   success: boolean;
   products: Product[];
-  category: {
-    _id: string;
-    name: string;
-    slug: string;
-    description: string;
-    image_url: string;
-    meta_keywords?: string[];
-    meta_title?: string;
-    meta_description?: string;
-  };
+  category: Category;
+}
+
+interface CategoryResponse {
+  success: boolean;
+  data: Category;
 }
 
 export default function CategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const categoryId = params.slug as string;
+  const categorySlug = params.slug as string;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categoryData, setCategoryData] = useState<ApiResponse | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("relevance");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
@@ -93,8 +101,8 @@ export default function CategoryDetailPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryId}`,
+        const categoryResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/categories/slug/${categorySlug}`,
           {
             method: "GET",
             headers: {
@@ -103,29 +111,54 @@ export default function CategoryDetailPage() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.statusText}`);
+        if (!categoryResponse.ok) {
+          throw new Error(
+            `Failed to fetch category: ${categoryResponse.statusText}`
+          );
         }
 
-        const data: ApiResponse = await response.json();
-        setCategoryData(data);
+        const categoryData: CategoryResponse = await categoryResponse.json();
+
+        if (!categoryData?.data?._id) {
+          throw new Error("Category not found");
+        }
+
+        setCategory(categoryData.data);
+
+        const productsResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryData.data._id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!productsResponse.ok) {
+          throw new Error(
+            `Failed to fetch products: ${productsResponse.statusText}`
+          );
+        }
+
+        const productsData: ProductsResponse = await productsResponse.json();
+        setProducts(productsData?.products || []);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load category"
         );
         console.error("Error fetching category products:", err);
+        setCategory(null);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (categoryId) {
+    if (categorySlug) {
       fetchCategoryProducts();
     }
-  }, [categoryId]);
-
-  const category = categoryData?.category;
-  const products = categoryData?.products || [];
+  }, [categorySlug]);
 
   // Get all unique brands
   const allBrands = React.useMemo(() => {
@@ -208,10 +241,10 @@ useEffect(() => {
   if (!category) return;
 
   const metaTitle =
-    category.meta_title?.trim() || category.name || "Category";
+    category.metaTitle?.trim() || category.name || "Category";
 
   const metaDescription =
-    category.meta_description?.trim() ||
+    category.metaDescription?.trim() ||
     category.description ||
     "";
 
@@ -232,7 +265,7 @@ useEffect(() => {
   metaTag.content = metaDescription;
 
   // ✅ Optional: keywords
-  if (category.meta_keywords?.length) {
+  if (category.metaKeywords?.length) {
     let keywordTag = document.head.querySelector(
       'meta[name="keywords"]'
     ) as HTMLMetaElement | null;
@@ -243,7 +276,7 @@ useEffect(() => {
       document.head.appendChild(keywordTag);
     }
 
-    keywordTag.content = category.meta_keywords.join(",");
+    keywordTag.content = category.metaKeywords.join(",");
   }
 }, [category]);
 
@@ -269,7 +302,7 @@ useEffect(() => {
     );
   }
 
-  if (error || !categoryData) {
+  if (error || !category) {
     return (
       <>
         <PromotionalBanner />
@@ -298,8 +331,8 @@ useEffect(() => {
       </>
     );
   }
-  const metaTitle = category?.meta_title || "Category";
-  const metaDescription = category?.meta_description || "";
+  const metaTitle = category?.metaTitle || "Category";
+  const metaDescription = category?.metaDescription || "";
   return (
     <>
       <Head>
@@ -307,7 +340,7 @@ useEffect(() => {
         <meta name="description" content={metaDescription} />
         <meta
           name="keywords"
-          content={category?.meta_keywords?.join(",") || ""}
+          content={category?.metaKeywords?.join(",") || ""}
         />
 
         {/* Open Graph / Facebook */}

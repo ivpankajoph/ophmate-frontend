@@ -6,9 +6,45 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { getAllCategories } from "@/store/slices/category";
 
-export default function ProductNavbar() {
-  const [activeMainKey, setActiveMainKey] = useState<string | null>(null);
+type CategoryGroup = {
+  key: string;
+  main: any;
+  items: any[];
+};
+
+const ImageThumb = ({
+  src,
+  alt,
+  size = 36,
+}: {
+  src?: string | null;
+  alt?: string;
+  size?: number;
+}) => {
+  if (!src) {
+    return (
+      <div
+        className="rounded-full border border-gray-200 bg-gray-100"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt ?? ""}
+      width={size}
+      height={size}
+      className="rounded-full border border-gray-200 object-cover"
+      style={{ width: size, height: size }}
+    />
+  );
+};
+
+export default function CategoryMegaBar() {
   const dispatch = useDispatch<AppDispatch>();
+  const [activeMainKey, setActiveMainKey] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(getAllCategories());
@@ -18,15 +54,8 @@ export default function ProductNavbar() {
     (state: RootState) => (state as any).category.categories || []
   );
 
-  const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        key: string;
-        main: any;
-        items: any[];
-      }
-    >();
+  const grouped = useMemo<CategoryGroup[]>(() => {
+    const map = new Map<string, CategoryGroup>();
     categories.forEach((category: any) => {
       const main = category?.mainCategory || {};
       const key = main?._id || main?.name || "unassigned";
@@ -52,15 +81,17 @@ export default function ProductNavbar() {
     grouped.find((group) => group.key === activeMainKey) || grouped[0];
 
   return (
-    <nav className="bg-white shadow sticky top-0 z-40">
-      <div className="flex items-center gap-4 px-4 py-3">
+    <div className="relative z-30 border-y border-orange-100 bg-white">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
         <div className="relative group">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-orange-400 hover:text-orange-600"
+            className="flex items-center gap-2 rounded-md border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-700 shadow-sm transition hover:border-orange-400 hover:text-orange-600"
           >
             Browse Categories
-            <span className="text-xs text-gray-500">Hover</span>
+            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+              Hover
+            </span>
           </button>
 
           <div className="absolute left-0 top-full hidden pt-3 group-hover:block">
@@ -83,15 +114,11 @@ export default function ProductNavbar() {
                             : "text-gray-600 hover:bg-white hover:text-gray-900"
                         }`}
                       >
-                        <span className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 bg-gray-100">
-                          {group.main?.image_url ? (
-                            <img
-                              src={group.main.image_url}
-                              alt={group.main?.name || "Category"}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : null}
-                        </span>
+                        <ImageThumb
+                          src={group.main?.image_url}
+                          alt={group.main?.name || "Category"}
+                          size={32}
+                        />
                         <span>{group.main?.name || "Unassigned"}</span>
                       </button>
                     );
@@ -144,6 +171,6 @@ export default function ProductNavbar() {
           <span>Buyer Central</span>
         </div>
       </div>
-    </nav>
+    </div>
   );
 }

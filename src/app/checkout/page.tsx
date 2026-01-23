@@ -16,11 +16,13 @@ import { toastError, toastSuccess } from "@/lib/toast"
 import PromotionalBanner from "@/components/promotional-banner"
 import Navbar from "@/components/navbar/Navbar"
 import Footer from "@/components/footer"
+import { trackCheckout, trackPurchase } from "@/lib/analytics-events"
 
 export default function CheckoutPage() {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const token = useSelector((state: RootState) => state.customerAuth.token)
+  const user = useSelector((state: RootState) => state.customerAuth.user)
   const cart = useSelector((state: RootState) => state.customerCart.cart)
   const addresses = useSelector((state: RootState) => state.customerAddress.addresses)
   const loading = useSelector((state: RootState) => state.customerOrder.loading)
@@ -49,6 +51,21 @@ export default function CheckoutPage() {
   }, [dispatch, token, router])
 
   useEffect(() => {
+    if (!token || !cart) return
+    trackCheckout({
+      userId: user?._id || user?.id || "",
+      cartTotal: cart.subtotal,
+      metadata: {
+        items: cart.items?.map((item: any) => ({
+          name: item.product_name,
+          quantity: item.quantity,
+          total_price: item.total_price,
+        })),
+      },
+    })
+  }, [token, cart, user])
+
+  useEffect(() => {
     if (!selectedAddress && addresses.length > 0) {
       const defaultAddress = addresses.find((addr) => addr.is_default)
       setSelectedAddress(defaultAddress?._id || addresses[0]._id)
@@ -73,7 +90,7 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) return
     try {
-      await dispatch(
+      const orderRes = await dispatch(
         createOrder({
           address_id: selectedAddress,
           payment_method: "cod",
@@ -82,6 +99,18 @@ export default function CheckoutPage() {
           notes: "",
         }),
       ).unwrap()
+      trackPurchase({
+        userId: user?._id || user?.id || "",
+        cartTotal: cart?.subtotal,
+        orderId: orderRes?.order?._id || orderRes?.order?.order_number,
+        metadata: {
+          items: cart?.items?.map((item: any) => ({
+            name: item.product_name,
+            quantity: item.quantity,
+            total_price: item.total_price,
+          })),
+        },
+      })
       toastSuccess("Order placed")
       await dispatch(fetchCart())
       router.push("/orders")
