@@ -20,6 +20,7 @@ import {
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
+import Pagination from "@/components/ui/Pagination";
 import Head from "next/head";
 
 interface Variant {
@@ -72,6 +73,13 @@ interface ProductsResponse {
   success: boolean;
   products: Product[];
   category: Category;
+  count?: number;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 interface CategoryResponse {
@@ -94,6 +102,10 @@ export default function CategoryDetailPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const limit = 10;
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
@@ -126,7 +138,7 @@ export default function CategoryDetailPage() {
         setCategory(categoryData.data);
 
         const productsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryData.data._id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryData.data._id}?page=${page}&limit=${limit}`,
           {
             method: "GET",
             headers: {
@@ -143,6 +155,8 @@ export default function CategoryDetailPage() {
 
         const productsData: ProductsResponse = await productsResponse.json();
         setProducts(productsData?.products || []);
+        setTotalPages(productsData?.pagination?.totalPages || 1);
+        setTotalProducts(productsData?.pagination?.total || productsData?.count || 0);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load category"
@@ -158,6 +172,10 @@ export default function CategoryDetailPage() {
     if (categorySlug) {
       fetchCategoryProducts();
     }
+  }, [categorySlug, page, limit]);
+
+  useEffect(() => {
+    setPage(1);
   }, [categorySlug]);
 
   // Get all unique brands
@@ -236,6 +254,13 @@ export default function CategoryDetailPage() {
 
   const handleProductClick = (categoryId: string, productId: string) => {
     router.push(`/product/${categoryId}/${productId}`);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 useEffect(() => {
   if (!category) return;
@@ -396,7 +421,7 @@ useEffect(() => {
                   <div className="flex items-center gap-2 text-white">
                     <Package className="w-5 h-5 text-blue-400" />
                     <span className="font-semibold">
-                      {filteredAndSortedProducts.length}
+                      {totalProducts || filteredAndSortedProducts.length}
                     </span>
                     <span className="text-gray-300">Products</span>
                   </div>
@@ -571,7 +596,7 @@ useEffect(() => {
                     <p className="text-gray-600">
                       Showing{" "}
                       <span className="font-semibold text-gray-900">
-                        {filteredAndSortedProducts.length}
+                        {totalProducts || filteredAndSortedProducts.length}
                       </span>{" "}
                       results
                     </p>
@@ -695,6 +720,12 @@ useEffect(() => {
                       </div>
                     ))}
                   </div>
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    isLoading={loading}
+                  />
                 </>
               ) : (
                 <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
@@ -726,3 +757,15 @@ useEffect(() => {
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

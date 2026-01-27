@@ -16,19 +16,31 @@ interface Category {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const fetchCategories = async (): Promise<Category[]> => {
+const DEFAULT_LIMIT = 6;
+
+const fetchCategories = async (
+  page: number,
+  limit: number,
+): Promise<{ data: Category[]; totalPages: number }> => {
   try {
-    const res = await fetch(`${API_BASE_URL}/categories/getall`);
+    const res = await fetch(
+      `${API_BASE_URL}/categories/getall?page=${page}&limit=${limit}`,
+    );
     const data = await res.json();
-    return data.success ? data.data : [];
+    return data.success
+      ? {
+          data: data.data || [],
+          totalPages: data.pagination?.totalPages || 1,
+        }
+      : { data: [], totalPages: 1 };
   } catch (error) {
     console.error("Failed to fetch categories", error);
-    return [];
+    return { data: [], totalPages: 1 };
   }
 };
 
 const CategoryCard = ({ category }: { category: Category }) => (
-  <Link href={`/categories/${category._id}`} className="block">
+  <Link href={`/categories/${category.slug}`} className="block">
     <div className="group relative overflow-hidden rounded-2xl h-80 cursor-pointer">
       <div className="absolute inset-0">
         <img
@@ -69,8 +81,11 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetchCategories()
-      .then(setCategories)
+    setLoading(true);
+    fetchCategories(1, DEFAULT_LIMIT)
+      .then((result) => {
+        setCategories(result.data);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -83,23 +98,33 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8 -mt-32">
+    <section className="bg-white py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Discover Our Categories
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Curated selections of premium products tailored for your lifestyle
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Shop by category
+          </h2>
+          <p className="text-base text-gray-600 max-w-2xl mx-auto">
+            Explore curated collections tailored for every lifestyle.
           </p>
+          <div className="mt-4">
+            <Link
+              href="/categories"
+              className="inline-flex items-center justify-center rounded-full border border-orange-200 px-5 py-2 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-700"
+            >
+              View all categories
+            </Link>
+          </div>
         </div>
 
         {categories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((cat) => (
-              <CategoryCard key={cat._id} category={cat} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.map((cat) => (
+                <CategoryCard key={cat._id} category={cat} />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-20">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -109,6 +134,6 @@ export default function CategoriesPage() {
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

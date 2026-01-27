@@ -2,20 +2,28 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
-import { getAllCategories } from "@/store/slices/category";
 
-type CategoryGroup = {
-  key: string;
-  main: any;
-  items: any[];
+type MainCategory = {
+  _id?: string;
+  name?: string;
+  slug?: string;
+  image_url?: string;
+  categories?: Array<{
+    _id?: string;
+    name?: string;
+    slug?: string;
+    subcategories?: Array<{
+      _id?: string;
+      name?: string;
+      slug?: string;
+    }>;
+  }>;
 };
 
 const ImageThumb = ({
   src,
   alt,
-  size = 36,
+  size = 56,
 }: {
   src?: string | null;
   alt?: string;
@@ -43,71 +51,91 @@ const ImageThumb = ({
 };
 
 export default function CategoryMegaBar() {
-  const dispatch = useDispatch<AppDispatch>();
-  const [activeMainKey, setActiveMainKey] = useState<string | null>(null);
+  const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
+  const [activeMainId, setActiveMainId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(getAllCategories());
-  }, [dispatch]);
-
-  const categories = useSelector(
-    (state: RootState) => (state as any).category.categories || []
-  );
-
-  const grouped = useMemo<CategoryGroup[]>(() => {
-    const map = new Map<string, CategoryGroup>();
-    categories.forEach((category: any) => {
-      const main = category?.mainCategory || {};
-      const key = main?._id || main?.name || "unassigned";
-      if (!map.has(key)) {
-        map.set(key, { key, main, items: [] });
+    let isMounted = true;
+    const fetchMainCategories = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/maincategories/getall`
+        );
+        const data = await res.json();
+        if (!isMounted) return;
+        const list = data?.data || [];
+        setMainCategories(list);
+        if (list.length) {
+          setActiveMainId(list[0]?._id || null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch main categories", error);
+        if (isMounted) {
+          setMainCategories([]);
+          setActiveMainId(null);
+        }
       }
-      map.get(key)?.items.push(category);
-    });
-    return Array.from(map.values()).sort((a, b) => {
-      const nameA = a.main?.name || "Unassigned";
-      const nameB = b.main?.name || "Unassigned";
-      return nameA.localeCompare(nameB);
-    });
-  }, [categories]);
+    };
 
-  useEffect(() => {
-    if (!activeMainKey && grouped.length) {
-      setActiveMainKey(grouped[0].key);
-    }
-  }, [activeMainKey, grouped]);
+    fetchMainCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const activeGroup =
-    grouped.find((group) => group.key === activeMainKey) || grouped[0];
+  const activeMain = useMemo(() => {
+    return (
+      mainCategories.find((item) => item._id === activeMainId) ||
+      mainCategories[0] ||
+      null
+    );
+  }, [mainCategories, activeMainId]);
 
   return (
     <div className="relative z-30 border-y border-orange-100 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+      <div className="mx-auto max-w-7xl px-4 py-3">
         <div className="relative group">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-md border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-700 shadow-sm transition hover:border-orange-400 hover:text-orange-600"
-          >
-            Browse Categories
-            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
-              Hover
-            </span>
-          </button>
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1">
+            {mainCategories.map((main) => {
+              const isActive = main._id === activeMain?._id;
+              return (
+                <button
+                  key={main._id || main.slug || main.name}
+                  type="button"
+                  onMouseEnter={() => setActiveMainId(main._id || null)}
+                  className={`flex min-w-[92px] flex-col items-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-semibold transition ${
+                    isActive
+                      ? "text-orange-600"
+                      : "text-gray-700 hover:text-orange-600"
+                  }`}
+                >
+                  <div className="rounded-full bg-white p-0.5 shadow-sm ring-1 ring-orange-100">
+                    <ImageThumb
+                      src={main.image_url}
+                      alt={main.name || "Category"}
+                      size={56}
+                    />
+                  </div>
+                  <span className="line-clamp-2">{main.name}</span>
+                </button>
+              );
+            })}
+          </div>
 
-          <div className="absolute left-0 top-full hidden pt-3 group-hover:block">
-            <div className="w-[960px] max-w-[95vw] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
-              <div className="grid grid-cols-[240px_1fr]">
+          <div className="absolute left-0 top-full hidden w-full pt-2 group-hover:block">
+            <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+              <div className="grid grid-cols-[220px_1fr]">
                 <div className="max-h-[520px] overflow-auto border-r border-gray-100 bg-gray-50">
                   <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    Categories for you
+                    Main categories
                   </div>
-                  {grouped.map((group) => {
-                    const isActive = group.key === activeGroup?.key;
+                  {mainCategories.map((main) => {
+                    const isActive = main._id === activeMain?._id;
                     return (
                       <button
-                        key={group.key}
+                        key={main._id || main.slug || main.name}
                         type="button"
-                        onMouseEnter={() => setActiveMainKey(group.key)}
+                        onMouseEnter={() => setActiveMainId(main._id || null)}
                         className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition ${
                           isActive
                             ? "bg-white font-semibold text-gray-900"
@@ -115,60 +143,58 @@ export default function CategoryMegaBar() {
                         }`}
                       >
                         <ImageThumb
-                          src={group.main?.image_url}
-                          alt={group.main?.name || "Category"}
+                          src={main.image_url}
+                          alt={main.name || "Category"}
                           size={32}
                         />
-                        <span>{group.main?.name || "Unassigned"}</span>
+                        <span>{main.name || "Unassigned"}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="max-h-[520px] overflow-auto p-5">
+                <div className="max-h-[520px] overflow-auto p-6">
                   <div className="mb-4 text-lg font-semibold text-gray-900">
-                    {activeGroup?.main?.name || "Categories"}
+                    {activeMain?.name || "Categories"}
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {(activeGroup?.items || []).map((category: any) => (
-                      <div
-                        key={category._id || category.id || category.name}
-                        className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm"
-                      >
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {(activeMain?.categories || []).map((category) => (
+                      <div key={category._id || category.slug || category.name}>
                         <Link
-                          href={`/category/${category.slug}`}
+                          href={`/categories/${category.slug}`}
                           className="text-sm font-semibold text-gray-900 hover:text-orange-600"
                         >
                           {category.name}
                         </Link>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                        <div className="mt-3 flex flex-col gap-1 text-sm text-gray-500">
                           {(category.subcategories || []).length ? (
-                            category.subcategories.map((sub: any) => (
+                            category.subcategories?.map((sub) => (
                               <Link
-                                key={sub._id || sub.id || sub.name}
-                                href={`/subcategory/${sub.slug}`}
-                                className="rounded-full border border-gray-200 px-2 py-1 hover:border-orange-400 hover:text-orange-600"
+                                key={sub._id || sub.slug || sub.name}
+                                href={`/sub-categories/${sub.slug}`}
+                                className="hover:text-orange-600"
                               >
                                 {sub.name}
                               </Link>
                             ))
                           ) : (
-                            <span className="text-gray-400">No subcategories</span>
+                            <span className="text-gray-400">
+                              No subcategories
+                            </span>
                           )}
                         </div>
                       </div>
                     ))}
+                    {!activeMain?.categories?.length && (
+                      <div className="text-sm text-gray-500">
+                        No categories available yet.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="hidden gap-4 text-sm text-gray-500 lg:flex">
-          <span className="font-medium text-gray-900">Featured selections</span>
-          <span>Order protections</span>
-          <span>Buyer Central</span>
         </div>
       </div>
     </div>

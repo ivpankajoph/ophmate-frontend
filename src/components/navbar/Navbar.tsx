@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Menu, ShoppingCart, Heart, User, Search, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,12 +18,76 @@ import Image from "next/image"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "@/store"
 import { logoutCustomer } from "@/store/slices/customerAuthSlice"
+import { useRouter } from "next/navigation"
+import useDebounce from "@/hooks/useDebounce"
+
+type SearchResult = {
+  type: "product" | "category"
+  id: string
+  name: string
+  slug?: string | null
+  categorySlug?: string | null
+  imageUrl?: string | null
+}
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
   const [search, setSearch] = useState("")
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const dispatch = useDispatch<AppDispatch>()
   const token = useSelector((state: RootState) => state.customerAuth.token)
+  const router = useRouter()
+  const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "", [])
+  const debouncedSearch = useDebounce(search, 350)
+
+  useEffect(() => {
+    const query = debouncedSearch.trim()
+    if (!query) {
+      setResults([])
+      setIsLoading(false)
+      return
+    }
+    if (!apiBase) {
+      setResults([])
+      return
+    }
+
+    const controller = new AbortController()
+    let isActive = true
+
+    const runSearch = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(
+          `${apiBase}/search?query=${encodeURIComponent(query)}`,
+          { signal: controller.signal },
+        )
+        if (!response.ok) {
+          throw new Error("Search request failed")
+        }
+        const data = await response.json()
+        if (isActive) {
+          setResults(Array.isArray(data?.results) ? data.results : [])
+        }
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          console.error("Search error:", error)
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    runSearch()
+
+    return () => {
+      isActive = false
+      controller.abort()
+    }
+  }, [apiBase, debouncedSearch])
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -32,6 +96,18 @@ export default function Navbar() {
     { name: "Deals", href: "/deals" },
     { name: "Contact", href: "/contact" },
   ]
+
+  const handleResultClick = (result: SearchResult) => {
+    const targetSlug =
+      result.type === "product" ? result.categorySlug : result.slug
+    if (targetSlug) {
+      router.push(`/categories/${targetSlug}`)
+    }
+    setSearch("")
+    setResults([])
+  }
+
+  const renderResults = search.trim().length > 0
 
   return (
     <header className="w-full sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
@@ -63,14 +139,62 @@ export default function Navbar() {
         </div>
 
         {/* Center: Search bar */}
-        <div className="hidden md:flex w-1/3 items-center relative">
-          <Input
-            placeholder="Search for products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-          <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+        <div className="hidden md:flex w-1/3 items-center">
+          <div className="relative w-full">
+            <Input
+              placeholder="Search for products or categories..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {renderResults && (
+              <div className="absolute left-0 right-0 top-full mt-2 rounded-md border bg-background shadow-lg z-50 overflow-hidden">
+                {isLoading ? (
+                  <div className="p-3 text-sm text-muted-foreground">
+                    Searching...
+                  </div>
+                ) : results.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {results.map((result) => (
+                      <button
+                        key={`${result.type}-${result.id}`}
+                        type="button"
+                        onClick={() => handleResultClick(result)}
+                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-muted/60 text-left"
+                      >
+                        {result.imageUrl ? (
+                          <Image
+                            src={result.imageUrl}
+                            alt={result.name}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            IMG
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {result.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {result.type}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-sm text-muted-foreground">
+                    No results found.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right: Icons */}
@@ -133,14 +257,60 @@ export default function Navbar() {
 
       {/* Mobile Search Bar */}
       <div className="md:hidden border-t px-4 py-2 bg-background">
-        <div className="flex items-center relative">
+        <div className="relative">
           <Input
-            placeholder="Search for products..."
+            placeholder="Search for products or categories..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
-          <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          {renderResults && (
+            <div className="absolute left-0 right-0 top-full mt-2 rounded-md border bg-background shadow-lg z-50 overflow-hidden">
+              {isLoading ? (
+                <div className="p-3 text-sm text-muted-foreground">
+                  Searching...
+                </div>
+              ) : results.length > 0 ? (
+                <div className="max-h-80 overflow-y-auto">
+                  {results.map((result) => (
+                    <button
+                      key={`${result.type}-${result.id}-mobile`}
+                      type="button"
+                      onClick={() => handleResultClick(result)}
+                      className="w-full px-3 py-2 flex items-center gap-3 hover:bg-muted/60 text-left"
+                    >
+                      {result.imageUrl ? (
+                        <Image
+                          src={result.imageUrl}
+                          alt={result.name}
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                          IMG
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {result.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {result.type}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 text-sm text-muted-foreground">
+                  No results found.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>

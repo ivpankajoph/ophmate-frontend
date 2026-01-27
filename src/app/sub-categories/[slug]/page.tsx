@@ -20,6 +20,7 @@ import {
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
+import Pagination from "@/components/ui/Pagination";
 import Head from "next/head";
 
 interface Variant {
@@ -72,6 +73,13 @@ interface ProductsResponse {
   success: boolean;
   products: Product[];
   subCategory: SubCategory;
+  count?: number;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 interface SubCategoryResponse {
@@ -94,6 +102,10 @@ export default function SubCategoryDetailPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const limit = 10;
 
   useEffect(() => {
     const fetchSubCategoryProducts = async () => {
@@ -127,7 +139,7 @@ export default function SubCategoryDetailPage() {
         setSubCategory(subCategoryData.data);
 
         const productsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${subCategoryData.data._id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${subCategoryData.data._id}?page=${page}&limit=${limit}`,
           {
             method: "GET",
             headers: {
@@ -144,6 +156,8 @@ export default function SubCategoryDetailPage() {
 
         const productsData: ProductsResponse = await productsResponse.json();
         setProducts(productsData?.products || []);
+        setTotalPages(productsData?.pagination?.totalPages || 1);
+        setTotalProducts(productsData?.pagination?.total || productsData?.count || 0);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load subcategory"
@@ -159,6 +173,10 @@ export default function SubCategoryDetailPage() {
     if (categorySlug) {
       fetchSubCategoryProducts();
     }
+  }, [categorySlug, page, limit]);
+
+  useEffect(() => {
+    setPage(1);
   }, [categorySlug]);
 
   // Get all unique brands
@@ -237,6 +255,13 @@ export default function SubCategoryDetailPage() {
 
   const handleProductClick = (categoryId: string, productId: string) => {
     router.push(`/product/${categoryId}/${productId}`);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   useEffect(() => {
@@ -395,7 +420,7 @@ const metaDescription = subCategory?.description || "";
                 <div className="flex items-center gap-6 mt-8">
                   <div className="flex items-center gap-2 text-white">
                     <Package className="w-5 h-5 text-blue-400" />
-                    <span className="font-semibold">{filteredAndSortedProducts.length}</span>
+                    <span className="font-semibold">{totalProducts || filteredAndSortedProducts.length}</span>
                     <span className="text-gray-300">Products</span>
                   </div>
                   <div className="flex items-center gap-2 text-white">
@@ -561,7 +586,7 @@ const metaDescription = subCategory?.description || "";
                 <>
                   <div className="mb-6">
                     <p className="text-gray-600">
-                      Showing <span className="font-semibold text-gray-900">{filteredAndSortedProducts.length}</span> results
+                      Showing <span className="font-semibold text-gray-900">{totalProducts || filteredAndSortedProducts.length}</span> results
                     </p>
                   </div>
 
@@ -674,6 +699,12 @@ const metaDescription = subCategory?.description || "";
                       </div>
                     ))}
                   </div>
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    isLoading={loading}
+                  />
                 </>
               ) : (
                 <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
@@ -705,3 +736,15 @@ const metaDescription = subCategory?.description || "";
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
