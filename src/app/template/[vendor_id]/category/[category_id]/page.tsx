@@ -7,14 +7,23 @@ import { Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 export default function CategoryProductsPage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const vendor_id = params.vendor_id as string;
   const categoryId = params.category_id as string;
   const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-white";
 
   useEffect(() => {
     const load = async () => {
@@ -79,14 +88,14 @@ export default function CategoryProductsPage() {
   }, [categoryId, products, searchTerm, categoryMap]);
 
   return (
-    <div className="min-h-screen bg-white py-16 lg:py-20">
+    <div className={`${pageClass} py-16 lg:py-20`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
               Category
             </p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            <h1 className="text-3xl sm:text-4xl font-bold">
               {label}
             </h1>
           </div>
@@ -94,7 +103,7 @@ export default function CategoryProductsPage() {
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 template-focus-accent"
+              className={`w-full rounded-lg pl-10 pr-4 py-2 template-focus-accent ${isStudio ? "border border-slate-700 bg-slate-950 text-slate-100" : "border border-gray-300"}`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -113,7 +122,7 @@ export default function CategoryProductsPage() {
                 href={`/template/${vendor_id}/product/${product._id}`}
                 className="group cursor-pointer"
               >
-                <div className="relative overflow-hidden bg-gray-100 mb-4 aspect-square rounded-xl">
+                <div className={`relative overflow-hidden mb-4 aspect-square rounded-xl ${isStudio ? "bg-slate-900" : "bg-gray-100"}`}>
                   {product?.defaultImages?.[0]?.url ? (
                     <img
                       src={product.defaultImages[0].url}
@@ -126,20 +135,20 @@ export default function CategoryProductsPage() {
                     </div>
                   )}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                <h3 className="text-xl font-semibold mb-1">
                   {product.productName || "Untitled Product"}
                 </h3>
-                <p className="text-gray-500 text-sm mb-2 line-clamp-2">
+                <p className={`${isStudio ? "text-slate-400" : "text-gray-500"} text-sm mb-2 line-clamp-2`}>
                   {product.shortDescription || "No description"}
                 </p>
-                <p className="text-gray-900 text-lg font-semibold">
+                <p className="text-lg font-semibold">
                   ₹{product?.variants?.[0]?.finalPrice || product?.finalPrice || "--"}
                 </p>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-12 text-center text-gray-500">
+          <div className={`rounded-2xl border border-dashed p-12 text-center ${isStudio ? "border-slate-800 bg-slate-900/70 text-slate-400" : "border-gray-200 bg-gray-50 text-gray-500"}`}>
             No products found for this category.
           </div>
         )}

@@ -91,14 +91,14 @@ export default function VendorRegistrationPage() {
     }
 
     try {
-      await dispatch(sendOtp(phone));
-
+      await dispatch(sendOtp(phone)).unwrap();
       sessionStorage.setItem("vendor_phone", phone);
-
       Swal.fire("Success", "OTP sent successfully", "success");
     } catch (err) {
-      console.log(err, "error");
-      Swal.fire("Error", "Something went wrong", "error");
+      console.error(err, "error");
+      const message =
+        typeof err === "string" ? err : "Failed to send OTP. Please try again.";
+      Swal.fire("Error", message, "error");
     }
   };
 
@@ -111,10 +111,11 @@ export default function VendorRegistrationPage() {
       dispatch(resetOtpState());
     }
   }, [success, error, dispatch]);
-  const handleResend = () => {
+  const handleResend = async () => {
     setOtp(["", "", "", "", "", ""]);
     setTimer(30);
     setCanResend(false);
+    await handleSubmit();
   };
 
   const handleVerifyOtp = async () => {

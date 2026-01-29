@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { useTemplateTheme } from './useTemplateTheme'
+import { useTemplateVariant } from './useTemplateVariant'
 
 type Props = {
   children: ReactNode
@@ -10,6 +11,7 @@ type Props = {
 
 export function TemplateThemeProvider({ children }: Props) {
   const { templateColor, bannerColor, fontScale } = useTemplateTheme()
+  const variant = useTemplateVariant()
   const initialStyles = useRef<{
     fontSize: string
     templateColor: string
@@ -54,5 +56,9 @@ export function TemplateThemeProvider({ children }: Props) {
     }
   }, [])
 
-  return <div className="template-theme">{children}</div>
+  return (
+    <div className={`template-theme template-variant-${variant.key}`}>
+      {children}
+    </div>
+  )
 }

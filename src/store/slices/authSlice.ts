@@ -28,7 +28,7 @@ export const sendOtp = createAsyncThunk<
 >('auth/sendOtp', async (phone, { rejectWithValue }) => {
   try {
     const goodPhone = `91${phone}`
-    const response = await axios.post(`${BASE_URL}/vendor/send-otp`, { goodPhone })
+    const response = await axios.post(`${BASE_URL}/vendors/send-otp`, { goodPhone })
     console.log("sdadas",response,response.data)
     sessionStorage.setItem("vendor_otp",response.data.otp)
     return response.data
@@ -43,7 +43,7 @@ export const verifyOtp = createAsyncThunk<
   { rejectValue: string }
 >('auth/verifyOtp', async ({ phone, otp }, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${BASE_URL}/vendor/verify-otp`, { phone, otp })
+    const response = await axios.post(`${BASE_URL}/vendors/verify-otp`, { phone, otp })
     console.log(response.data,"asdasdsa")
     return response.data.token
   } catch (error: any) {
@@ -63,7 +63,7 @@ export const sendEmailOtp = createAsyncThunk<
     const state = getState()
     const token = state?.auth?.token
     const response = await axios.post(
-      `${BASE_URL}/vendor/send-email-otp`,
+      `${BASE_URL}/vendors/send-email-otp`,
       { email },
       { headers: { Authorization: `Bearer ${token}` } }
     )
@@ -82,7 +82,7 @@ export const verifyEmailOtp = createAsyncThunk<
     const state = getState()
     const token = state?.auth?.token
     const response = await axios.post(
-      `${BASE_URL}/vendor/verify-email-otp`,
+      `${BASE_URL}/vendors/verify-email-otp`,
       { email, otp },
       { headers: { Authorization: `Bearer ${token}` } }
     )

@@ -18,8 +18,10 @@ import { useParams } from "next/navigation";
 import axios from "axios";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { clearTemplateAuth, getTemplateAuth } from "./templateAuth";
+import { useTemplateVariant } from "./useTemplateVariant";
 
 export default function Navbar() {
+  const variant = useTemplateVariant();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
@@ -40,6 +42,8 @@ export default function Navbar() {
   const vendor_id = params.vendor_id;
 
   const menuItems = ["Home", "About", "Contact"];
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
 
   useEffect(() => {
     const load = async () => {
@@ -109,7 +113,11 @@ export default function Navbar() {
   }, [categories, activeCategoryId]);
 
   return (
-    <nav className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-6 relative z-20 backdrop-blur-2xl">
+    <nav
+      className={`flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-6 relative z-20 backdrop-blur-2xl ${
+        isStudio ? "bg-slate-950/80 text-slate-100" : ""
+      }`}
+    >
       {/* Logo Section */}
       <div className="flex items-center gap-3 md:gap-4">
         <div className="w-12 h-12 rounded-full border flex items-center justify-center overflow-hidden shadow-sm">
@@ -129,7 +137,7 @@ export default function Navbar() {
       </div>
 
       {/* Desktop Menu */}
-      <div className="hidden lg:flex items-center gap-8">
+      <div className={`hidden lg:flex items-center gap-8 ${isStudio ? "gap-6" : ""}`}>
         {menuItems.map((item) => (
           <Link
             key={item}
@@ -138,14 +146,18 @@ export default function Navbar() {
                 ? `/template/${vendor_id}`
                 : `/template/${vendor_id}/${item.toLowerCase()}`
             }
-            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+            className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+              isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+            }`}
           >
             {item}
           </Link>
         ))}
         <Link
           href={`/template/${vendor_id}/cart`}
-          className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+          className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+            isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+          }`}
         >
           Cart
         </Link>
@@ -153,13 +165,17 @@ export default function Navbar() {
           <>
             <Link
               href={`/template/${vendor_id}/orders`}
-              className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+              className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+                isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+              }`}
             >
               Orders
             </Link>
             <Link
               href={`/template/${vendor_id}/profile`}
-              className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+              className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+                isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+              }`}
             >
               Profile
             </Link>
@@ -167,7 +183,9 @@ export default function Navbar() {
         ) : (
           <Link
             href={`/template/${vendor_id}/login`}
-            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+            className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+              isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+            }`}
           >
             Login
           </Link>
@@ -183,16 +201,18 @@ export default function Navbar() {
         ))}
 
         <div className="relative group">
-          <Link
-            href={`/template/${vendor_id}/category`}
-            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
-          >
-            Category
-          </Link>
+        <Link
+          href={`/template/${vendor_id}/category`}
+          className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+            isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
+          }`}
+        >
+          Category
+        </Link>
 
-          <div className="pointer-events-none absolute left-0 top-full pt-4 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
-            <div className="flex min-w-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-              <div className="w-1/2 border-r border-slate-100 p-4">
+          <div className="pointer-events-none absolute right-0 top-full z-50 w-[90vw] max-w-[560px] pt-4 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+            <div className={`flex w-full overflow-hidden rounded-2xl border shadow-2xl ${isStudio ? "border-slate-800 bg-slate-900 text-slate-100" : "border-slate-200 bg-white"}`}>
+              <div className={`w-1/2 border-r p-4 ${isStudio ? "border-slate-800" : "border-slate-100"}`}>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                   Categories
                 </p>
@@ -205,15 +225,19 @@ export default function Navbar() {
                         onMouseEnter={() => setActiveCategoryId(category._id)}
                         className={`rounded-xl px-3 py-2 text-sm transition ${
                           activeCategoryId === category._id
-                            ? "bg-slate-100 text-slate-900"
-                            : "text-slate-600 hover:bg-slate-50"
+                            ? isStudio
+                              ? "bg-slate-800 text-slate-100"
+                              : "bg-slate-100 text-slate-900"
+                            : isStudio
+                              ? "text-slate-300 hover:bg-slate-800/60"
+                              : "text-slate-600 hover:bg-slate-50"
                         }`}
                       >
                         {category?.name || "Category"}
                       </Link>
                     ))
                   ) : (
-                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    <div className={`rounded-xl border border-dashed px-3 py-6 text-center text-xs uppercase tracking-[0.3em] text-slate-400 ${isStudio ? "border-slate-700 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
                       No categories
                     </div>
                   )}
@@ -231,14 +255,14 @@ export default function Navbar() {
                         <Link
                           key={sub._id}
                           href={`/template/${vendor_id}/category/${activeCategoryId}`}
-                          className="rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+                          className={`rounded-xl px-3 py-2 text-sm transition ${isStudio ? "text-slate-300 hover:bg-slate-800/60" : "text-slate-600 hover:bg-slate-50"}`}
                         >
                           {sub?.name || "Subcategory"}
                         </Link>
                       )
                     )
                   ) : (
-                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    <div className={`rounded-xl border border-dashed px-3 py-6 text-center text-xs uppercase tracking-[0.3em] text-slate-400 ${isStudio ? "border-slate-700 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
                       No subcategories
                     </div>
                   )}
@@ -276,7 +300,9 @@ export default function Navbar() {
               setIsLoggedIn(false);
               setCartCount(0);
             }}
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900"
+            className={`text-xs font-semibold uppercase tracking-[0.2em] ${
+              isStudio ? "text-slate-300 hover:text-white" : "text-slate-500 hover:text-slate-900"
+            }`}
           >
             Logout
           </button>

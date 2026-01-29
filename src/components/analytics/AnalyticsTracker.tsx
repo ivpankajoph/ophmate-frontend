@@ -26,6 +26,9 @@ const getVendorIdFromPath = (path: string) => {
   return match?.[1] || "";
 };
 
+const getSourceFromPath = (path: string) =>
+  path.startsWith("/template/") ? "template" : "ophmart";
+
 const buildMetadata = (searchParams: URLSearchParams | null) => {
   if (!searchParams) return {};
   const utmSource = searchParams.get("utm_source");
@@ -127,6 +130,7 @@ export default function AnalyticsTracker() {
     const path = `${window.location.pathname}${window.location.search}`;
     const fullUrl = window.location.href;
     const now = Date.now();
+    const source = getSourceFromPath(window.location.pathname);
 
     if (!apiBase) {
       if (isDev) {
@@ -192,6 +196,7 @@ export default function AnalyticsTracker() {
         visitorId: visitorIdRef.current,
         userId: userIdRef.current,
         vendorId: getVendorIdFromPath(prev.path),
+        source: getSourceFromPath(prev.path),
         durationMs: Math.max(0, now - prev.startedAt),
         metadata,
       });
@@ -207,6 +212,7 @@ export default function AnalyticsTracker() {
       visitorId: visitorIdRef.current,
       userId: userIdRef.current,
       vendorId: getVendorIdFromPath(path),
+      source,
       screen: { width: window.screen.width, height: window.screen.height },
       viewport: { width: window.innerWidth, height: window.innerHeight },
       language: navigator.language,
@@ -282,6 +288,7 @@ export default function AnalyticsTracker() {
         visitorId: visitorIdRef.current,
         userId: userIdRef.current,
         vendorId: getVendorIdFromPath(prev.path),
+        source: getSourceFromPath(prev.path),
         durationMs: Math.max(0, Date.now() - prev.startedAt),
         metadata: metadataRef.current,
       });

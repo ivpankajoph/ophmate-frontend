@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { setTemplateAuth, templateApiFetch } from "../../components/templateAuth";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 export default function TemplateRegisterPage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const vendorId = params.vendor_id as string;
   const router = useRouter();
@@ -15,6 +17,13 @@ export default function TemplateRegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -41,7 +50,7 @@ export default function TemplateRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-6 py-16">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-900">Create account</h1>

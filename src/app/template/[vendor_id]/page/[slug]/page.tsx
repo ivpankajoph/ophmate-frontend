@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 type Section = {
   id?: string;
@@ -11,6 +12,7 @@ type Section = {
 };
 
 export default function CustomTemplatePage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const slug = params.slug as string;
 
@@ -26,8 +28,16 @@ export default function CustomTemplatePage() {
     );
   }, [customPages, slug]);
 
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <section
         className="relative h-64 bg-cover bg-center"
         style={{

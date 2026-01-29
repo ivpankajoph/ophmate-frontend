@@ -6,6 +6,7 @@ import { Minus, Plus, Search } from "lucide-react";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { getTemplateAuth, templateApiFetch } from "@/app/template/components/templateAuth";
 import { trackAddToCart } from "@/lib/analytics-events";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 
 type Product = {
@@ -18,6 +19,7 @@ type Product = {
 };
 
 export default function ProductDetailPage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const productId = params.product_id as string;
   const vendorId = params.vendor_id as string;
@@ -27,6 +29,14 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState("");
+
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
 
   useEffect(() => {
     if (!productId) return;
@@ -117,10 +127,10 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="relative bg-white rounded-lg overflow-hidden">
+          <div className={`relative rounded-lg overflow-hidden ${isStudio ? "bg-slate-900/70 border border-slate-800" : "bg-white"}`}>
             <button className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors z-10">
               <Search size={20} />
             </button>
@@ -138,12 +148,12 @@ export default function ProductDetailPage() {
           </div>
 
           <div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4">
               {product.productName || "Untitled Product"}
             </h1>
 
             <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold">
                 {price ? `₹${price}` : "Price on request"}
               </span>
               <span className="font-medium template-accent">
@@ -151,16 +161,16 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <p className="text-gray-600 leading-relaxed mb-6">
+            <p className={`${isStudio ? "text-slate-300" : "text-gray-600"} leading-relaxed mb-6`}>
               {product.shortDescription ||
                 "Add a short description to highlight this product."}
             </p>
 
             <div className="flex items-center gap-4 mb-8">
-              <div className="flex items-center border border-gray-300 rounded-lg">
+              <div className={`flex items-center rounded-lg ${isStudio ? "border border-slate-700" : "border border-gray-300"}`}>
                 <button
                   onClick={decrementQuantity}
-                  className="w-10 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  className={`w-10 h-12 flex items-center justify-center transition-colors ${isStudio ? "hover:bg-slate-800/70" : "hover:bg-gray-100"}`}
                 >
                   <Minus size={18} />
                 </button>
@@ -168,11 +178,11 @@ export default function ProductDetailPage() {
                   type="text"
                   value={quantity}
                   readOnly
-                  className="w-16 h-12 text-center border-x border-gray-300 focus:outline-none"
+                  className={`w-16 h-12 text-center focus:outline-none ${isStudio ? "border-x border-slate-700 bg-slate-950 text-slate-100" : "border-x border-gray-300"}`}
                 />
                 <button
                   onClick={incrementQuantity}
-                  className="w-10 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  className={`w-10 h-12 flex items-center justify-center transition-colors ${isStudio ? "hover:bg-slate-800/70" : "hover:bg-gray-100"}`}
                 >
                   <Plus size={18} />
                 </button>
@@ -190,14 +200,14 @@ export default function ProductDetailPage() {
               <div className="text-sm text-slate-500">{message}</div>
             )}
 
-            <div className="border-t border-gray-200 pt-6">
-              <p className="text-gray-600">
+            <div className={`border-t pt-6 ${isStudio ? "border-slate-800" : "border-gray-200"}`}>
+              <p className={isStudio ? "text-slate-300" : "text-gray-600"}>
                 <span className="font-semibold">Product ID:</span> {product._id}
               </p>
             </div>
 
-            <div className="mt-8 border border-gray-200 rounded-lg p-6">
-              <p className="text-sm text-gray-600 mb-3 font-medium">
+            <div className={`mt-8 rounded-lg p-6 ${isStudio ? "border border-slate-800 bg-slate-900/70" : "border border-gray-200"}`}>
+              <p className={`text-sm mb-3 font-medium ${isStudio ? "text-slate-300" : "text-gray-600"}`}>
                 Guaranteed Safe Checkout
               </p>
               <div className="flex items-center gap-3 flex-wrap">
@@ -227,14 +237,14 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="mt-16">
-          <div className="border-b border-gray-200">
+          <div className={`border-b ${isStudio ? "border-slate-800" : "border-gray-200"}`}>
             <div className="flex gap-8">
               <button
                 onClick={() => setActiveTab("description")}
                 className={`pb-4 font-semibold transition-colors ${
                   activeTab === "description"
-                    ? "text-gray-900 border-b-2 border-gray-900"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? isStudio ? "text-slate-100 border-b-2 border-slate-100" : "text-gray-900 border-b-2 border-gray-900"
+                    : isStudio ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                 }`}
               >
                 Description
@@ -243,8 +253,8 @@ export default function ProductDetailPage() {
                 onClick={() => setActiveTab("reviews")}
                 className={`pb-4 font-semibold transition-colors ${
                   activeTab === "reviews"
-                    ? "text-gray-900 border-b-2 border-gray-900"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? isStudio ? "text-slate-100 border-b-2 border-slate-100" : "text-gray-900 border-b-2 border-gray-900"
+                    : isStudio ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                 }`}
               >
                 Reviews (0)
@@ -255,7 +265,7 @@ export default function ProductDetailPage() {
           <div className="py-8">
             {activeTab === "description" && (
               <div className="prose max-w-none">
-                <p className="text-gray-600 leading-relaxed mb-4">
+                <p className={`${isStudio ? "text-slate-300" : "text-gray-600"} leading-relaxed mb-4`}>
                   {product.description ||
                     "Add a detailed description to help customers decide."}
                 </p>
@@ -263,7 +273,7 @@ export default function ProductDetailPage() {
             )}
             {activeTab === "reviews" && (
               <div className="text-center py-12">
-                <p className="text-gray-500">No reviews yet.</p>
+                <p className={isStudio ? "text-slate-400" : "text-gray-500"}>No reviews yet.</p>
               </div>
             )}
           </div>

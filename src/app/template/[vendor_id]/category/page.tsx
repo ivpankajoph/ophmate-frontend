@@ -6,9 +6,11 @@ import { useSelector } from 'react-redux';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { NEXT_PUBLIC_API_URL } from '@/config/variables';
+import { useTemplateVariant } from '@/app/template/components/useTemplateVariant';
 
 
 export default function ShopCategoriesPage() {
+  const variant = useTemplateVariant();
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('default');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -100,13 +102,26 @@ export default function ShopCategoriesPage() {
   const toCategorySlug = (value: string) =>
     encodeURIComponent(value.toLowerCase().replace(/\s+/g, '-'));
 
+  const isStudio = variant.key === 'studio';
+  const isMinimal = variant.key === 'minimal';
+  const pageClass = isStudio
+    ? 'min-h-screen bg-slate-950 text-slate-100'
+    : isMinimal
+      ? 'min-h-screen bg-[#f5f5f7] text-slate-900'
+      : 'min-h-screen bg-gray-50';
+  const panelClass = isStudio
+    ? 'bg-slate-900/70 border border-slate-800'
+    : isMinimal
+      ? 'bg-white border border-slate-200'
+      : 'bg-white';
+
   return (
    <>
 
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       {/* Hero Section */}
       <div 
-        className="relative h-80 bg-cover bg-center"
+        className={`relative ${isMinimal ? 'h-64' : 'h-80'} bg-cover bg-center`}
         style={{
           backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=1920&q=80')`
         }}
@@ -123,7 +138,7 @@ export default function ShopCategoriesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar Filters */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+            <div className={`rounded-lg shadow-sm p-6 sticky top-6 ${panelClass}`}>
               {/* Search */}
               <div className="mb-6">
                 <label className="block text-gray-700 font-semibold mb-3">
@@ -141,7 +156,7 @@ export default function ShopCategoriesPage() {
 
               {/* Categories */}
               <div className="mb-6">
-                <h3 className="text-gray-900 font-semibold mb-3 flex items-center gap-2">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <SlidersHorizontal size={20} />
                   Categories
                 </h3>
@@ -153,7 +168,9 @@ export default function ShopCategoriesPage() {
                       className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center justify-between ${
                         selectedCategory === cat.id
                           ? 'template-accent-soft template-accent font-medium'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          : isStudio
+                            ? 'text-slate-300 hover:bg-slate-800/60'
+                            : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       <span>{cat.name}</span>
@@ -171,19 +188,19 @@ export default function ShopCategoriesPage() {
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
-                    <span className="text-gray-600">Under $50</span>
+                    <span className={isStudio ? 'text-slate-300' : 'text-gray-600'}>Under $50</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
-                    <span className="text-gray-600">$50 - $100</span>
+                    <span className={isStudio ? 'text-slate-300' : 'text-gray-600'}>$50 - $100</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
-                    <span className="text-gray-600">$100 - $150</span>
+                    <span className={isStudio ? 'text-slate-300' : 'text-gray-600'}>$100 - $150</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded template-accent-input" />
-                    <span className="text-gray-600">Over $150</span>
+                    <span className={isStudio ? 'text-slate-300' : 'text-gray-600'}>Over $150</span>
                   </label>
                 </div>
               </div>
@@ -198,8 +215,8 @@ export default function ShopCategoriesPage() {
           {/* Categories Grid */}
           <div className="lg:col-span-3">
             {/* Toolbar */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="text-gray-600">
+            <div className={`rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${panelClass}`}>
+                <div className={isStudio ? 'text-slate-300' : 'text-gray-600'}>
                 Showing <span className="font-semibold">{categories.length}</span> categories
               </div>
               <div className="flex items-center gap-4">
@@ -208,7 +225,7 @@ export default function ShopCategoriesPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2 cursor-pointer template-focus-accent"
+                    className={`appearance-none rounded-lg pl-4 pr-10 py-2 cursor-pointer template-focus-accent ${isStudio ? 'bg-slate-950 border border-slate-700 text-slate-100' : 'bg-white border border-gray-300'}`}
                   >
                     <option value="default">Default sorting</option>
                     <option value="name">Name: A to Z</option>
@@ -218,11 +235,11 @@ export default function ShopCategoriesPage() {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex gap-2 border border-gray-300 rounded-lg p-1">
+                <div className={`flex gap-2 border rounded-lg p-1 ${isStudio ? 'border-slate-700' : 'border-gray-300'}`}>
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded ${
-                      viewMode === 'grid' ? 'text-white template-accent-bg' : 'text-gray-600 hover:bg-gray-100'
+                      viewMode === 'grid' ? 'text-white template-accent-bg' : isStudio ? 'text-slate-300 hover:bg-slate-800/60' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Grid3x3 size={20} />
@@ -230,7 +247,7 @@ export default function ShopCategoriesPage() {
                   <button
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded ${
-                      viewMode === 'list' ? 'text-white template-accent-bg' : 'text-gray-600 hover:bg-gray-100'
+                      viewMode === 'list' ? 'text-white template-accent-bg' : isStudio ? 'text-slate-300 hover:bg-slate-800/60' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <List size={20} />
@@ -252,9 +269,9 @@ export default function ShopCategoriesPage() {
                     href={`/template/${vendor_id}/category/${categoryPath}`}
                   >
                     <div
-                      className={`relative bg-white rounded-lg shadow-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow ${
+                      className={`relative rounded-lg shadow-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow ${
                         viewMode === 'list' ? 'flex' : ''
-                      }`}
+                      } ${panelClass}`}
                     >
                       <div
                         className={`relative overflow-hidden bg-gray-100 ${

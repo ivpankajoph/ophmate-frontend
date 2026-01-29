@@ -18,7 +18,7 @@ export default function CartDrawer() {
   const loading = useSelector((state: RootState) => state.customerCart.loading)
   const token = useSelector((state: RootState) => state.customerAuth.token)
 
-  const cartItems = cart?.items || []
+  const cartItems = token ? cart?.items || [] : []
 
   useEffect(() => {
     if (token) {
@@ -52,7 +52,7 @@ export default function CartDrawer() {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
-          {cartItems.length > 0 && (
+          {token && cartItems.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center">
               {cartItems.length}
             </span>
@@ -144,30 +144,25 @@ export default function CartDrawer() {
         </div>
 
         {/* Footer */}
-        <div className="border-t px-4 py-4 space-y-3 bg-background">
-          <div className="flex justify-between text-sm">
-            <span>Taxes</span>
-            <span>$0.00 USD</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Shipping</span>
-            <span>Calculated at checkout</span>
-          </div>
-          <Separator />
-          <div className="flex justify-between font-semibold text-base">
-            <span>Total</span>
-            <span>₹{subtotal.toFixed(2)}</span>
-          </div>
+        {token && (
+          <div className="border-t px-4 py-4 space-y-3 bg-background">
+            <Separator />
+            <div className="flex justify-between font-semibold text-base">
+              <span>Total</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </div>
 
-          <Button
-            className="mt-4 w-full py-6 text-base font-semibold rounded-full"
-            asChild
-            disabled={!token || cartItems.length === 0}
-          >
-            <Link href="/checkout">Proceed to Checkout</Link>
-          </Button>
-        </div>
+            <Button
+              className="mt-4 w-full py-6 text-base font-semibold rounded-full"
+              asChild
+              disabled={cartItems.length === 0}
+            >
+              <Link href="/checkout">Proceed to Checkout</Link>
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   )
 }
+

@@ -6,6 +6,7 @@ import {
   getTemplateAuth,
   templateApiFetch,
 } from "../../components/templateAuth";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 type Profile = {
   name?: string;
@@ -35,6 +36,7 @@ type Order = {
 };
 
 export default function TemplateProfilePage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const vendorId = params.vendor_id as string;
   const router = useRouter();
@@ -44,6 +46,13 @@ export default function TemplateProfilePage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
 
   useEffect(() => {
     if (!auth) {
@@ -73,7 +82,7 @@ export default function TemplateProfilePage() {
 
   if (!auth) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={pageClass}>
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -97,7 +106,7 @@ export default function TemplateProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <div className="max-w-6xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">My Profile</h1>
         <div className="h-1 mb-6 template-accent-bg"></div>

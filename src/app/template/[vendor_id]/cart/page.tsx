@@ -2,10 +2,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { X, CheckCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   getTemplateAuth,
   templateApiFetch,
 } from "../../components/templateAuth";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 type CartItem = {
   _id: string;
@@ -15,6 +17,7 @@ type CartItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  variant_attributes?: Record<string, any>;
 };
 
 type Cart = {
@@ -24,6 +27,7 @@ type Cart = {
 };
 
 export default function ShoppingCartPage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const vendorId = params.vendor_id as string;
   const router = useRouter();
@@ -33,6 +37,19 @@ export default function ShoppingCartPage() {
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState("");
   const [showNotification, setShowNotification] = useState(false);
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
+  const formatAttrs = (attrs?: Record<string, any>) => {
+    if (!attrs) return "";
+    return Object.values(attrs)
+      .filter((value) => value)
+      .join(" / ");
+  };
 
   const loadCart = async () => {
     try {
@@ -73,7 +90,7 @@ export default function ShoppingCartPage() {
 
   if (!auth) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={pageClass}>
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -97,7 +114,7 @@ export default function ShoppingCartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">Cart</h1>
         <div className="h-1 mb-6 template-accent-bg"></div>
@@ -149,17 +166,27 @@ export default function ShoppingCartPage() {
                       </div>
 
                       <div className="col-span-5 flex items-center gap-4">
-                        <img
-                          src={
-                            item.image_url ||
-                            "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=200&q=80"
-                          }
-                          alt={item.product_name}
-                          className="w-20 h-20 object-cover rounded"
-                        />
-                        <span className="font-medium template-accent">
-                          {item.product_name}
-                        </span>
+                        <Link
+                          href={`/template/${vendorId}/product/${item.product_id}`}
+                          className="flex items-center gap-4"
+                        >
+                          <img
+                            src={
+                              item.image_url ||
+                              "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=200&q=80"
+                            }
+                            alt={item.product_name}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <div className="space-y-1">
+                            <span className="block font-medium template-accent">
+                              {item.product_name}
+                            </span>
+                            <span className="block text-xs text-gray-500">
+                              {formatAttrs(item.variant_attributes) || "Default variant"}
+                            </span>
+                          </div>
+                        </Link>
                       </div>
 
                       <div className="col-span-2 text-center text-gray-700">
@@ -179,6 +206,7 @@ export default function ShoppingCartPage() {
                           min="1"
                           className="w-16 px-3 py-2 border border-gray-300 rounded text-center template-focus-accent"
                         />
+                        <span className="sr-only">{item.quantity} quantity</span>
                       </div>
 
                       <div className="col-span-2 text-right font-semibold text-gray-900">

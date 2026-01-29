@@ -7,6 +7,7 @@ import {
   templateApiFetch,
 } from "../../components/templateAuth";
 import { trackCheckout, trackPurchase } from "@/lib/analytics-events";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 type Address = {
   _id: string;
@@ -32,6 +33,7 @@ type Cart = {
 };
 
 export default function TemplateCheckoutPage() {
+  const variant = useTemplateVariant();
   const params = useParams();
   const vendorId = params.vendor_id as string;
   const router = useRouter();
@@ -43,6 +45,13 @@ export default function TemplateCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-gray-50";
 
   const [form, setForm] = useState({
     label: "Home",
@@ -169,7 +178,7 @@ export default function TemplateCheckoutPage() {
 
   if (!auth) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={pageClass}>
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -193,7 +202,7 @@ export default function TemplateCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={pageClass}>
       <div className="max-w-6xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">Checkout</h1>
         <div className="h-1 mb-6 template-accent-bg"></div>

@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@/components/ui/button";
+import { AppDispatch, RootState } from "@/store";
+import { addCartItem } from "@/store/slices/customerCartSlice";
+import { toastError, toastSuccess } from "@/lib/toast";
+import { trackAddToCart } from "@/lib/analytics-events";
 
 type Category = {
   _id?: string;
@@ -24,21 +31,62 @@ const getProductImage = (product: any) => {
 };
 
 const ProductCard = ({ product }: { product: any }) => {
-  const firstVariant = product?.variants?.[0];
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const token = useSelector((state: RootState) => state.customerAuth.token);
+  const user = useSelector((state: RootState) => state.customerAuth.user);
+  const [isAdding, setIsAdding] = useState(false);
+  const firstVariant =
+    product?.variants?.find((variant: any) => variant?.isActive) ||
+    product?.variants?.[0];
   const productCategory = product?.productCategory || "unknown";
   const finalPrice = Number(firstVariant?.finalPrice || 0);
   const actualPrice = Number(firstVariant?.actualPrice || 0);
   const discountPercent = Number(firstVariant?.discountPercent || 0);
   const stockQuantity = Number(firstVariant?.stockQuantity || 0);
   const imageUrl = getProductImage(product);
+  const isOutOfStock = stockQuantity <= 0;
+
+  const handleAddToCart = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!product || !firstVariant?._id) return;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setIsAdding(true);
+    try {
+      await dispatch(
+        addCartItem({
+          product_id: product._id,
+          variant_id: firstVariant._id,
+          quantity: 1,
+        }),
+      ).unwrap();
+      trackAddToCart({
+        vendorId: product?.vendor?._id,
+        userId: user?._id || user?.id || "",
+        productId: product._id,
+        productName: product.productName,
+        productPrice: firstVariant.finalPrice || 0,
+        quantity: 1,
+      });
+      toastSuccess("Added to cart");
+    } catch (error: any) {
+      toastError(error || "Failed to add to cart");
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
-    <Link
-      href={`/product/${productCategory}/${product?._id || ""}`}
-      className="group block"
-    >
-      <div className="h-full overflow-hidden rounded-2xl border border-white/80 bg-white shadow-[0_20px_60px_-40px_rgba(15,23,42,0.7)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_80px_-40px_rgba(15,23,42,0.8)]">
-        <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+    <div className="group h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_-32px_rgba(15,23,42,0.6)]">
+      <Link
+        href={`/product/${productCategory}/${product?._id || ""}`}
+        className="block"
+      >
+        <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">
           <img
             src={imageUrl}
             alt={
@@ -49,22 +97,20 @@ const ProductCard = ({ product }: { product: any }) => {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {discountPercent > 0 && (
-            <span className="absolute left-4 top-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow">
+            <span className="absolute left-3 top-3 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow">
               {discountPercent}% off
             </span>
           )}
         </div>
-        <div className="space-y-3 p-5">
+        <div className="space-y-2 px-4 pb-3 pt-4">
           <div>
-            <h3 className="line-clamp-1 text-base font-semibold text-slate-900 group-hover:text-orange-600">
+            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
               {product?.productName || "Untitled Product"}
             </h3>
-            <p className="text-xs text-slate-500">
-              {product?.brand || "Unknown brand"}
-            </p>
+            <p className="text-xs text-slate-500">1 unit</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold text-slate-900">
+            <span className="text-base font-semibold text-slate-900">
               {formatPrice(finalPrice)}
             </span>
             {actualPrice > finalPrice && (
@@ -73,19 +119,26 @@ const ProductCard = ({ product }: { product: any }) => {
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span
-              className={`font-medium ${
-                stockQuantity > 5 ? "text-emerald-600" : "text-orange-600"
-              }`}
-            >
-              {stockQuantity > 0 ? `${stockQuantity} in stock` : "Out of stock"}
-            </span>
-            <span className="font-semibold text-orange-600">View Details</span>
-          </div>
         </div>
+      </Link>
+      <div className="flex items-center justify-between gap-2 px-4 pb-4">
+        <span
+          className={`text-xs font-medium ${
+            stockQuantity > 5 ? "text-emerald-600" : "text-orange-600"
+          }`}
+        >
+          {stockQuantity > 0 ? `${stockQuantity} in stock` : "Out of stock"}
+        </span>
+        <Button
+          onClick={handleAddToCart}
+          disabled={isAdding || isOutOfStock || !firstVariant?._id}
+          variant="outline"
+          className="h-8 rounded-full border-emerald-500 px-4 text-xs font-semibold uppercase text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isOutOfStock ? "Out" : isAdding ? "Adding" : "Add"}
+        </Button>
       </div>
-    </Link>
+    </div>
   );
 };
 

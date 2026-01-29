@@ -131,6 +131,167 @@
   --template-color: #0f172a;
   --template-banner-color: #0f172a;
   --template-font-scale: 1;
+  --template-surface: #ffffff;
+  --template-surface-muted: #f8fafc;
+  --template-border: #e2e8f0;
+  --template-radius: 28px;
+  --template-heading-font: "Playfair Display", serif;
+  --template-body-font: "Space Grotesk", sans-serif;
+  background-color: var(--template-surface-muted);
+  color: #0f172a;
+  font-family: var(--template-body-font);
+}
+
+.template-theme h1,
+.template-theme h2,
+.template-theme h3,
+.template-theme h4 {
+  font-family: var(--template-heading-font);
+  letter-spacing: -0.01em;
+}
+
+.template-variant-classic {
+  --template-surface: #ffffff;
+  --template-surface-muted: #f8fafc;
+  --template-border: #e2e8f0;
+  --template-radius: 28px;
+  --template-heading-font: "Playfair Display", serif;
+  --template-body-font: "Space Grotesk", sans-serif;
+}
+
+.template-variant-studio {
+  --template-surface: #0f172a;
+  --template-surface-muted: #0b1020;
+  --template-border: #1e293b;
+  --template-radius: 10px;
+  --template-heading-font: "Space Grotesk", sans-serif;
+  --template-body-font: "DM Sans", sans-serif;
+}
+
+.template-variant-minimal {
+  --template-surface: #ffffff;
+  --template-surface-muted: #f3f4f6;
+  --template-border: #e2e8f0;
+  --template-radius: 16px;
+  --template-heading-font: "DM Sans", sans-serif;
+  --template-body-font: "DM Sans", sans-serif;
+}
+
+.template-variant-studio nav {
+  background: rgba(2, 6, 23, 0.85);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.template-variant-studio nav a {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+}
+
+.template-variant-minimal nav {
+  background: color-mix(in srgb, #ffffff 85%, transparent);
+  border-bottom: 1px solid var(--template-border);
+}
+
+.template-variant-studio {
+  color: #e2e8f0;
+  background: radial-gradient(
+      circle at top,
+      rgba(56, 189, 248, 0.12),
+      transparent 55%
+    ),
+    var(--template-surface-muted);
+}
+
+.template-variant-studio .template-accent {
+  color: #38bdf8;
+}
+
+.template-variant-studio .template-accent-bg {
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.template-variant-studio .template-accent-soft {
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.template-variant-studio .template-accent-gradient {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(99, 102, 241, 0.08));
+}
+
+.template-variant-minimal {
+  color: #111827;
+  background: #f3f4f6;
+}
+
+.template-variant-minimal .template-accent {
+  color: #111827;
+}
+
+.template-variant-minimal .template-accent-bg {
+  background: #111827;
+  border-radius: 999px;
+}
+
+.template-variant-minimal .template-accent-soft {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.template-variant-minimal .template-accent-gradient {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.template-variant-minimal .template-accent-bg-hover:hover {
+  background-color: #000000;
+}
+
+.template-home {
+  background: var(--template-surface-muted);
+}
+
+.template-home-classic {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.template-home-studio .template-studio-hero {
+  padding: 3rem 1.5rem 2.5rem;
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.template-studio-row {
+  display: grid;
+  gap: 2.5rem;
+  padding: 2.5rem 1.5rem;
+}
+
+.template-studio-row-alt {
+  background: #0f172a;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.template-studio-panel {
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.template-home-minimal {
+  background: var(--template-surface-muted);
+}
+
+.template-minimal-panel {
+  margin: 2rem 1.5rem 3rem;
+  padding: 2rem;
+  background: var(--template-surface);
+  border-radius: var(--template-radius);
+  border: 1px solid var(--template-border);
+  box-shadow: 0 12px 30px -20px rgba(15, 23, 42, 0.35);
 }
 
 .template-accent {

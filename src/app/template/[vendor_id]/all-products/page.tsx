@@ -4,9 +4,11 @@ import { Star, Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
 
 
 export default function AllProducts() {
+  const variant = useTemplateVariant();
   const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
   const params = useParams();
   const vendor_id = params.vendor_id as string;
@@ -28,6 +30,14 @@ export default function AllProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  const isStudio = variant.key === "studio";
+  const isMinimal = variant.key === "minimal";
+  const pageClass = isStudio
+    ? "min-h-screen bg-slate-950 text-slate-100"
+    : isMinimal
+      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
+      : "min-h-screen bg-white";
+
   // Filtered products based on search + category
   const filteredProducts = products.filter((product: any) => {
     const name = (product?.productName || "").toLowerCase();
@@ -48,11 +58,11 @@ export default function AllProducts() {
 
   return (
      <>
-    <div className="bg-white py-16 lg:py-20">
+    <div className={`${pageClass} py-16 lg:py-20`}>
      
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Title */}
-        <h2 className="text-4xl lg:text-5xl font-bold text-left text-gray-900 mb-8">
+        <h2 className="text-4xl lg:text-5xl font-bold text-left mb-8">
           All Products
         </h2>
 
@@ -63,7 +73,7 @@ export default function AllProducts() {
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 template-focus-accent"
+              className={`w-full rounded-lg pl-10 pr-4 py-2 template-focus-accent ${isStudio ? "border border-slate-700 bg-slate-950 text-slate-100" : "border border-gray-300"}`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -101,7 +111,7 @@ export default function AllProducts() {
                 className="group cursor-pointer"
               >
                 {/* Product Image */}
-                <div className="relative overflow-hidden bg-gray-100 mb-4 aspect-square rounded-xl">
+                <div className={`relative overflow-hidden mb-4 aspect-square rounded-xl ${isStudio ? "bg-slate-900" : "bg-gray-100"}`}>
                   {product?.defaultImages?.[0]?.url ? (
                     <img
                       src={product.defaultImages[0].url}
@@ -131,17 +141,17 @@ export default function AllProducts() {
                 </div>
 
                 {/* Product Info */}
-                <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-1">
+                <h3 className="text-xl lg:text-2xl font-semibold mb-1">
                   {product.productName || "Untitled Product"}
                 </h3>
-                <p className="text-gray-500 text-sm lg:text-base mb-2">
+                <p className={`${isStudio ? "text-slate-400" : "text-gray-500"} text-sm lg:text-base mb-2`}>
                   {product?.productCategoryName ||
                     product?.productCategory?.name ||
                     product?.productCategory?.title ||
                     product?.productCategory?.categoryName ||
                     "Category"}
                 </p>
-                <p className="text-gray-900 text-lg lg:text-xl font-semibold">
+                <p className="text-lg lg:text-xl font-semibold">
                   ₹{product?.variants?.[0]?.finalPrice || "--"}
                 </p>
               </Link>
