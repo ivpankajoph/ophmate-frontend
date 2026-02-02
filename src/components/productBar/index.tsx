@@ -72,11 +72,17 @@ export default function ProductNavbar() {
                   </div>
                   {grouped.map((group) => {
                     const isActive = group.key === activeGroup?.key;
+                    const href = group.main?.slug
+                      ? `/main-categories/${group.main.slug}`
+                      : group.main?._id
+                        ? `/main-categories/${group.main._id}`
+                        : "#";
                     return (
-                      <button
+                      <Link
                         key={group.key}
-                        type="button"
+                        href={href}
                         onMouseEnter={() => setActiveMainKey(group.key)}
+                        onFocus={() => setActiveMainKey(group.key)}
                         className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition ${
                           isActive
                             ? "bg-white font-semibold text-gray-900"
@@ -93,7 +99,7 @@ export default function ProductNavbar() {
                           ) : null}
                         </span>
                         <span>{group.main?.name || "Unassigned"}</span>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>

@@ -12,11 +12,11 @@ import QuoteBlock from "@/components/quotes";
 import { AppDispatch } from "@/store";
 import { updateVendorBusiness } from "@/store/slices/vendorSlice";
 import {
-  BUSINESS_NATURES, BUSINESS_TYPES, COUNTRIES, INDIAN_STATES,
+  BUSINESS_NATURES, BUSINESS_TYPES, CATEGORIES, COUNTRIES, INDIAN_STATES,
   validateGST, validatePAN, validatePhone, validatePincode,
   validateIFSC, validateAccount, validateUPI, ESTABLISHED_YEAR,
   ANNUAL_TURNOVER, DEALING_AREA, NUMBER_OF_EMPLOYEES,
-  CATEGORIES, OPERATING_HOURS, RETURN_POLICY, BANK_NAMES,
+  OPERATING_HOURS, RETURN_POLICY, BANK_NAMES,
 } from "@/lib/constants";
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
@@ -51,18 +51,46 @@ const TextInput = memo(({
 });
 
 // OPTIMIZATION: Memoized select component
-const SelectInput = memo(({ name, label, value, options, error, onChange }: any) => (
-  <div>
-    <label className="block text-sm font-medium mb-1">{label}</label>
-    <Select value={value} onValueChange={(val) => onChange(name, val)}>
-      <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
-      <SelectContent>
-        {options.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-      </SelectContent>
-    </Select>
-    {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
-  </div>
-));
+const SelectInput = memo(({ name, label, value, options, error, onChange }: any) => {
+  const [query, setQuery] = useState("");
+  const filteredOptions = options.filter((opt: string) =>
+    opt.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  useEffect(() => {
+    setQuery("");
+  }, [value]);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <Select value={value} onValueChange={(val) => onChange(name, val)}>
+        <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
+        <SelectContent className="space-y-1">
+          <div className="px-3 pt-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Search ${label.toLowerCase()}...`}
+              className="w-full"
+            />
+          </div>
+          <div className="max-h-60 overflow-auto pb-2">
+            {!filteredOptions.length && (
+              <div className="px-3 py-2 text-xs text-muted-foreground">Nothing found</div>
+            )}
+            {filteredOptions.map((opt: string) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </div>
+        </SelectContent>
+      </Select>
+      {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+    </div>
+  );
+});
 
 // OPTIMIZATION: Memoized file input
 const FileInput = memo(({ name, label, error, onChange }: any) => (
@@ -76,6 +104,11 @@ const FileInput = memo(({ name, label, error, onChange }: any) => (
 // ✅ Multi Select with removable chips
 const MultiSelectInput = memo(
   ({ name, label, options, values, error, onChange }: any) => {
+    const [query, setQuery] = useState("");
+    const filteredOptions = options.filter((opt: string) =>
+      opt.toLowerCase().includes(query.toLowerCase()),
+    );
+
     const handleSelect = (value: string) => {
       if (!values.includes(value)) {
         onChange(name, [...values, value]);
@@ -89,16 +122,32 @@ const MultiSelectInput = memo(
       );
     };
 
+    useEffect(() => {
+      setQuery("");
+    }, [values]);
+
     return (
       <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
 
         <Select onValueChange={handleSelect}>
-          <SelectTrigger>
-            <SelectValue placeholder={`Select ${label}`} />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((opt: string) => (
+        <SelectTrigger>
+          <SelectValue placeholder={`Select ${label}`} />
+        </SelectTrigger>
+        <SelectContent className="space-y-1">
+          <div className="px-3 pt-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Search ${label.toLowerCase()}...`}
+              className="w-full"
+            />
+          </div>
+          <div className="max-h-60 overflow-auto pb-2">
+            {!filteredOptions.length && (
+              <div className="px-3 py-2 text-xs text-muted-foreground">Nothing found</div>
+            )}
+            {filteredOptions.map((opt: string) => (
               <SelectItem
                 key={opt}
                 value={opt}
@@ -107,7 +156,8 @@ const MultiSelectInput = memo(
                 {opt}
               </SelectItem>
             ))}
-          </SelectContent>
+          </div>
+        </SelectContent>
         </Select>
 
         {/* Selected chips */}
@@ -157,10 +207,12 @@ export default function BusinessDetails() {
     established_year: "", business_nature: "", annual_turnover: "",
     dealing_area: "", office_employees: "",
     gst_cert: null as File | null, pan_card: null as File | null,
+    avatar: null as File | null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("vendor_email") || "";
@@ -168,14 +220,30 @@ export default function BusinessDetails() {
     setForm((prev) => ({ ...prev, email: storedEmail, phone_no: storedPhone }));
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
+
   // OPTIMIZATION: Single update function with no validation during typing
   const updateField = useCallback((name: string, value: any) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }, []);
 
 
   const handleSelectChange = useCallback((name: string, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }, []);
 
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -194,6 +262,40 @@ export default function BusinessDetails() {
         return updated;
       });
     }
+  }, []);
+
+  const handleAvatarChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (!file) {
+      setForm((prev) => ({ ...prev, avatar: null }));
+      setAvatarPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.avatar;
+        return next;
+      });
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setErrors((prev) => ({ ...prev, avatar: "Only image files are allowed." }));
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return previewUrl;
+    });
+    setForm((prev) => ({ ...prev, avatar: file }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.avatar;
+      return next;
+    });
   }, []);
 
   // OPTIMIZATION: Validate only on blur
@@ -234,7 +336,15 @@ export default function BusinessDetails() {
         if (!value && name !== "address_line_2") error = "This field is required";
     }
 
-    setErrors((prev) => error ? { ...prev, [name]: error } : { ...prev });
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (error) {
+        next[name] = error;
+      } else {
+        delete next[name];
+      }
+      return next;
+    });
   }, [form]);
 
   const handleSubmit = async () => {
@@ -244,7 +354,13 @@ export default function BusinessDetails() {
     const newErrors: Record<string, string> = {};
     Object.keys(form).forEach((key) => {
       const value = form[key as keyof typeof form];
-      if (key !== "address_line_2" && key !== "gst_cert" && key !== "pan_card" && !value) {
+      if (
+        key !== "address_line_2" &&
+        key !== "gst_cert" &&
+        key !== "pan_card" &&
+        key !== "avatar" &&
+        !value
+      ) {
         newErrors[key] = "This field is required";
       }
     });
@@ -270,10 +386,15 @@ export default function BusinessDetails() {
 
       console.log("Update dispatch result:", result);
       if (updateVendorBusiness.fulfilled.match(result)) {
+        const successMessage =
+          (result.payload as any)?.message ||
+          "Your business details have been saved successfully.";
         Swal.fire({
-          icon: "success", title: "Business Updated!",
-          text: "Your business details have been saved successfully.",
-          timer: 2000, showConfirmButton: false,
+          icon: "success",
+          title: "Business Updated!",
+          text: successMessage,
+          timer: 2000,
+          showConfirmButton: false,
         });
         router.push("/vendor/registration/thankyou");
       } else {
@@ -323,6 +444,29 @@ export default function BusinessDetails() {
                     <TextInput name="phone_no" label="Phone No" value={form.phone_no} disabled
                       placeholder="10-digit number" onChange={updateField} onBlur={handleBlur} error={errors.phone_no} />
                     <p className="text-xs text-gray-500 mt-1">Can't edit</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-1">Profile Picture</label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-24 w-24 rounded-full border border-dashed border-gray-300 bg-white overflow-hidden">
+                        {avatarPreview ? (
+                          <img
+                            src={avatarPreview}
+                            alt="Avatar preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                            No photo
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <Input type="file" accept="image/*" onChange={handleAvatarChange} />
+                        <p className="text-xs text-gray-500">JPG, PNG, or WEBP up to 5MB</p>
+                        {errors.avatar && <div className="text-red-500 text-xs">{errors.avatar}</div>}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

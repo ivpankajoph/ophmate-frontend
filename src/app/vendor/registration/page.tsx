@@ -40,13 +40,15 @@ export default function VendorRegistrationPage() {
     if (value.length <= 10) setPhone(value);
   };
 
-  const handleContinue = () => {
-    if (phone.length === 10) {
-      handleSubmit();
-      setShowOtp(true);
-      setTimer(30);
-      setCanResend(false);
-    }
+  const handleContinue = async () => {
+    if (phone.length !== 10) return;
+
+    const sent = await handleSubmit();
+    if (!sent) return;
+
+    setShowOtp(true);
+    setTimer(30);
+    setCanResend(false);
   };
 
   const handleEditNumber = () => {
@@ -87,18 +89,22 @@ export default function VendorRegistrationPage() {
   const handleSubmit = async () => {
     if (!phone) {
       Swal.fire("Warning", "Please enter a phone number", "warning");
-      return;
+      return false;
     }
 
     try {
       await dispatch(sendOtp(phone)).unwrap();
       sessionStorage.setItem("vendor_phone", phone);
       Swal.fire("Success", "OTP sent successfully", "success");
-    } catch (err) {
+      return true;
+    } catch (err: any) {
       console.error(err, "error");
       const message =
-        typeof err === "string" ? err : "Failed to send OTP. Please try again.";
+        typeof err === "string"
+          ? err
+          : err?.message ?? "Failed to send OTP. Please try again.";
       Swal.fire("Error", message, "error");
+      return false;
     }
   };
 
@@ -113,9 +119,14 @@ export default function VendorRegistrationPage() {
   }, [success, error, dispatch]);
   const handleResend = async () => {
     setOtp(["", "", "", "", "", ""]);
-    setTimer(30);
-    setCanResend(false);
-    await handleSubmit();
+    const sent = await handleSubmit();
+
+    if (sent) {
+      setTimer(30);
+      setCanResend(false);
+    } else {
+      setCanResend(true);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -134,9 +145,14 @@ export default function VendorRegistrationPage() {
       Swal.fire("Success", "OTP verified successfully", "success");
 
       router.push("/vendor/registration/personal-details");
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error verifying OTP:", error);
-      Swal.fire("Error", "Something went wrong while verifying OTP", "error");
+      const message =
+        typeof error === "string"
+          ? error
+          : error?.message ??
+            "Something went wrong while verifying OTP. Please try again.";
+      Swal.fire("Error", message, "error");
     }
   };
 

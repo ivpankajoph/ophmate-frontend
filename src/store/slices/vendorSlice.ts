@@ -24,10 +24,10 @@ export const updateVendorBusiness = createAsyncThunk(
     try {
       const state: any = getState();
       const token = state?.auth?.token;
-      const response = await axios.put(
-        `${BASE_URL}/vendor/business`,
-        formData,
-        {
+    const response = await axios.put(
+      `${BASE_URL}/vendors/business`,
+      formData,
+      {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",

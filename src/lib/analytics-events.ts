@@ -30,6 +30,18 @@ const getVisitorId = () =>
     ? ""
     : getStorageId("oph_visitor_id", localStorage);
 
+const getTemplateMeta = () => {
+  if (typeof window === "undefined") return {};
+  const templateId = window.localStorage.getItem("oph_template_id") || "";
+  const templateKey = window.localStorage.getItem("oph_template_key") || "";
+  const templateName = window.localStorage.getItem("oph_template_name") || "";
+  return {
+    template_id: templateId,
+    template_key: templateKey,
+    template_name: templateName,
+  };
+};
+
 const getVendorIdFromPath = (path: string) => {
   const match = path.match(/\/template\/([^/?#]+)/);
   return match?.[1] || "";
@@ -57,6 +69,7 @@ const sendAnalyticsEvent = async (payload: AnalyticsPayload) => {
   const path = window.location.pathname;
   const source = getSourceFromPath(path);
   const vendorId = payload.vendorId || getVendorIdFromPath(path);
+  const metadata = { ...getTemplateMeta(), ...(payload.metadata || {}) };
 
   const body = {
     ...payload,
@@ -68,6 +81,7 @@ const sendAnalyticsEvent = async (payload: AnalyticsPayload) => {
     fullUrl: window.location.href,
     pageTitle: document.title,
     referrer: document.referrer || "",
+    metadata,
   };
 
   try {

@@ -98,11 +98,17 @@ export default function CategoryMegaBar() {
           <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1">
             {mainCategories.map((main) => {
               const isActive = main._id === activeMain?._id;
+              const href = main.slug
+                ? `/main-categories/${main.slug}`
+                : main._id
+                  ? `/main-categories/${main._id}`
+                  : "#";
               return (
-                <button
+                <Link
                   key={main._id || main.slug || main.name}
-                  type="button"
+                  href={href}
                   onMouseEnter={() => setActiveMainId(main._id || null)}
+                  onFocus={() => setActiveMainId(main._id || null)}
                   className={`flex min-w-[92px] flex-col items-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-semibold transition ${
                     isActive
                       ? "text-orange-600"
@@ -117,7 +123,7 @@ export default function CategoryMegaBar() {
                     />
                   </div>
                   <span className="line-clamp-2">{main.name}</span>
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -131,11 +137,17 @@ export default function CategoryMegaBar() {
                   </div>
                   {mainCategories.map((main) => {
                     const isActive = main._id === activeMain?._id;
+                    const href = main.slug
+                      ? `/main-categories/${main.slug}`
+                      : main._id
+                        ? `/main-categories/${main._id}`
+                        : "#";
                     return (
-                      <button
+                      <Link
                         key={main._id || main.slug || main.name}
-                        type="button"
+                        href={href}
                         onMouseEnter={() => setActiveMainId(main._id || null)}
+                        onFocus={() => setActiveMainId(main._id || null)}
                         className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition ${
                           isActive
                             ? "bg-white font-semibold text-gray-900"
@@ -148,7 +160,7 @@ export default function CategoryMegaBar() {
                           size={32}
                         />
                         <span>{main.name || "Unassigned"}</span>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>

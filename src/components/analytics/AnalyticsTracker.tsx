@@ -49,10 +49,12 @@ export default function AnalyticsTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const user = useSelector((state: RootState) => state.customerAuth?.user);
+  const templateData = useSelector((state: RootState) => state.alltemplatepage?.data);
   const userIdRef = useRef<string>("");
   const visitorIdRef = useRef<string>("");
   const sessionIdRef = useRef<string>("");
   const metadataRef = useRef<Record<string, unknown>>({});
+  const templateMetaRef = useRef<Record<string, unknown>>({});
   const clientIpRef = useRef<string>("");
   const clientIpPromiseRef = useRef<Promise<string> | null>(null);
   const lastPageRef = useRef<{
@@ -70,6 +72,26 @@ export default function AnalyticsTracker() {
   useEffect(() => {
     metadataRef.current = metadata;
   }, [metadata]);
+
+  useEffect(() => {
+    const templateMeta = {
+      template_id: templateData?._id || templateData?.id || "",
+      template_key: templateData?.template_key || templateData?.templateKey || "",
+      template_name: templateData?.template_name || templateData?.templateName || "",
+    };
+    templateMetaRef.current = templateMeta;
+    if (typeof window !== "undefined") {
+      if (templateMeta.template_id) {
+        window.localStorage.setItem("oph_template_id", String(templateMeta.template_id));
+      }
+      if (templateMeta.template_key) {
+        window.localStorage.setItem("oph_template_key", String(templateMeta.template_key));
+      }
+      if (templateMeta.template_name) {
+        window.localStorage.setItem("oph_template_name", String(templateMeta.template_name));
+      }
+    }
+  }, [templateData]);
 
   useEffect(() => {
     userIdRef.current =
@@ -198,7 +220,7 @@ export default function AnalyticsTracker() {
         vendorId: getVendorIdFromPath(prev.path),
         source: getSourceFromPath(prev.path),
         durationMs: Math.max(0, now - prev.startedAt),
-        metadata,
+        metadata: { ...metadata, ...templateMetaRef.current },
       });
     }
 
@@ -217,7 +239,7 @@ export default function AnalyticsTracker() {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       language: navigator.language,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      metadata,
+      metadata: { ...metadata, ...templateMetaRef.current },
     });
 
     lastPageRef.current = { path, fullUrl, startedAt: now };
@@ -290,7 +312,7 @@ export default function AnalyticsTracker() {
         vendorId: getVendorIdFromPath(prev.path),
         source: getSourceFromPath(prev.path),
         durationMs: Math.max(0, Date.now() - prev.startedAt),
-        metadata: metadataRef.current,
+        metadata: { ...metadataRef.current, ...templateMetaRef.current },
       });
     };
   }, [apiBase]);
