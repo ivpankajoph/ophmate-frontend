@@ -6,10 +6,7 @@ export type VariantImage = {
 export type Variant = {
   _id: string;
   variantSku: string;
-  variantAttributes: {
-    color: string;
-    country: string;
-  };
+  variantAttributes: Record<string, string>;
   actualPrice: number;
   discountPercent: number;
   finalPrice: number;
@@ -29,19 +26,44 @@ export type FAQ = {
 
 export type Product = {
   _id: string;
+  ownerId?: string;
   productName: string;
-  productCategory: string;
+  slug?: string;
+  mainCategory?: string;
+  mainCategoryData?: {
+    name?: string;
+    slug?: string;
+    description?: string;
+  };
+  productCategory?: string;
+  productCategoryData?: {
+    name?: string;
+    slug?: string;
+    description?: string;
+  };
+  productSubCategories?: string[];
+  productSubCategoryData?: Array<{
+    _id?: string;
+    name?: string;
+    slug?: string;
+  }>;
   brand: string;
-  variants: Variant[];
   shortDescription?: string;
   description?: string;
   defaultImages?: { url: string; publicId: string }[];
+  specifications?: Array<Record<string, string>>;
   isAvailable?: boolean;
   metaTitle?: string;
   metaDescription?: string;
+  metaKeywords?: string[];
+  baseSku?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
   faqs?: FAQ[];
+  variants: Variant[];
   vendor?: {
     name?: string;
-    vendor_id?: string;
+    _id?: string;
   };
 };

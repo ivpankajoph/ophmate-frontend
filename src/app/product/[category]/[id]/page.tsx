@@ -83,8 +83,9 @@ export default function ProductDetailPage() {
       product.variants.find((v: Variant) => v.isActive) || product.variants[0];
     setSelectedVariant(firstActiveVariant ?? null);
 
+    const defaultPrimaryImage = product.defaultImages?.[0]?.url?.trim();
     const firstImg = firstActiveVariant?.variantsImageUrls[0]?.url?.trim();
-    setSelectedImage(firstImg || "");
+    setSelectedImage(defaultPrimaryImage || firstImg || "");
 
     const metaTitle =
       firstActiveVariant?.variantMetaTitle ||
@@ -201,12 +202,18 @@ export default function ProductDetailPage() {
     );
   }
 
+  const defaultImageUrls = (product.defaultImages || [])
+    .map((img:any) => img?.url?.trim())
+    .filter(Boolean);
+
+  const variantImageUrls = product.variants.flatMap((v: Variant) =>
+    v.variantsImageUrls
+      .map((img) => img?.url?.trim())
+      .filter(Boolean),
+  );
+
   const allImageUrls = Array.from(
-    new Set(
-      product.variants.flatMap((v: Variant) =>
-        v.variantsImageUrls.map((img) => img.url.trim()),
-      ),
-    ),
+    new Set([...defaultImageUrls, ...variantImageUrls]),
   ).filter(Boolean);
 
   const productDescription =
@@ -226,6 +233,23 @@ export default function ProductDetailPage() {
   const basePrice = selectedVariant?.finalPrice || 0;
   const actualPrice = selectedVariant?.actualPrice || 0;
 
+  const mainCategoryLabel =
+    product.mainCategoryData?.name ||
+    product.mainCategory ||
+    "Unassigned";
+  const categoryLabel =
+    product.productCategoryData?.name ||
+    product.productCategory ||
+    "Unassigned";
+  const subCategoryNames =
+    product.productSubCategoryData?.map((sub:any) => sub.name).filter(Boolean) ??
+    [];
+  const specificationEntries =
+    product.specifications
+      ?.flatMap((item:any) =>
+        Object.entries(item).filter(([, value]) => Boolean(value)),
+      )
+      .filter(([key]:any) => Boolean(key)) || [];
   return (
     <>
       <PromotionalBanner />
@@ -260,17 +284,19 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex-1 relative">
-                <div className="relative w-full h-[520px] rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100 shadow-xl">
-                  <Image
-                    src={selectedImage || "/placeholder.jpg"}
-                    alt={product.productName}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover cursor-crosshair"
-                    onMouseMove={handleMouseMove}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                  />
+                <div className="relative w-full min-h-[520px] rounded-[32px] overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100 shadow-2xl border border-white p-4">
+                  <div className="relative w-full h-[520px] md:h-[560px] rounded-[28px] overflow-hidden bg-white flex items-center justify-center">
+                    <Image
+                      src={selectedImage || "/placeholder.jpg"}
+                      alt={product.productName}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-contain cursor-crosshair"
+                      onMouseMove={handleMouseMove}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                  </div>
 
                   {showMagnifier && (
                     <div
@@ -303,9 +329,9 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="mt-4 flex gap-3">
-                  <Button
-                    variant="outline"
-                    className={`flex-1 transition-all ${wishlisted ? "bg-pink-50 border-pink-300 text-pink-600" : ""}`}
+              <Button
+                variant="outline"
+                className={`flex-1 transition-all ${wishlisted ? "bg-pink-50 border-pink-300 text-pink-600" : ""}`}
                     onClick={() => setWishlisted((s) => !s)}
                   >
                     <Heart
@@ -561,6 +587,29 @@ export default function ProductDetailPage() {
                 </div>
               </section>
 
+              {specificationEntries.length > 0 && (
+                <section className="bg-white rounded-xl p-6 shadow-md border">
+                  <h2 className="text-2xl font-bold mb-4">
+                    Detailed Specifications
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {specificationEntries.map(([label, value]:any) => (
+                      <div
+                        key={`${label}-${value}`}
+                        className="p-3 rounded-2xl border border-neutral-100 bg-gradient-to-br from-white to-neutral-50 shadow-sm"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                          {label}
+                        </p>
+                        <p className="text-sm font-bold text-neutral-900 mt-1">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               <section className="bg-white rounded-xl p-6 shadow-md border">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -611,31 +660,32 @@ export default function ProductDetailPage() {
                 </div>
               </section>
 
-              {product.faqs && product.faqs.length > 0 && (
-                <section className="bg-white rounded-xl p-6 shadow-md border">
-                  <h2 className="text-2xl font-bold mb-4">
-                    Frequently Asked Questions
-                  </h2>
-                  <Accordion type="multiple" className="w-full">
-                    {product.faqs.map((faq: FAQ, index: number) => (
-                      <AccordionItem
-                        key={index}
-                        value={`faq-${index}`}
-                        className="border-b-2"
-                      >
-                        <AccordionTrigger className="text-left font-semibold hover:text-indigo-600 transition-colors">
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <p className="text-muted-foreground leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </section>
-              )}
+            {product.faqs && product.faqs.length > 0 && (
+              <section className="bg-white rounded-xl p-6 shadow-md border">
+                <h2 className="text-2xl font-bold mb-4">
+                  Frequently Asked Questions
+                </h2>
+                <Accordion type="multiple" className="w-full">
+                  {product.faqs.map((faq: FAQ, index: number) => (
+                    <AccordionItem
+                      key={index}
+                      value={`faq-${index}`}
+                      className="border-b-2"
+                    >
+                      <AccordionTrigger className="text-left font-semibold hover:text-indigo-600 transition-colors">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </section>
+            )}
+
             </div>
 
             <Separator />
