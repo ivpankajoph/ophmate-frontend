@@ -22,6 +22,7 @@ export const createOrder = createAsyncThunk(
       shipping_fee?: number;
       discount?: number;
       notes?: string;
+      delivery_provider?: string;
     },
     { rejectWithValue },
   ) => {

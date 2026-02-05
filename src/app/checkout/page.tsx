@@ -13,11 +13,29 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { toastError, toastSuccess } from "@/lib/toast"
+import userApi from "@/lib/userApi"
 import PromotionalBanner from "@/components/promotional-banner"
 import Navbar from "@/components/navbar/Navbar"
 import Footer from "@/components/footer"
 import { trackCheckout, trackPurchase } from "@/lib/analytics-events"
 import Image from "next/image"
+
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
+const loadRazorpayScript = () =>
+  new Promise<boolean>((resolve) => {
+    if (typeof window === "undefined") return resolve(false)
+    if (window.Razorpay) return resolve(true)
+    const script = document.createElement("script")
+    script.src = "https://checkout.razorpay.com/v1/checkout.js"
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
 
 export default function CheckoutPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -28,7 +46,12 @@ export default function CheckoutPage() {
   const addresses = useSelector((state: RootState) => state.customerAddress.addresses)
   const loading = useSelector((state: RootState) => state.customerOrder.loading)
 
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay")
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState<string>("")
+  const [shippingFee, setShippingFee] = useState(0)
+  const [shippingLoading, setShippingLoading] = useState(false)
+  const [shippingError, setShippingError] = useState("")
   const [form, setForm] = useState({
     label: "Home",
     full_name: "",
@@ -73,6 +96,29 @@ export default function CheckoutPage() {
     }
   }, [addresses, selectedAddress])
 
+  const fetchShippingQuote = async (addressId: string) => {
+    try {
+      setShippingLoading(true)
+      setShippingError("")
+      const res = await userApi.post("/orders/borzo/calculate", {
+        address_id: addressId,
+        payment_method: paymentMethod,
+      })
+      const amount = Number(res?.data?.response?.order?.payment_amount || 0)
+      setShippingFee(Number.isFinite(amount) ? amount : 0)
+    } catch (error: any) {
+      setShippingFee(0)
+      setShippingError(error?.response?.data?.message || "Failed to calculate delivery fee")
+    } finally {
+      setShippingLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedAddress) return
+    fetchShippingQuote(selectedAddress)
+  }, [selectedAddress, paymentMethod])
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
@@ -88,18 +134,94 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleRazorpayPayment = async (order: any, payment: any) => {
+    const loaded = await loadRazorpayScript()
+    if (!loaded) {
+      throw new Error("Failed to load payment gateway")
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const options = {
+        key: payment.keyId,
+        order_id: payment.orderId,
+        amount: payment.amount,
+        currency: payment.currency,
+        name: "Ophmate",
+        description: `Order ${order?.order_number || ""}`,
+        prefill: {
+          name: user?.name || user?.full_name || "",
+          email: user?.email || "",
+          contact: user?.phone || "",
+        },
+        handler: async (response: any) => {
+          try {
+            await userApi.post(`/orders/${order._id}/razorpay/verify`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            })
+            resolve()
+          } catch (err) {
+            reject(err)
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            try {
+              await userApi.post(`/orders/${order._id}/razorpay/failed`, {
+                reason: "dismissed",
+              })
+            } catch {
+              // ignore
+            }
+            reject(new Error("Payment cancelled"))
+          },
+        },
+        theme: {
+          color: "#1f2937",
+        },
+      }
+
+      const razorpay = new window.Razorpay(options)
+      razorpay.on("payment.failed", async (response: any) => {
+        try {
+          await userApi.post(`/orders/${order._id}/razorpay/failed`, {
+            reason: response?.error?.description || "payment_failed",
+          })
+        } catch {
+          // ignore
+        }
+        reject(new Error(response?.error?.description || "Payment failed"))
+      })
+      razorpay.open()
+    })
+  }
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress) return
     try {
+      setPaymentProcessing(true)
       const orderRes = await dispatch(
         createOrder({
           address_id: selectedAddress,
-          payment_method: "cod",
-          shipping_fee: 0,
+          payment_method: paymentMethod,
+          shipping_fee: shippingFee,
           discount: 0,
           notes: "",
+          delivery_provider: "borzo",
         }),
       ).unwrap()
+
+      if (paymentMethod === "razorpay") {
+        if (!orderRes?.payment?.orderId) {
+          throw new Error("Payment initialization failed")
+        }
+        await handleRazorpayPayment(orderRes.order, orderRes.payment)
+        toastSuccess("Payment successful")
+      } else {
+        toastSuccess("Order placed")
+      }
+
       trackPurchase({
         userId: user?._id || user?.id || "",
         cartTotal: cart?.subtotal,
@@ -112,15 +234,17 @@ export default function CheckoutPage() {
           })),
         },
       })
-      toastSuccess("Order placed")
       await dispatch(fetchCart())
       router.push("/orders")
     } catch (error: any) {
-      toastError(error || "Failed to place order")
+      toastError(error?.message || error || "Failed to place order")
+    } finally {
+      setPaymentProcessing(false)
     }
   }
 
   const subtotal = useMemo(() => cart?.subtotal || 0, [cart])
+  const totalWithShipping = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee])
   const orderItems = cart?.items || []
   const getItemCategory = (item: any) =>
     item?.product_category ||
@@ -280,12 +404,46 @@ export default function CheckoutPage() {
                 )
               })}
             </div>
+            <div className="space-y-2 border-t pt-3">
+              <Label>Payment Method</Label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  checked={paymentMethod === "razorpay"}
+                  onChange={() => setPaymentMethod("razorpay")}
+                />
+                Pay online (Razorpay)
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                />
+                Cash on Delivery
+              </label>
+            </div>
+            <div className="flex justify-between text-sm text-muted-foreground border-t pt-3">
+              <span>Delivery (Borzo)</span>
+              <span>
+                {shippingLoading ? "Calculating..." : `₹${shippingFee.toFixed(2)}`}
+              </span>
+            </div>
+            {shippingError && (
+              <p className="text-xs text-rose-600">{shippingError}</p>
+            )}
             <div className="flex justify-between font-semibold border-t pt-3">
               <span>Total</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+              <span>₹{totalWithShipping.toFixed(2)}</span>
             </div>
-            <Button onClick={handlePlaceOrder} disabled={!selectedAddress || loading}>
-              {loading ? "Placing Order..." : "Place Order"}
+            <Button onClick={handlePlaceOrder} disabled={!selectedAddress || loading || paymentProcessing}>
+              {loading || paymentProcessing
+                ? "Processing..."
+                : paymentMethod === "razorpay"
+                  ? "Pay & Place Order"
+                  : "Place Order (COD)"}
             </Button>
           </CardContent>
         </Card>
@@ -294,4 +452,8 @@ export default function CheckoutPage() {
     <Footer/></>
   )
 }
+
+
+
+
 
