@@ -43,7 +43,12 @@ export default function Navbar() {
 
   const menuItems = ["Home", "About", "Contact"];
   const isStudio = variant.key === "studio";
-  const isMinimal = variant.key === "minimal";
+  const desktopLinkTone = isStudio
+    ? "text-slate-100 hover:text-sky-300"
+    : "text-slate-800 hover:text-slate-900";
+  const iconTone = isStudio
+    ? "text-slate-100 hover:text-sky-300"
+    : "text-slate-700 hover:text-slate-900";
 
   useEffect(() => {
     const load = async () => {
@@ -114,8 +119,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-6 relative z-20 backdrop-blur-2xl ${
-        isStudio ? "bg-slate-950/80 text-slate-100" : ""
+      className={`sticky top-0 flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-6 z-40 backdrop-blur-2xl border-b border-slate-200/60 ${
+        isStudio ? "bg-slate-950/80 text-slate-100" : "bg-white/90 text-slate-900"
       }`}
     >
       {/* Logo Section */}
@@ -146,7 +151,7 @@ export default function Navbar() {
                 ? `/template/${vendor_id}`
                 : `/template/${vendor_id}/${item.toLowerCase()}`
             }
-            className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+            className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
               isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
             }`}
           >
@@ -155,7 +160,7 @@ export default function Navbar() {
         ))}
         <Link
           href={`/template/${vendor_id}/cart`}
-          className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+          className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
             isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
           }`}
         >
@@ -165,7 +170,7 @@ export default function Navbar() {
           <>
             <Link
               href={`/template/${vendor_id}/orders`}
-              className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+              className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
                 isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
               }`}
             >
@@ -173,7 +178,7 @@ export default function Navbar() {
             </Link>
             <Link
               href={`/template/${vendor_id}/profile`}
-              className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+              className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
                 isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
               }`}
             >
@@ -183,7 +188,7 @@ export default function Navbar() {
         ) : (
           <Link
             href={`/template/${vendor_id}/login`}
-            className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+            className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
               isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
             }`}
           >
@@ -194,7 +199,7 @@ export default function Navbar() {
           <Link
             key={page.id || page.slug || page.title}
             href={`/template/${vendor_id}/page/${page.slug || page.id}`}
-            className="text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover"
+            className={`text-base font-medium transition-all duration-200 ${desktopLinkTone}`}
           >
             {page.title || "Page"}
           </Link>
@@ -203,7 +208,7 @@ export default function Navbar() {
         <div className="relative group">
         <Link
           href={`/template/${vendor_id}/category`}
-          className={`text-base font-medium hover:opacity-75 transition-all duration-200 template-accent-hover ${
+          className={`text-base font-medium transition-all duration-200 ${desktopLinkTone} ${
             isStudio ? "uppercase tracking-[0.2em] text-xs" : ""
           }`}
         >
@@ -254,7 +259,7 @@ export default function Navbar() {
                       (sub) => (
                         <Link
                           key={sub._id}
-                          href={`/template/${vendor_id}/category/${activeCategoryId}`}
+                          href={`/template/${vendor_id}/subcategory/${sub._id}`}
                           className={`rounded-xl px-3 py-2 text-sm transition ${isStudio ? "text-slate-300 hover:bg-slate-800/60" : "text-slate-600 hover:bg-slate-50"}`}
                         >
                           {sub?.name || "Subcategory"}
@@ -279,17 +284,17 @@ export default function Navbar() {
           <a
             key={i}
             href="#"
-            className="transition-opacity hover:opacity-75 template-accent"
+            className={`transition-colors duration-200 ${iconTone}`}
           >
             <Icon size={22} />
           </a>
         ))}
         <Link
           href={`/template/${vendor_id}/cart`}
-          className="relative transition-opacity hover:opacity-75 template-accent"
+          className={`relative transition-colors duration-200 ${iconTone}`}
         >
           <ShoppingBag size={22} />
-          <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white template-accent-bg">
+          <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white bg-slate-900">
             {cartCount}
           </span>
         </Link>
@@ -319,7 +324,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-opacity-70 backdrop-blur-lg py-8 shadow-md animate-slideDown bg-white">
+        <div className={`lg:hidden absolute top-full left-0 right-0 bg-opacity-90 backdrop-blur-lg py-8 shadow-md animate-slideDown ${isStudio ? "bg-slate-950 text-slate-100" : "bg-white text-slate-900"}`}>
           <div className="flex flex-col items-center gap-6">
             {menuItems.map((item) => (
               <Link
@@ -329,7 +334,7 @@ export default function Navbar() {
                     ? `/template/${vendor_id}`
                     : `/template/${vendor_id}/${item.toLowerCase()}`
                 }
-                className="text-lg font-medium transition-all hover:opacity-75 template-accent-hover"
+                className={`text-lg font-medium transition-colors duration-200 ${desktopLinkTone}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item}
@@ -339,7 +344,7 @@ export default function Navbar() {
               <Link
                 key={page.id || page.slug || page.title}
                 href={`/template/${vendor_id}/page/${page.slug || page.id}`}
-                className="text-lg font-medium transition-all hover:opacity-75 template-accent-hover"
+                className={`text-lg font-medium transition-colors duration-200 ${desktopLinkTone}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {page.title || "Page"}
@@ -347,7 +352,7 @@ export default function Navbar() {
             ))}
             <Link
               href={`/template/${vendor_id}/category`}
-              className="text-lg font-medium transition-all hover:opacity-75 template-accent-hover"
+              className={`text-lg font-medium transition-colors duration-200 ${desktopLinkTone}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Category
@@ -358,17 +363,17 @@ export default function Navbar() {
                 <a
                   key={i}
                   href="#"
-                  className="transition-opacity hover:opacity-75 template-accent"
+                  className={`transition-colors duration-200 ${iconTone}`}
                 >
                   <Icon size={22} />
                 </a>
               ))}
               <Link
                 href={`/template/${vendor_id}/cart`}
-                className="relative transition-opacity hover:opacity-75 template-accent"
+                className={`relative transition-colors duration-200 ${iconTone}`}
               >
                 <ShoppingBag size={22} />
-                <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white template-accent-bg">
+                <span className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold text-white bg-slate-900">
                   {cartCount}
                 </span>
               </Link>

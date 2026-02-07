@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useMemo } from "react";
 import { RootState } from "@/store";
 import {
   Facebook,
@@ -17,25 +18,66 @@ import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 
 export default function Footer() {
+  const params = useParams();
+  const vendor_id = params.vendor_id as string;
+
   const contact = useSelector((state: any) => state?.vendorprofilepage?.vendor);
-  const { homepage } = useSelector((state: RootState) => ({
+  const { homepage, products } = useSelector((state: RootState) => ({
     homepage: (state as any).alltemplatepage?.data,
+    products: (state as any).alltemplatepage?.products || [],
   }));
+
   const customPages =
     (homepage as any)?.components?.custom_pages?.filter(
       (page: any) => page?.isPublished !== false
     ) || [];
+  const contactAddress = [
+    contact?.street || contact?.address,
+    contact?.city,
+    contact?.state,
+    contact?.country,
+  ]
+    .filter((item) => typeof item === "string" && item.trim())
+    .join(", ");
 
-  // Get vendor_id dynamically
-  const params = useParams();
-  const vendor_id = params.vendor_id;
+  const categoryLinks = useMemo(() => {
+    const map = new Map<string, { path: string; label: string }>();
+    products.forEach((product: any) => {
+      const rawId =
+        product?.productCategory?._id ||
+        product?.productCategory ||
+        product?.productCategoryName ||
+        product?.productCategory?.name ||
+        product?.productCategory?.title ||
+        product?.productCategory?.categoryName;
+      const label =
+        product?.productCategoryName ||
+        product?.productCategory?.name ||
+        product?.productCategory?.title ||
+        product?.productCategory?.categoryName ||
+        (typeof product?.productCategory === "string" &&
+        !/^[a-f\d]{24}$/i.test(product.productCategory)
+          ? product.productCategory
+          : "");
+      if (!rawId || !label) return;
+
+      const path = /^[a-f\d]{24}$/i.test(rawId)
+        ? `/template/${vendor_id}/category/${rawId}`
+        : `/template/${vendor_id}/category/${encodeURIComponent(
+            String(label).toLowerCase().replace(/\s+/g, "-")
+          )}`;
+
+      if (!map.has(path)) {
+        map.set(path, { path, label: String(label) });
+      }
+    });
+    return Array.from(map.values()).slice(0, 6);
+  }, [products, vendor_id]);
 
   return (
     <footer className="w-full border-t mt-10">
-      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
-          {/* Company Info */}
           <div>
             <div className="flex items-center gap-3 mb-5">
               <div className="w-12 h-12 rounded-full border flex items-center justify-center overflow-hidden shadow-sm">
@@ -54,11 +96,10 @@ export default function Footer() {
             </div>
 
             <p className="opacity-75 mb-6 leading-relaxed text-sm md:text-base">
-              Your premier destination for all things green. Bringing nature into
-              your home, one plant at a time.
+              {homepage?.components?.home_page?.header_text_small ||
+                "Discover curated products from this vendor storefront."}
             </p>
 
-            {/* Social Icons */}
             <div className="flex gap-4">
               {[Facebook, Instagram, Youtube, Twitter].map((Icon, i) => (
                 <a
@@ -72,18 +113,14 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-4">
-              Quick Links
-            </h3>
+            <h3 className="text-base md:text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
               {[
                 { name: "Home", path: `/template/${vendor_id}` },
-                { name: "Shop", path: `/template/${vendor_id}/category` },
+                { name: "Shop", path: `/template/${vendor_id}/all-products` },
                 { name: "About Us", path: `/template/${vendor_id}/about` },
                 { name: "Contact", path: `/template/${vendor_id}/contact` },
-                { name: "FAQs", path: `/template/${vendor_id}/faqs` },
                 ...customPages.map((page: any) => ({
                   name: page.title || "Page",
                   path: `/template/${vendor_id}/page/${page.slug || page.id}`,
@@ -101,42 +138,37 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Categories */}
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-4">
-              Categories
-            </h3>
+            <h3 className="text-base md:text-lg font-semibold mb-4">Categories</h3>
             <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
-              {[
-                "Houseplants",
-                "Outdoor Plants",
-                "Succulents",
-                "Desert Bloom",
-                "Plant Care",
-              ].map((cat) => (
-                <li key={cat}>
+              {categoryLinks.length > 0 ? (
+                categoryLinks.map((cat) => (
+                  <li key={cat.path}>
+                    <Link href={cat.path} className="opacity-75 hover:opacity-100 transition">
+                      {cat.label}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li>
                   <Link
-                    href={`/template/${vendor_id}/category`}
+                    href={`/template/${vendor_id}/all-products`}
                     className="opacity-75 hover:opacity-100 transition"
                   >
-                    {cat}
+                    All Products
                   </Link>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-4">
-              Contact Us
-            </h3>
+            <h3 className="text-base md:text-lg font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-4 text-sm md:text-base">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="shrink-0 mt-1" />
                 <span className="opacity-75">
-                  {contact?.street || "Street Name"}, {contact?.state},{" "}
-                  {contact?.country}
+                  {contactAddress || "Store Address"}
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -145,7 +177,7 @@ export default function Footer() {
                   href={`tel:${contact?.phone || ""}`}
                   className="opacity-75 hover:opacity-100 transition"
                 >
-                  {contact?.phone || "+91 9876543210"}
+                  {contact?.phone || contact?.alternate_contact_phone || "+91 9876543210"}
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -162,7 +194,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Newsletter */}
       <div className="border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
@@ -170,7 +201,7 @@ export default function Footer() {
               Subscribe to Our Newsletter
             </h3>
             <p className="opacity-75 text-sm md:text-base">
-              Get the latest updates on new plants and exclusive offers.
+              Get updates on new arrivals and offers.
             </p>
           </div>
 
@@ -187,31 +218,26 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom Footer */}
       <div className="border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-75">
           <p className="text-center md:text-left">
-            © 2025 {contact?.name || "Your Company"}. All rights reserved.
+            © {new Date().getFullYear()}{" "}
+            {homepage?.business_name || contact?.name || contact?.registrar_name || "Your Company"}. All rights reserved.
           </p>
           <div className="flex gap-6">
-            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(
-              (link) => (
-                <Link
-                  key={link}
-                  href={`/template/${vendor_id}/${link
-                    .toLowerCase()
-                    .replace(/ /g, "-")}`}
-                  className="hover:opacity-100 transition template-accent-hover"
-                >
-                  {link}
-                </Link>
-              )
-            )}
+            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((link) => (
+              <Link
+                key={link}
+                href={`/template/${vendor_id}/${link.toLowerCase().replace(/ /g, "-")}`}
+                className="hover:opacity-100 transition template-accent-hover"
+              >
+                {link}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Back to Top */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         className="fixed bottom-6 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105 z-50 text-white template-accent-bg template-accent-bg-hover"

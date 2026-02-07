@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { fetchAlltemplatepageTemplate } from '@/store/slices/alltemplateslice'
+import { fetchVendorProfile } from '@/store/slices/vendorProfileSlice'
 import type { AppDispatch } from '@/store'
 
 type Props = {
@@ -14,7 +15,10 @@ export function TemplateDataLoader({ vendorId }: Props) {
 
   useEffect(() => {
     if (!vendorId) return
-    const load = () => dispatch(fetchAlltemplatepageTemplate(vendorId))
+    const load = () => {
+      dispatch(fetchAlltemplatepageTemplate(vendorId))
+      dispatch(fetchVendorProfile(vendorId))
+    }
     load()
 
     const handleFocus = () => load()

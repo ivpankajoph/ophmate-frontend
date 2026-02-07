@@ -61,8 +61,18 @@ export const fetchVendorProfile = createAsyncThunk<
   { rejectValue: string } // error type
 >("vendor/fetchProfile", async (id, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${BASE_URL}/vendor/vendorprofile?id=${id}`);
-    return response.data.vendor as Vendor;
+    const response = await axios.get(`${BASE_URL}/vendors/vendorprofile?id=${id}`);
+    const vendor =
+      response?.data?.vendor ??
+      response?.data?.data?.vendor ??
+      response?.data?.data ??
+      null;
+
+    if (!vendor || typeof vendor !== "object") {
+      return rejectWithValue("Vendor profile not found in API response");
+    }
+
+    return vendor as Vendor;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch vendor profile");
   }

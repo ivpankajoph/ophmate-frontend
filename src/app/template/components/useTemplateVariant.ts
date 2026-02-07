@@ -32,6 +32,19 @@ export const TEMPLATE_VARIANTS: TemplateVariant[] = [
 
 export const DEFAULT_TEMPLATE_VARIANT: TemplateVariantKey = 'classic'
 
+const normalizeVariantKey = (value: unknown): TemplateVariantKey | undefined => {
+  if (typeof value !== 'string') return undefined
+  const key = value.trim().toLowerCase()
+  if (!key) return undefined
+  if (key.includes('studio')) return 'studio'
+  if (key.includes('minimal')) return 'minimal'
+  if (key.includes('classic')) return 'classic'
+  if (key === '0') return 'classic'
+  if (key === '1') return 'studio'
+  if (key === '2') return 'minimal'
+  return undefined
+}
+
 export function useTemplateVariant() {
   const searchParams = useSearchParams()
   const previewKey = searchParams?.get('preview') || searchParams?.get('template')
@@ -42,11 +55,7 @@ export function useTemplateVariant() {
   )
 
   return useMemo(() => {
-    const key = typeof previewKey === 'string' && previewKey.length
-      ? (previewKey as TemplateVariantKey)
-      : typeof rawKey === 'string'
-        ? (rawKey as TemplateVariantKey)
-        : undefined
+    const key = normalizeVariantKey(previewKey) || normalizeVariantKey(rawKey)
     const match = TEMPLATE_VARIANTS.find((item) => item.key === key)
     return match || TEMPLATE_VARIANTS[0]
   }, [previewKey, rawKey])
