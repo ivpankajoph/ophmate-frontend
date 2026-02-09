@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import CheckoutPageClient from "@/app/template/components/pages/CheckoutPageClient";
 import { buildTemplateMetadata } from "@/lib/template-metadata";
 
 type PageProps = {
@@ -14,6 +14,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return buildTemplateMetadata({ vendorId: vendor_id, page: 'checkout' });
 }
 
-export default function Page() {
-  return <CheckoutPageClient />;
+export default async function Page({ params }: PageProps) {
+  const { vendor_id } = await params;
+  redirect(`/template/${vendor_id}/checkout/bag`);
 }

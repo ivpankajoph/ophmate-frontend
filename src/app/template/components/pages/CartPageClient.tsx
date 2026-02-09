@@ -261,7 +261,7 @@ export default function ShoppingCartPage() {
                 </div>
 
                 <button
-                  onClick={() => router.push(`/template/${vendorId}/checkout`)}
+                  onClick={() => router.push(`/template/${vendorId}/checkout/bag`)}
                   className="w-full text-white py-4 rounded-full font-semibold transition-colors text-lg template-accent-bg template-accent-bg-hover"
                 >
                   Proceed to checkout
