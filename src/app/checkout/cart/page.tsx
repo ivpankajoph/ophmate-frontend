@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function CheckoutRootPage() {
+export default function CheckoutCartAliasPage() {
   redirect("/checkout/bag");
 }

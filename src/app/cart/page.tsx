@@ -138,7 +138,7 @@ export default function CartPage() {
               <span>₹{(cart.subtotal || 0).toFixed(2)}</span>
             </div>
             <Button asChild>
-              <Link href="/checkout">Proceed to Checkout</Link>
+              <Link href="/checkout/bag">Proceed to Checkout</Link>
             </Button>
           </CardContent>
         </Card>

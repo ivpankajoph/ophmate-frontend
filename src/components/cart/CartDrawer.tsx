@@ -157,7 +157,7 @@ export default function CartDrawer() {
               asChild
               disabled={cartItems.length === 0}
             >
-              <Link href="/checkout">Proceed to Checkout</Link>
+              <Link href="/checkout/bag">Proceed to Checkout</Link>
             </Button>
           </div>
         )}
