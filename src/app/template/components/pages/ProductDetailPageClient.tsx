@@ -308,6 +308,10 @@ export default function ProductDetailPage() {
         quantity,
       });
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("template-cart-updated"));
+      }
+
       setMessage("Added to cart");
     } catch (error: any) {
       setMessage(error?.message || "Failed to add to cart");

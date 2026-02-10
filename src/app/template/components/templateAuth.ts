@@ -34,11 +34,17 @@ export const getTemplateAuth = (vendorId: string): TemplateAuthPayload | null =>
 export const setTemplateAuth = (vendorId: string, payload: TemplateAuthPayload) => {
   if (typeof window === "undefined") return;
   localStorage.setItem(storageKey(vendorId), JSON.stringify(payload));
+  window.dispatchEvent(
+    new CustomEvent("template-auth-updated", { detail: { vendorId } })
+  );
 };
 
 export const clearTemplateAuth = (vendorId: string) => {
   if (typeof window === "undefined") return;
   localStorage.removeItem(storageKey(vendorId));
+  window.dispatchEvent(
+    new CustomEvent("template-auth-updated", { detail: { vendorId } })
+  );
 };
 
 export const templateApiFetch = async (

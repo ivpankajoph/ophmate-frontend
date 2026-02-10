@@ -8,7 +8,7 @@ Disallow: /admin
 Disallow: /vendor
 
 # Host
-Host: https://ophmate-frontend.vercel.app
+Host: https://sellerslogin.com
 
 # Sitemaps
-Sitemap: https://ophmate-frontend.vercel.app/sitemap.xml
+Sitemap: https://sellerslogin.com/sitemap.xml

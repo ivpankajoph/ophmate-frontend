@@ -113,6 +113,9 @@ export function TemplateHomeRenderer() {
           quantity: 1,
         }),
       })
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('template-cart-updated'))
+      }
       setActionMessage('Added to cart.')
     } catch (error: any) {
       setActionMessage(error?.message || 'Failed to add to cart.')

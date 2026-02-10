@@ -17,7 +17,7 @@ import { RootState } from "@/store";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
-import { clearTemplateAuth, getTemplateAuth } from "./templateAuth";
+import { clearTemplateAuth, getTemplateAuth, templateApiFetch } from "./templateAuth";
 import { useTemplateVariant } from "./useTemplateVariant";
 
 export default function Navbar() {
@@ -70,29 +70,61 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!vendor_id) return;
-    const auth = getTemplateAuth(String(vendor_id));
-    setIsLoggedIn(!!auth?.token);
-    if (!auth?.token) {
-      setCartCount(0);
-      return;
-    }
+    const currentVendorId = String(vendor_id);
+
     const loadCart = async () => {
+      const auth = getTemplateAuth(currentVendorId);
+      setIsLoggedIn(Boolean(auth?.token));
+
+      if (!auth?.token) {
+        setCartCount(0);
+        return;
+      }
+
       try {
-        const res = await fetch(
-          `${NEXT_PUBLIC_API_URL}/template-users/cart`,
-          {
-            headers: {
-              Authorization: `Bearer ${auth.token}`,
-            },
-          }
-        );
-        const data = await res.json();
-        setCartCount(data?.cart?.total_quantity || 0);
+        const data = await templateApiFetch(currentVendorId, "/cart");
+        const quantityValue = Number(data?.cart?.total_quantity);
+        const itemQuantityFallback = Array.isArray(data?.cart?.items)
+          ? data.cart.items.reduce(
+              (sum: number, item: any) => sum + Number(item?.quantity || 0),
+              0
+            )
+          : 0;
+
+        if (Number.isFinite(quantityValue) && quantityValue >= 0) {
+          setCartCount(quantityValue);
+        } else {
+          setCartCount(itemQuantityFallback);
+        }
       } catch {
         setCartCount(0);
       }
     };
+
     loadCart();
+
+    const refreshCart = () => {
+      loadCart();
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key) return;
+      if (event.key === `template_auth_${currentVendorId}`) {
+        loadCart();
+      }
+    };
+
+    window.addEventListener("template-cart-updated", refreshCart);
+    window.addEventListener("template-auth-updated", refreshCart);
+    window.addEventListener("focus", refreshCart);
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("template-cart-updated", refreshCart);
+      window.removeEventListener("template-auth-updated", refreshCart);
+      window.removeEventListener("focus", refreshCart);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [vendor_id]);
 
   const subcategoriesByCategory = useMemo(() => {

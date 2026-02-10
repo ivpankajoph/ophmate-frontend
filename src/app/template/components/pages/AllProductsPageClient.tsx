@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Star, Search } from "lucide-react";
+import { ShoppingBag, Star, Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import axios from "axios";
 
+import { trackAddToCart } from "@/lib/analytics-events";
+import { toastError, toastSuccess } from "@/lib/toast";
 import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
+import { getTemplateAuth, templateApiFetch } from "@/app/template/components/templateAuth";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 
 const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
@@ -64,6 +67,37 @@ type NormalizedProduct = {
   category: ProductCategoryDetails;
 };
 
+const toNumber = (value: unknown) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const formatPrice = (value: unknown) => `Rs. ${toNumber(value).toLocaleString()}`;
+
+const getPrimaryVariant = (product: any) => {
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  return variants.find((variant: any) => variant?._id && variant?.isActive !== false) || variants[0] || null;
+};
+
+const getProductPricing = (product: any) => {
+  const variant = getPrimaryVariant(product);
+  const finalPrice = toNumber(variant?.finalPrice);
+  const actualPrice = toNumber(variant?.actualPrice);
+  let discountPercent = toNumber(variant?.discountPercent);
+
+  if (!discountPercent && actualPrice > finalPrice && actualPrice > 0) {
+    discountPercent = Math.round(((actualPrice - finalPrice) / actualPrice) * 100);
+  }
+
+  return {
+    variantId: variant?._id || "",
+    finalPrice,
+    actualPrice,
+    discountPercent,
+    stockQuantity: toNumber(variant?.stockQuantity),
+  };
+};
+
 export default function AllProducts() {
   const variant = useTemplateVariant();
   const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
@@ -73,6 +107,7 @@ export default function AllProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const [addingById, setAddingById] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -124,7 +159,84 @@ export default function AllProducts() {
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
       ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-white";
+      : "min-h-screen bg-slate-50";
+
+  const searchClass = isStudio
+    ? "border border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-400"
+    : isMinimal
+      ? "border border-slate-300 bg-white"
+      : "border border-slate-300 bg-white";
+
+  const chipActiveClass = isStudio
+    ? "bg-sky-500 text-slate-950"
+    : "bg-indigo-600 text-white";
+
+  const chipInactiveClass = isStudio
+    ? "bg-slate-900 text-slate-200 hover:bg-slate-800"
+    : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+
+  const cardClass = isStudio
+    ? "bg-slate-900 border border-slate-800 hover:border-slate-600"
+    : "bg-white border border-slate-200 hover:border-indigo-200";
+
+  const subtleTextClass = isStudio ? "text-slate-300" : "text-slate-500";
+  const titleTextClass = isStudio ? "text-slate-100" : "text-slate-900";
+  const heroClass = isStudio
+    ? "mb-7 rounded-2xl border border-slate-800 bg-slate-900/80 p-6"
+    : "mb-7 rounded-2xl border border-slate-200 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 p-6";
+  const heroTitleClass = isStudio ? "text-slate-100" : "text-slate-900";
+  const heroSubtextClass = isStudio ? "text-slate-300" : "text-slate-600";
+
+  const handleAddToCart = async (product: any) => {
+    if (!vendor_id || !product?._id) return;
+
+    const auth = getTemplateAuth(vendor_id);
+    if (!auth) {
+      window.location.href = `/template/${vendor_id}/login?next=/template/${vendor_id}/all-products`;
+      return;
+    }
+
+    const pricing = getProductPricing(product);
+    if (!pricing.variantId) {
+      toastError("Variant not available for this product");
+      return;
+    }
+
+    if (pricing.stockQuantity <= 0) {
+      toastError("This product is out of stock");
+      return;
+    }
+
+    setAddingById((prev) => ({ ...prev, [product._id]: true }));
+    try {
+      await templateApiFetch(vendor_id, "/cart", {
+        method: "POST",
+        body: JSON.stringify({
+          product_id: product._id,
+          variant_id: pricing.variantId,
+          quantity: 1,
+        }),
+      });
+
+      trackAddToCart({
+        vendorId: vendor_id,
+        userId: auth?.user?.id,
+        productId: product._id,
+        productName: product?.productName,
+        productPrice: pricing.finalPrice,
+        quantity: 1,
+      });
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("template-cart-updated"));
+      }
+      toastSuccess("Added to cart");
+    } catch (error: any) {
+      toastError(error?.message || "Failed to add to cart");
+    } finally {
+      setAddingById((prev) => ({ ...prev, [product._id]: false }));
+    }
+  };
 
   const filteredProducts = normalizedProducts.filter(({ product, category }) => {
     const name = normalizeText(product?.productName).toLowerCase();
@@ -139,24 +251,25 @@ export default function AllProducts() {
   });
 
   return (
-    <div className={`${pageClass} py-16 lg:py-20`}>
+    <div className={`${pageClass} py-10 lg:py-14`}>
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-4xl lg:text-5xl font-bold text-left mb-8">All Products</h2>
+        <div className={heroClass}>
+          <h2 className={`text-3xl lg:text-4xl font-bold text-left ${heroTitleClass}`}>All Products</h2>
+          <p className={`mt-2 text-sm ${heroSubtextClass}`}>
+            Explore {filteredProducts.length} products and add items to cart directly from this page.
+          </p>
+        </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
           <div className="relative w-full lg:w-1/3">
             <input
               type="text"
               placeholder="Search products..."
-              className={`w-full rounded-lg pl-10 pr-4 py-2 template-focus-accent ${
-                isStudio
-                  ? "border border-slate-700 bg-slate-950 text-slate-100"
-                  : "border border-gray-300"
-              }`}
+              className={`w-full rounded-xl pl-11 pr-4 py-2.5 template-focus-accent ${searchClass}`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search className="absolute left-3.5 top-3 text-slate-400" size={18} />
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -166,8 +279,8 @@ export default function AllProducts() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                   selectedCategory === cat
-                    ? "text-white template-accent-bg"
-                    : "bg-gray-100 text-gray-700 template-accent-soft-hover"
+                    ? chipActiveClass
+                    : chipInactiveClass
                 }`}
               >
                 {cat}
@@ -177,65 +290,109 @@ export default function AllProducts() {
         </div>
 
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-            {filteredProducts.map(({ product, category }) => (
-              <Link
-                key={product._id}
-                href={`/template/${vendor_id}/product/${product._id}`}
-                className="group cursor-pointer"
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            {filteredProducts.map(({ product, category }) => {
+              const pricing = getProductPricing(product);
+              const rating = Math.max(0, Math.min(5, toNumber(product?.rating || 4.2)));
+              const isAdding = Boolean(addingById[product._id]);
+
+              return (
                 <div
-                  className={`relative overflow-hidden mb-4 aspect-square rounded-xl ${
-                    isStudio ? "bg-slate-900" : "bg-gray-100"
-                  }`}
+                  key={product._id}
+                  className={`group rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}
                 >
-                  {product?.defaultImages?.[0]?.url ? (
-                    <img
-                      src={product.defaultImages[0].url}
-                      alt={product.productName}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">
-                      No Image
+                  <Link
+                    href={`/template/${vendor_id}/product/${product._id}`}
+                    className="block"
+                  >
+                    <div className="relative overflow-hidden rounded-t-2xl bg-slate-100">
+                      <div className="aspect-[4/5]">
+                        {product?.defaultImages?.[0]?.url ? (
+                          <img
+                            src={product.defaultImages[0].url}
+                            alt={product.productName || "Product image"}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+
+                      {pricing.discountPercent > 0 ? (
+                        <span className="absolute left-3 top-3 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-semibold text-white">
+                          {pricing.discountPercent}% OFF
+                        </span>
+                      ) : null}
                     </div>
-                  )}
-                </div>
+                  </Link>
 
-                <div className="flex gap-1 mb-2">
-                  {[...Array(5)].map((_, index) => (
-                    <Star
-                      key={index}
-                      size={16}
-                      className={
-                        index < Math.round(product?.rating || 0)
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }
-                    />
-                  ))}
-                </div>
+                  <div className="p-4">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                        <Star size={12} className="fill-current" />
+                        {rating.toFixed(1)}
+                      </div>
+                      <span className={`text-xs ${subtleTextClass}`}>
+                        {pricing.stockQuantity > 0 ? `${pricing.stockQuantity} in stock` : "Out of stock"}
+                      </span>
+                    </div>
 
-                <h3 className="text-xl lg:text-2xl font-semibold mb-1">
-                  {product.productName || "Untitled Product"}
-                </h3>
-                <p
-                  className={`${
-                    isStudio ? "text-slate-400" : "text-gray-500"
-                  } text-sm lg:text-base mb-2`}
-                >
-                  {category.label || "Category"}
-                </p>
-                <p className="text-lg lg:text-xl font-semibold">
-                  Rs. {product?.variants?.[0]?.finalPrice || "--"}
-                </p>
-              </Link>
-            ))}
+                    <Link href={`/template/${vendor_id}/product/${product._id}`} className="block">
+                      <h3 className={`line-clamp-2 text-lg font-semibold ${titleTextClass}`}>
+                        {product?.productName || "Untitled Product"}
+                      </h3>
+                    </Link>
+
+                    <p className={`mt-1 text-sm ${subtleTextClass}`}>
+                      {category.label || "Category"}
+                    </p>
+
+                    <div className="mt-3 flex items-end gap-2">
+                      <p className={`text-xl font-bold ${titleTextClass}`}>{formatPrice(pricing.finalPrice)}</p>
+                      {pricing.actualPrice > pricing.finalPrice ? (
+                        <p className="text-sm text-slate-400 line-through">
+                          {formatPrice(pricing.actualPrice)}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        disabled={isAdding || pricing.stockQuantity <= 0}
+                        onClick={() => handleAddToCart(product)}
+                        className="inline-flex items-center justify-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                      >
+                        <ShoppingBag size={15} />
+                        {isAdding ? "Adding..." : "Add to Cart"}
+                      </button>
+
+                      <Link
+                        href={`/template/${vendor_id}/product/${product._id}`}
+                        className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                          isStudio
+                            ? "border-slate-700 text-slate-200 hover:bg-slate-800"
+                            : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        View
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <p className="text-gray-500 text-center mt-10">
-            No products found matching your criteria.
-          </p>
+          <div
+            className={`mt-10 rounded-xl border border-dashed p-10 text-center ${
+              isStudio ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white"
+            }`}
+          >
+            <p className={subtleTextClass}>No products found matching your criteria.</p>
+          </div>
         )}
       </div>
     </div>
