@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { cache } from "react";
+import {
+  fetchSeoOverride,
+  mergeMetadataWithSeoOverride,
+  type SeoAppSource,
+} from "@/lib/admin-seo";
 
 type UnknownRecord = Record<string, any>;
 
@@ -252,10 +257,56 @@ const findCustomPage = (template: UnknownRecord | null, slug?: string) => {
   );
 };
 
+const buildTemplatePath = (options: BuildTemplateMetadataOptions) => {
+  const base = `/template/${encodeURIComponent(options.vendorId)}`;
+  switch (options.page) {
+    case "home":
+      return base;
+    case "about":
+      return `${base}/about`;
+    case "contact":
+      return `${base}/contact`;
+    case "all-products":
+      return `${base}/all-products`;
+    case "product-list":
+      return `${base}/product`;
+    case "product-detail":
+      return `${base}/product/${encodeURIComponent(options.productId || "")}`;
+    case "category-list":
+      return `${base}/category`;
+    case "category-detail":
+      return `${base}/category/${encodeURIComponent(options.categoryId || "")}`;
+    case "custom-page":
+      return `${base}/page/${encodeURIComponent(options.slug || "")}`;
+    case "cart":
+      return `${base}/cart`;
+    case "checkout":
+      return `${base}/checkout`;
+    case "orders":
+      return `${base}/orders`;
+    case "profile":
+      return `${base}/profile`;
+    case "login":
+      return `${base}/login`;
+    case "register":
+      return `${base}/register`;
+    default:
+      return base;
+  }
+};
+
 export async function buildTemplateMetadata(
   options: BuildTemplateMetadataOptions
 ): Promise<Metadata> {
   const { vendorId, page, productId, categoryId, slug } = options;
+  const pagePath = buildTemplatePath(options);
+  const applyAdminSeo = async (metadata: Metadata) => {
+    const override = await fetchSeoOverride({
+      appSource: "vendor_template_frontend" as SeoAppSource,
+      path: pagePath,
+    });
+    return mergeMetadataWithSeoOverride(metadata, override);
+  };
   const { template, products } = await fetchTemplatePreview(vendorId);
   const storeName = getStoreName(template);
   const homePage = template?.components?.home_page;
@@ -269,7 +320,7 @@ export async function buildTemplateMetadata(
 
   if (page === "home") {
     const homeMeta = readMetaFromObject(homePage);
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(homeMeta.title, homePage?.header_text, defaultTitle),
       description: pickString(
         homeMeta.description,
@@ -278,12 +329,12 @@ export async function buildTemplateMetadata(
         defaultDescription
       ),
       keywords: uniqueKeywords(homeMeta.keywords, getPageKeywordsFromProducts(products)),
-    });
+    }));
   }
 
   if (page === "about") {
     const aboutMeta = readMetaFromObject(aboutPage);
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(aboutMeta.title, aboutPage?.hero?.title, `About ${storeName}`),
       description: pickString(
         aboutMeta.description,
@@ -292,12 +343,12 @@ export async function buildTemplateMetadata(
         defaultDescription
       ),
       keywords: aboutMeta.keywords,
-    });
+    }));
   }
 
   if (page === "contact") {
     const contactMeta = readMetaFromObject(contactPage);
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(
         contactMeta.title,
         contactPage?.hero?.title,
@@ -309,7 +360,7 @@ export async function buildTemplateMetadata(
         defaultDescription
       ),
       keywords: contactMeta.keywords,
-    });
+    }));
   }
 
   if (page === "product-detail" && productId) {
@@ -317,7 +368,7 @@ export async function buildTemplateMetadata(
     const fetchedProduct = await fetchProductById(productId);
     const product = fetchedProduct || productFromCatalog;
     const productMeta = readMetaFromObject(product);
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(
         productMeta.title,
         product?.productName,
@@ -335,7 +386,7 @@ export async function buildTemplateMetadata(
         parseKeywords(product?.productTags),
         parseKeywords(product?.tags)
       ),
-    });
+    }));
   }
 
   if (page === "category-detail" && categoryId) {
@@ -354,7 +405,7 @@ export async function buildTemplateMetadata(
         sampleProduct?.productCategory?.categoryName
       ) || decodeURIComponent(categoryId).replace(/-/g, " ");
 
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(categoryMeta.title, `${categoryName} | ${storeName}`),
       description: pickString(
         categoryMeta.description,
@@ -362,7 +413,7 @@ export async function buildTemplateMetadata(
         defaultDescription
       ),
       keywords: uniqueKeywords(categoryMeta.keywords, [categoryName], getPageKeywordsFromProducts(products)),
-    });
+    }));
   }
 
   if (page === "custom-page") {
@@ -371,7 +422,7 @@ export async function buildTemplateMetadata(
     const firstSection = Array.isArray(customPage?.sections)
       ? customPage.sections[0]
       : null;
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: pickString(customMeta.title, customPage?.title, `Page | ${storeName}`),
       description: pickString(
         customMeta.description,
@@ -380,23 +431,23 @@ export async function buildTemplateMetadata(
         defaultDescription
       ),
       keywords: customMeta.keywords,
-    });
+    }));
   }
 
   if (page === "all-products" || page === "product-list") {
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: `Products | ${storeName}`,
       description: `Explore all products available in ${storeName}.`,
       keywords: getPageKeywordsFromProducts(products),
-    });
+    }));
   }
 
   if (page === "category-list") {
-    return makeMetadata({
+    return applyAdminSeo(makeMetadata({
       title: `Categories | ${storeName}`,
       description: `Browse product categories in ${storeName}.`,
       keywords: getPageKeywordsFromProducts(products),
-    });
+    }));
   }
 
   const fallbackMap: Record<TemplateMetadataPage, { title: string; description: string }> = {
@@ -453,5 +504,5 @@ export async function buildTemplateMetadata(
     },
   };
 
-  return makeMetadata(fallbackMap[page]);
+  return applyAdminSeo(makeMetadata(fallbackMap[page]));
 }

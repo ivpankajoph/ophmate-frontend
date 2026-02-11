@@ -22,6 +22,11 @@ import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import Pagination from "@/components/ui/Pagination";
 import Head from "next/head";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store";
+import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
+import { createWishlistItem } from "@/lib/wishlist";
+import { toastSuccess } from "@/lib/toast";
 
 interface Variant {
   _id: string;
@@ -90,7 +95,11 @@ interface SubCategoryResponse {
 export default function SubCategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const categorySlug = params.slug as string;
+  const wishlistItems = useSelector(
+    (state: RootState) => state.customerWishlist?.items || [],
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -262,6 +271,34 @@ export default function SubCategoryDetailPage() {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const isWishlisted = (productId: string) =>
+    wishlistItems.some((item) => item.product_id === String(productId));
+
+  const handleToggleWishlist = (product: Product, variant: Variant) => {
+    const alreadyWishlisted = isWishlisted(product._id);
+    dispatch(
+      toggleWishlistItem(
+        createWishlistItem({
+          product_id: product._id,
+          product_name: product.productName,
+          product_category: product.productCategory || "unknown",
+          image_url:
+            variant?.variantsImageUrls?.[0]?.url ||
+            product.defaultImages?.[0]?.url ||
+            "/placeholder.png",
+          final_price: variant?.finalPrice || 0,
+          actual_price: variant?.actualPrice || variant?.finalPrice || 0,
+          brand: product.brand,
+          short_description: product.shortDescription || product.description,
+          variant_id: variant?._id,
+          variant_attributes: variant?.variantAttributes || undefined,
+          stock_quantity: variant?.stockQuantity ?? 0,
+        }),
+      ),
+    );
+    toastSuccess(alreadyWishlisted ? "Removed from wishlist" : "Added to wishlist");
   };
 
   useEffect(() => {
@@ -595,7 +632,9 @@ const metaDescription = subCategory?.description || "";
                       ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                       : "space-y-6"
                   }>
-                    {filteredAndSortedProducts.map((item, index) => (
+                    {filteredAndSortedProducts.map((item, index) => {
+                      const alreadyWishlisted = isWishlisted(item.product._id);
+                      return (
                       <div
                         key={`${item.product._id}-${item.variant._id}`}
                         onClick={() =>
@@ -630,10 +669,17 @@ const metaDescription = subCategory?.description || "";
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleToggleWishlist(item.product, item.variant);
                             }}
-                            className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
                           >
-                            <Heart className="w-5 h-5 text-gray-700 hover:fill-red-500 hover:text-red-500 transition-colors" />
+                            <Heart
+                              className={`w-5 h-5 transition-colors ${
+                                alreadyWishlisted
+                                  ? "fill-red-500 text-red-500"
+                                  : "text-gray-700 hover:fill-red-500 hover:text-red-500"
+                              }`}
+                            />
                           </button>
                         </div>
 
@@ -697,7 +743,8 @@ const metaDescription = subCategory?.description || "";
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <Pagination
                     page={page}

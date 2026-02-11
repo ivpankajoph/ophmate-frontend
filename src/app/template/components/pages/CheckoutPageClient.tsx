@@ -143,9 +143,14 @@ export default function TemplateCheckoutPage() {
         body: JSON.stringify({
           address_id: addressId,
           payment_method: paymentMethod,
+          delivery_provider: "borzo",
         }),
       });
-      const amount = Number(data?.response?.order?.payment_amount || 0);
+      const fixedAmount = data?.configured_delivery?.is_fixed
+        ? Number(data?.configured_delivery?.amount)
+        : Number.NaN;
+      const quotedAmount = Number(data?.response?.order?.payment_amount);
+      const amount = Number.isFinite(fixedAmount) ? fixedAmount : quotedAmount;
       setShippingFee(Number.isFinite(amount) ? amount : 0);
     } catch (err: any) {
       setShippingFee(0);

@@ -8,6 +8,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { AppDispatch, RootState } from "@/store";
 import { addCartItem } from "@/store/slices/customerCartSlice";
+import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
+import { Heart } from "lucide-react";
+import { createWishlistItem } from "@/lib/wishlist";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { trackAddToCart } from "@/lib/analytics-events";
 
@@ -35,6 +38,9 @@ const ProductCard = ({ product }: { product: any }) => {
   const router = useRouter();
   const token = useSelector((state: RootState) => state.customerAuth.token);
   const user = useSelector((state: RootState) => state.customerAuth.user);
+  const wishlistItems = useSelector(
+    (state: RootState) => state.customerWishlist?.items || [],
+  );
   const [isAdding, setIsAdding] = useState(false);
   const firstVariant =
     product?.variants?.find((variant: any) => variant?.isActive) ||
@@ -46,6 +52,9 @@ const ProductCard = ({ product }: { product: any }) => {
   const stockQuantity = Number(firstVariant?.stockQuantity || 0);
   const imageUrl = getProductImage(product);
   const isOutOfStock = stockQuantity <= 0;
+  const isWishlisted = wishlistItems.some(
+    (item) => item.product_id === String(product?._id || ""),
+  );
 
   const handleAddToCart = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -80,6 +89,31 @@ const ProductCard = ({ product }: { product: any }) => {
     }
   };
 
+  const handleToggleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!product?._id) return;
+
+    dispatch(
+      toggleWishlistItem(
+        createWishlistItem({
+          product_id: product._id,
+          product_name: product.productName,
+          product_category: product.productCategory || "unknown",
+          image_url: imageUrl,
+          final_price: finalPrice,
+          actual_price: actualPrice || finalPrice,
+          brand: product.brand,
+          short_description: product.shortDescription || product.description,
+          variant_id: firstVariant?._id,
+          variant_attributes: firstVariant?.variantAttributes || undefined,
+          stock_quantity: stockQuantity,
+        }),
+      ),
+    );
+    toastSuccess(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
+  };
+
   return (
     <div className="group h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_-32px_rgba(15,23,42,0.6)]">
       <Link
@@ -101,6 +135,20 @@ const ProductCard = ({ product }: { product: any }) => {
               {discountPercent}% off
             </span>
           )}
+          <button
+            type="button"
+            onClick={handleToggleWishlist}
+            className="absolute right-3 top-3 rounded-full bg-white/90 p-2 shadow transition hover:scale-105"
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart
+              className={`h-4 w-4 ${
+                isWishlisted
+                  ? "fill-red-500 text-red-500"
+                  : "text-slate-700 hover:fill-red-500 hover:text-red-500"
+              }`}
+            />
+          </button>
         </div>
         <div className="space-y-2 px-4 pb-3 pt-4">
           <div>

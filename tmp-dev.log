@@ -1,0 +1,16 @@
+
+> ophmart@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Port 3000 is in use by process 19600, using available port 3002 instead.
+   ▲ Next.js 15.5.9 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.1.34:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Compiled middleware in 246ms
+ ✓ Ready in 2.6s
+
+c:\oph work\ophmate-frontend>

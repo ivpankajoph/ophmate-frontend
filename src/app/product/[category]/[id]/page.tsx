@@ -31,6 +31,7 @@ import { AppDispatch, RootState } from "@/store";
 import { useParams, useRouter } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
 import { addCartItem } from "@/store/slices/customerCartSlice";
+import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { trackAddToCart } from "@/lib/analytics-events";
 import PromotionalBanner from "@/components/promotional-banner";
@@ -39,6 +40,7 @@ import Footer from "@/components/footer";
 import MightInterested from "@/components/MightInterested";
 import Link from "next/link";
 import { FAQ, Variant } from "../../type/type";
+import { createWishlistItem } from "@/lib/wishlist";
 
 const getColorFromVariant = (variant: Variant): string => {
   return variant?.variantAttributes?.color || "Unknown";
@@ -59,6 +61,9 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const token = useSelector((state: RootState) => state.customerAuth.token);
   const user = useSelector((state: RootState) => state.customerAuth.user);
+  const wishlistItems = useSelector(
+    (state: RootState) => state.customerWishlist?.items || [],
+  );
   const { product, loading, error } = useSelector(
     (state: any) => state.product,
   );
@@ -66,7 +71,6 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [wishlisted, setWishlisted] = useState(false);
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
@@ -168,6 +172,39 @@ export default function ProductDetailPage() {
 
   const handleMouseEnter = () => setShowMagnifier(true);
   const handleMouseLeave = () => setShowMagnifier(false);
+  const wishlisted = wishlistItems.some(
+    (item) => item.product_id === String(product?._id || ""),
+  );
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    const variant =
+      selectedVariant ||
+      product.variants?.find((item: Variant) => item?.isActive) ||
+      product.variants?.[0];
+
+    dispatch(
+      toggleWishlistItem(
+        createWishlistItem({
+          product_id: product._id,
+          product_name: product.productName,
+          product_category: product.productCategory || "unknown",
+          image_url:
+            variant?.variantsImageUrls?.[0]?.url ||
+            product.defaultImages?.[0]?.url ||
+            "/placeholder.png",
+          final_price: variant?.finalPrice || 0,
+          actual_price: variant?.actualPrice || variant?.finalPrice || 0,
+          brand: product.brand,
+          short_description: product.shortDescription || product.description,
+          variant_id: variant?._id,
+          variant_attributes: variant?.variantAttributes || undefined,
+          stock_quantity: variant?.stockQuantity ?? 0,
+        }),
+      ),
+    );
+    toastSuccess(wishlisted ? "Removed from wishlist" : "Added to wishlist");
+  };
 
   if (loading) {
     return (
@@ -332,7 +369,7 @@ export default function ProductDetailPage() {
               <Button
                 variant="outline"
                 className={`flex-1 transition-all ${wishlisted ? "bg-pink-50 border-pink-300 text-pink-600" : ""}`}
-                    onClick={() => setWishlisted((s) => !s)}
+                onClick={handleToggleWishlist}
                   >
                     <Heart
                       className={`mr-2 ${wishlisted ? "fill-current" : ""}`}

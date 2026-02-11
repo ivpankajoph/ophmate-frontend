@@ -37,6 +37,9 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false)
   const dispatch = useDispatch<AppDispatch>()
   const token = useSelector((state: RootState) => state.customerAuth.token)
+  const wishlistCount = useSelector(
+    (state: RootState) => state.customerWishlist?.items?.length || 0,
+  )
   const router = useRouter()
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "", [])
   const debouncedSearch = useDebounce(search, 350)
@@ -206,8 +209,17 @@ export default function Navbar() {
       </Link>
 
           <Link href="/wishlist">
-            <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="relative">
+              <Heart
+                className={`h-5 w-5 ${
+                  wishlistCount > 0 ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              {wishlistCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
             </Button>
           </Link>
 

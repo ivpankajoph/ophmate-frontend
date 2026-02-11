@@ -10,6 +10,7 @@ import customerAuthReducer from "./slices/customerAuthSlice"
 import customerCartReducer from "./slices/customerCartSlice"
 import customerAddressReducer from "./slices/customerAddressSlice"
 import customerOrderReducer from "./slices/customerOrderSlice"
+import customerWishlistReducer from "./slices/customerWishlistSlice"
 
 const rootReducer = combineReducers({
   banner: bannerReducer,
@@ -22,7 +23,8 @@ const rootReducer = combineReducers({
   customerAuth: customerAuthReducer,
   customerCart: customerCartReducer,
   customerAddress: customerAddressReducer,
-  customerOrder: customerOrderReducer
+  customerOrder: customerOrderReducer,
+  customerWishlist: customerWishlistReducer,
 })
 
 export type RootState = ReturnType<typeof rootReducer>

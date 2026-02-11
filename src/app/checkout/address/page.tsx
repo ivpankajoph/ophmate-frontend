@@ -132,8 +132,14 @@ export default function CheckoutAddressPage() {
       const response = await userApi.post("/orders/borzo/calculate", {
         address_id: addressId,
         payment_method: paymentMethod,
+        delivery_provider: "borzo",
       });
-      const amount = Number(response?.data?.response?.order?.payment_amount || 0);
+      const payload = response?.data || {};
+      const fixedAmount = payload?.configured_delivery?.is_fixed
+        ? Number(payload?.configured_delivery?.amount)
+        : Number.NaN;
+      const quotedAmount = Number(payload?.response?.order?.payment_amount);
+      const amount = Number.isFinite(fixedAmount) ? fixedAmount : quotedAmount;
       setShippingFee(Number.isFinite(amount) ? amount : 0);
     } catch (error: any) {
       setShippingFee(0);
