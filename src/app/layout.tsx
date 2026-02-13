@@ -8,6 +8,7 @@ import VendorProvider from "@/providers/VendorProvider";
 import GoogleAnalytics from "@/components/google-analytics/GoogleAnalytics";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import SeoRuntime from "@/components/seo/seo-runtime";
+import PageTransitionLoader from "@/components/navigation/PageTransitionLoader";
 import {
   fetchSeoOverride,
   mergeMetadataWithSeoOverride,
@@ -61,6 +62,7 @@ export default function RootLayout({
           <ReduxProvider>
             <AnalyticsTracker />
             <SeoRuntime />
+            <PageTransitionLoader />
             {children}
           </ReduxProvider>
         </VendorProvider>

@@ -58,8 +58,12 @@ export default function CategoryMegaBar() {
     let isMounted = true;
     const fetchMainCategories = async () => {
       try {
+        const params = new URLSearchParams({
+          page: "1",
+          limit: "50",
+        });
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/maincategories/getall`
+          `${process.env.NEXT_PUBLIC_API_URL}/maincategories/getall?${params.toString()}`
         );
         const data = await res.json();
         if (!isMounted) return;

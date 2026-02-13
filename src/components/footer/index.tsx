@@ -112,18 +112,19 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Contact Info */}
+        
+
         <div>
           <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <MapPin className="h-4 w-4 mt-1" />
-              <span>123 Market Street, New Delhi, India</span>
+              <span>Office No 834 Gaur City Mall, Greater Noida, Gautam Budhdha Nagar 201310, India</span>
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              <a href="tel:+911234567890" className="hover:underline">
-                +91 12345 67890
+              <a href="tel:+919873138444" className="hover:underline">
+                +91 9873138444
               </a>
             </li>
             <li className="flex items-center gap-2">

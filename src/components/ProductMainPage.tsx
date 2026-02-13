@@ -14,13 +14,6 @@ import { createWishlistItem } from "@/lib/wishlist";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { trackAddToCart } from "@/lib/analytics-events";
 
-type Category = {
-  _id?: string;
-  name?: string;
-  slug?: string;
-  image_url?: string;
-};
-
 const formatPrice = (value: number) =>
   `Rs. ${Number(value || 0).toLocaleString()}`;
 
@@ -50,6 +43,14 @@ const ProductCard = ({ product }: { product: any }) => {
   const actualPrice = Number(firstVariant?.actualPrice || 0);
   const discountPercent = Number(firstVariant?.discountPercent || 0);
   const stockQuantity = Number(firstVariant?.stockQuantity || 0);
+  const rating = Number(product?.averageRating || product?.rating || 0);
+  const reviewCount = Number(
+    product?.totalReviews ||
+      product?.reviewCount ||
+      product?.ratingsCount ||
+      product?.reviews?.length ||
+      0,
+  );
   const imageUrl = getProductImage(product);
   const isOutOfStock = stockQuantity <= 0;
   const isWishlisted = wishlistItems.some(
@@ -115,12 +116,12 @@ const ProductCard = ({ product }: { product: any }) => {
   };
 
   return (
-    <div className="group h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_-32px_rgba(15,23,42,0.6)]">
+    <div className="group h-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <Link
         href={`/product/${productCategory}/${product?._id || ""}`}
         className="block"
       >
-        <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">
+        <div className="relative aspect-square overflow-hidden bg-slate-50 p-3">
           <img
             src={imageUrl}
             alt={
@@ -128,17 +129,17 @@ const ProductCard = ({ product }: { product: any }) => {
               product?.productName ||
               "Product"
             }
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
           />
           {discountPercent > 0 && (
-            <span className="absolute left-3 top-3 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow">
-              {discountPercent}% off
+            <span className="absolute left-2 top-2 rounded-md bg-emerald-600 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+              {Math.round(discountPercent)}% off
             </span>
           )}
           <button
             type="button"
             onClick={handleToggleWishlist}
-            className="absolute right-3 top-3 rounded-full bg-white/90 p-2 shadow transition hover:scale-105"
+            className="absolute right-2 top-2 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm transition hover:scale-105"
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
@@ -150,28 +151,47 @@ const ProductCard = ({ product }: { product: any }) => {
             />
           </button>
         </div>
-        <div className="space-y-2 px-4 pb-3 pt-4">
-          <div>
-            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
-              {product?.productName || "Untitled Product"}
-            </h3>
-            <p className="text-xs text-slate-500">1 unit</p>
+        <div className="space-y-2 px-3 pb-2.5 pt-2">
+          <p className="line-clamp-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            {product?.brand || "Ophmate"}
+          </p>
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-[14px] font-medium leading-5 text-slate-900">
+            {product?.productName || "Untitled Product"}
+          </h3>
+          <div className="flex items-center gap-2 text-xs">
+            {rating > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1 rounded bg-emerald-600 px-1.5 py-0.5 font-semibold text-white">
+                  {rating.toFixed(1)} <span aria-hidden="true">★</span>
+                </span>
+                <span className="text-slate-500">
+                  ({reviewCount > 0 ? reviewCount : 1})
+                </span>
+              </>
+            ) : (
+              <span className="text-slate-500">1 unit</span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-base font-semibold text-slate-900">
+          <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
+            <span className="text-xl font-semibold leading-none text-slate-900">
               {formatPrice(finalPrice)}
             </span>
             {actualPrice > finalPrice && (
-              <span className="text-xs text-slate-400 line-through">
+              <span className="text-sm text-slate-400 line-through">
                 {formatPrice(actualPrice)}
+              </span>
+            )}
+            {discountPercent > 0 && (
+              <span className="text-xs font-semibold text-emerald-700">
+                {Math.round(discountPercent)}% off
               </span>
             )}
           </div>
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-2 px-4 pb-4">
+      <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-3 py-2.5">
         <span
-          className={`text-xs font-medium ${
+          className={`text-[11px] font-semibold ${
             stockQuantity > 5 ? "text-emerald-600" : "text-orange-600"
           }`}
         >
@@ -181,7 +201,7 @@ const ProductCard = ({ product }: { product: any }) => {
           onClick={handleAddToCart}
           disabled={isAdding || isOutOfStock || !firstVariant?._id}
           variant="outline"
-          className="h-8 rounded-full border-emerald-500 px-4 text-xs font-semibold uppercase text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-8 rounded-md border-emerald-500 px-3 text-[11px] font-semibold uppercase text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isOutOfStock ? "Out" : isAdding ? "Adding" : "Add"}
         </Button>
@@ -189,6 +209,9 @@ const ProductCard = ({ product }: { product: any }) => {
     </div>
   );
 };
+
+const PRODUCT_GRID_CLASS =
+  "grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
 
 const SectionHeader = ({
   title,
@@ -209,7 +232,6 @@ const SectionHeader = ({
 
 const ProductsMainPage = () => {
   const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [shuffleSeed, setShuffleSeed] = useState(0);
 
@@ -221,30 +243,23 @@ const ProductsMainPage = () => {
           typeof window !== "undefined"
             ? localStorage.getItem("authToken") || ""
             : "";
-        const [productsRes, categoriesRes] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/all`, {
+        const productsRes = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/all`,
+          {
             params: { page: 1, limit: 48 },
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/categories/getall`, {
-            params: { page: 1, limit: 8 },
-          }),
-        ]);
+          },
+        );
 
         const productList = Array.isArray(productsRes.data?.products)
           ? productsRes.data.products
           : [];
-        const categoryList = Array.isArray(categoriesRes.data?.data)
-          ? categoriesRes.data.data
-          : [];
 
         setProducts(productList);
-        setCategories(categoryList);
         setShuffleSeed(Math.random());
       } catch (error) {
         console.error("Failed to fetch home data:", error);
         setProducts([]);
-        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -297,21 +312,6 @@ const ProductsMainPage = () => {
     return list.slice(0, 8);
   }, [products, shuffleSeed]);
 
-  const categorySections = useMemo(() => {
-    return categories
-      .map((category) => {
-        const categoryId = String(category._id || "");
-        const categoryProducts = products.filter(
-          (product) => String(product?.productCategory || "") === categoryId
-        );
-        return {
-          ...category,
-          products: categoryProducts.slice(0, 4),
-        };
-      })
-      .filter((section) => section.products.length > 0);
-  }, [categories, products]);
-
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -329,7 +329,7 @@ const ProductsMainPage = () => {
             subtitle="Fresh arrivals that shoppers are picking fast."
           />
           {trendingProducts.length ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={PRODUCT_GRID_CLASS}>
               {trendingProducts.map((product) => (
                 <ProductCard
                   key={product?._id || product?.slug || product?.productName}
@@ -350,7 +350,7 @@ const ProductsMainPage = () => {
             subtitle="A shuffled mix of highly loved products."
           />
           {topRated.length ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={PRODUCT_GRID_CLASS}>
               {topRated.map((product) => (
                 <ProductCard
                   key={product?._id || product?.slug || product?.productName}
@@ -371,7 +371,7 @@ const ProductsMainPage = () => {
             subtitle="Just in: latest additions to the store."
           />
           {newArrivals.length ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={PRODUCT_GRID_CLASS}>
               {newArrivals.map((product) => (
                 <ProductCard
                   key={product?._id || product?.slug || product?.productName}
@@ -392,7 +392,7 @@ const ProductsMainPage = () => {
             subtitle="Top discounts hand-picked across the store."
           />
           {bestDeals.length ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={PRODUCT_GRID_CLASS}>
               {bestDeals.map((product) => (
                 <ProductCard
                   key={product?._id || product?.slug || product?.productName}
@@ -407,52 +407,6 @@ const ProductsMainPage = () => {
           )}
         </section>
 
-        <section>
-          <SectionHeader
-            title="Category-wise picks"
-            subtitle="Browse a few favorites from every category."
-          />
-          <div className="space-y-10">
-            {categorySections.length ? (
-              categorySections.map((section) => (
-                <div key={section._id || section.slug || section.name}>
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {section.name}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Popular in {section.name}
-                      </p>
-                    </div>
-                    {section.slug && (
-                      <Link
-                        href={`/categories/${section.slug}`}
-                        className="text-sm font-semibold text-orange-600 hover:text-orange-700"
-                      >
-                        View all
-                      </Link>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    {section.products.map((product: any) => (
-                      <ProductCard
-                        key={
-                          product?._id || product?.slug || product?.productName
-                        }
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500">
-                No category products to show yet.
-              </div>
-            )}
-          </div>
-        </section>
       </div>
     </div>
   );

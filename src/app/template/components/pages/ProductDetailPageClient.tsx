@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Minus, Plus, Star, Truck, RefreshCw, Shield, Zap, Check } from "lucide-react";
 
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { getTemplateAuth, templateApiFetch } from "@/app/template/components/templateAuth";
 import { trackAddToCart } from "@/lib/analytics-events";
 import { useTemplateVariant } from "@/app/template/components/useTemplateVariant";
+import ProductReviewsSection, {
+  ProductReviewSummary,
+} from "@/components/reviews/ProductReviewsSection";
 
 type VariantImage = {
   url?: string;
@@ -44,9 +47,11 @@ type Product = {
   variants?: ProductVariant[];
   specifications?: Array<Record<string, string>>;
   faqs?: ProductFaq[];
+  averageRating?: number;
+  ratingsCount?: number;
 };
 
-type ProductTab = "description" | "specifications" | "faqs";
+type ProductTab = "description" | "specifications" | "faqs" | "reviews";
 
 const RETAIL_BENEFITS = [
   { icon: Truck, text: "Free shipping over Rs. 75" },
@@ -102,6 +107,7 @@ const getUniqueImages = (product: Product | null) => {
 export default function ProductDetailPage() {
   const variantTheme = useTemplateVariant();
   const params = useParams();
+  const pathname = usePathname();
 
   const productId = params.product_id as string;
   const vendorId = params.vendor_id as string;
@@ -114,6 +120,11 @@ export default function ProductDetailPage() {
   const [message, setMessage] = useState("");
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [templateToken, setTemplateToken] = useState<string | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<ProductReviewSummary>({
+    averageRating: 0,
+    ratingsCount: 0,
+  });
 
   const isStudio = variantTheme.key === "studio";
   const isMinimal = variantTheme.key === "minimal";
@@ -148,6 +159,21 @@ export default function ProductDetailPage() {
       active = false;
     };
   }, [productId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncAuth = () => {
+      const auth = getTemplateAuth(vendorId);
+      setTemplateToken(auth?.token || null);
+    };
+
+    syncAuth();
+    window.addEventListener("template-auth-updated", syncAuth);
+    return () => {
+      window.removeEventListener("template-auth-updated", syncAuth);
+    };
+  }, [vendorId]);
 
   const variants = useMemo(() => product?.variants || [], [product]);
 
@@ -337,6 +363,16 @@ export default function ProductDetailPage() {
   }
 
   const hasFaqs = Array.isArray(product.faqs) && product.faqs.length > 0;
+  const productAverageRating = toNumber(product.averageRating);
+  const productRatingsCount = toNumber(product.ratingsCount);
+  const displayRating =
+    reviewSummary.ratingsCount > 0
+      ? reviewSummary.averageRating
+      : productAverageRating;
+  const displayReviewsCount =
+    reviewSummary.ratingsCount > 0
+      ? reviewSummary.ratingsCount
+      : productRatingsCount;
 
   return (
     <div className={pageClass}>
@@ -410,8 +446,10 @@ export default function ProductDetailPage() {
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm ${isStudio ? "bg-slate-800 text-slate-100" : "bg-amber-50 text-amber-900"}`}>
                   <Star className="h-4 w-4 fill-current text-amber-500" />
-                  <span className="font-semibold">4.6</span>
-                  <span>(213 reviews)</span>
+                  <span className="font-semibold">
+                    {displayRating > 0 ? displayRating.toFixed(1) : "0.0"}
+                  </span>
+                  <span>({displayReviewsCount} reviews)</span>
                 </div>
                 <div className={`rounded px-3 py-1 font-mono text-sm ${isStudio ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
                   SKU: {selectedVariant?.variantSku || "N/A"}
@@ -614,6 +652,21 @@ export default function ProductDetailPage() {
               >
                 FAQs
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("reviews")}
+                className={`pb-3 text-sm font-semibold transition ${
+                  activeTab === "reviews"
+                    ? isStudio
+                      ? "border-b-2 border-slate-100 text-slate-100"
+                      : "border-b-2 border-slate-900 text-slate-900"
+                    : isStudio
+                      ? "text-slate-400 hover:text-white"
+                      : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Reviews
+              </button>
             </div>
           </div>
 
@@ -683,6 +736,16 @@ export default function ProductDetailPage() {
                   <p className={isStudio ? "text-slate-400" : "text-slate-500"}>No FAQs available for this product yet.</p>
                 )}
               </div>
+            )}
+
+            {activeTab === "reviews" && (
+              <ProductReviewsSection
+                productId={productId}
+                token={templateToken}
+                loginPath={`/template/${vendorId}/login?next=${encodeURIComponent(pathname || `/template/${vendorId}/product/${productId}`)}`}
+                onSummaryChange={setReviewSummary}
+                theme={isStudio ? "studio" : "default"}
+              />
             )}
           </div>
         </div>

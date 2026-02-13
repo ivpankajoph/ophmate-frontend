@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/accordion";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { fetchProductById } from "@/store/slices/productSlice";
 import { addCartItem } from "@/store/slices/customerCartSlice";
 import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
@@ -41,6 +41,9 @@ import MightInterested from "@/components/MightInterested";
 import Link from "next/link";
 import { FAQ, Variant } from "../../type/type";
 import { createWishlistItem } from "@/lib/wishlist";
+import ProductReviewsSection, {
+  ProductReviewSummary,
+} from "@/components/reviews/ProductReviewsSection";
 
 const getColorFromVariant = (variant: Variant): string => {
   return variant?.variantAttributes?.color || "Unknown";
@@ -57,6 +60,7 @@ const retailBenefits = [
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const token = useSelector((state: RootState) => state.customerAuth.token);
@@ -73,6 +77,10 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [reviewSummary, setReviewSummary] = useState<ProductReviewSummary>({
+    averageRating: 0,
+    ratingsCount: 0,
+  });
 
   useEffect(() => {
     if (id) {
@@ -269,6 +277,16 @@ export default function ProductDetailPage() {
 
   const basePrice = selectedVariant?.finalPrice || 0;
   const actualPrice = selectedVariant?.actualPrice || 0;
+  const productAverageRating = Number(product?.averageRating || 0);
+  const productRatingsCount = Number(product?.ratingsCount || 0);
+  const displayRating =
+    reviewSummary.ratingsCount > 0
+      ? reviewSummary.averageRating
+      : productAverageRating;
+  const displayReviewsCount =
+    reviewSummary.ratingsCount > 0
+      ? reviewSummary.ratingsCount
+      : productRatingsCount;
 
   const mainCategoryLabel =
     product.mainCategoryData?.name ||
@@ -393,8 +411,12 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-4 mt-3">
                 <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
                   <Star className="text-amber-400 fill-amber-400 w-5 h-5" />
-                  <span className="font-bold text-amber-900">4.6</span>
-                  <span className="text-sm text-amber-700">(213 reviews)</span>
+                  <span className="font-bold text-amber-900">
+                    {displayRating > 0 ? displayRating.toFixed(1) : "0.0"}
+                  </span>
+                  <span className="text-sm text-amber-700">
+                    ({displayReviewsCount} reviews)
+                  </span>
                 </div>
                 <Separator orientation="vertical" className="h-6" />
                 <div className="text-sm text-muted-foreground font-mono bg-neutral-100 px-3 py-1 rounded">
@@ -646,57 +668,12 @@ export default function ProductDetailPage() {
                   </div>
                 </section>
               )}
-
-              <section className="bg-white rounded-xl p-6 shadow-md border">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Star className="text-amber-500 fill-amber-500" />
-                    Customer Reviews
-                  </h2>
-                  <Badge className="bg-amber-100 text-amber-800 text-lg px-3 py-1">
-                    4.6 ★ (213)
-                  </Badge>
-                </div>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="p-4 border-2 rounded-xl hover:shadow-md transition-shadow bg-gradient-to-br from-white to-neutral-50"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold">
-                            C{i}
-                          </div>
-                          <div>
-                            <div className="font-semibold">Customer {i}</div>
-                            <div className="text-xs text-muted-foreground">
-                              2 days ago
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full">
-                          <Star className="text-amber-400 fill-amber-400 w-4 h-4" />
-                          <span className="font-bold text-amber-900">
-                            4.{i}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        Great product! Highly recommended. The quality exceeded
-                        my expectations and delivery was fast.
-                      </p>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 border-2 hover:bg-indigo-50 hover:border-indigo-300 font-semibold"
-                  >
-                    Write a Review
-                  </Button>
-                </div>
-              </section>
-
+              <ProductReviewsSection
+                productId={String(product._id)}
+                token={token}
+                loginPath={`/login?next=${encodeURIComponent(pathname || "/")}`}
+                onSummaryChange={setReviewSummary}
+              />
             {product.faqs && product.faqs.length > 0 && (
               <section className="bg-white rounded-xl p-6 shadow-md border">
                 <h2 className="text-2xl font-bold mb-4">
@@ -810,6 +787,7 @@ export default function ProductDetailPage() {
     </>
   );
 }
+
 
 
 

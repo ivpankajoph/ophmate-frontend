@@ -22,7 +22,7 @@ import {
   sendCustomerOtp,
   verifyCustomerOtp,
 } from "@/store/slices/customerAuthSlice"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Mail, Lock, User, Phone, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 
 import PromotionalBanner from "@/components/promotional-banner"
@@ -59,9 +59,14 @@ function LoadingSpinner() {
 export default function UserLogin() {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { loading, token, otpSent } = useSelector(
     (state: RootState) => state.customerAuth,
   )
+  const requestedNextPath = searchParams.get("next") || "/profile"
+  const nextPath = requestedNextPath.startsWith("/")
+    ? requestedNextPath
+    : "/profile"
 
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
@@ -75,9 +80,9 @@ export default function UserLogin() {
 
   useEffect(() => {
     if (token) {
-      router.push("/profile")
+      router.push(nextPath)
     }
-  }, [token, router])
+  }, [token, router, nextPath])
 
   const handleOtpChange = (index: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return
