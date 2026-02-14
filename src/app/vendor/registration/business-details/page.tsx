@@ -25,11 +25,14 @@ import Footer from "@/components/footer";
 // OPTIMIZATION: Memoized input component to prevent re-renders
 const TextInput = memo(({
   name, label, value, placeholder, disabled, error,
-  onChange, onBlur, onPaste, toUpperCase
+  onChange, onBlur, onPaste, toUpperCase, capitalize
 }: any) => {
+  const toTitleCase = (input: string) => input.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
     if (toUpperCase) val = val.toUpperCase();
+    else if (capitalize) val = toTitleCase(val);
     onChange(name, val);
   };
 
@@ -434,7 +437,7 @@ export default function BusinessDetails() {
                 <CardHeader><CardTitle>Your Information</CardTitle></CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-4">
                   <TextInput name="registrar_name" label="Your Name" value={form.registrar_name}
-                    onChange={updateField} onBlur={handleBlur} error={errors.registrar_name} toUpperCase />
+                    onChange={updateField} onBlur={handleBlur} error={errors.registrar_name} capitalize />
                   <div>
                     <TextInput name="email" label="Email" value={form.email} disabled
                       onChange={updateField} onBlur={handleBlur} error={errors.email} />
@@ -476,7 +479,7 @@ export default function BusinessDetails() {
                 <CardHeader><CardTitle>Business Information</CardTitle></CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-4">
                   <TextInput name="name" label="Business Name" value={form.name}
-                    onChange={updateField} onBlur={handleBlur} error={errors.name} toUpperCase />
+                    onChange={updateField} onBlur={handleBlur} error={errors.name} capitalize />
                   <SelectInput name="business_type" label="Business Type" value={form.business_type}
                     options={BUSINESS_TYPES} onChange={handleSelectChange} error={errors.business_type} />
                   <TextInput name="gst_number" label="GST Number" value={form.gst_number}
@@ -484,7 +487,7 @@ export default function BusinessDetails() {
                   <TextInput name="pan_number" label="PAN Number" value={form.pan_number}
                     placeholder="e.g. ABCDE1234F" onChange={updateField} onBlur={handleBlur} error={errors.pan_number} toUpperCase />
                   <TextInput name="alternate_contact_name" label="Alternate Contact Name" value={form.alternate_contact_name}
-                    onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_name} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_name} capitalize />
                   <TextInput name="alternate_contact_phone" label="Alternate Contact Phone" value={form.alternate_contact_phone}
                     placeholder="10-digit number" onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_phone} />
                 </CardContent>
@@ -512,13 +515,13 @@ export default function BusinessDetails() {
                 <CardHeader><CardTitle>Address Details</CardTitle></CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-4">
                   <TextInput name="address_line_1" label="Address Line 1" value={form.address_line_1}
-                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_1} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_1} capitalize />
                   <TextInput name="address_line_2" label="Address Line 2 (Optional)" value={form.address_line_2}
-                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_2} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.address_line_2} capitalize />
                   <TextInput name="street" label="Street" value={form.street}
-                    onChange={updateField} onBlur={handleBlur} error={errors.street} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.street} capitalize />
                   <TextInput name="city" label="City" value={form.city}
-                    onChange={updateField} onBlur={handleBlur} error={errors.city} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.city} capitalize />
                   <SelectInput name="state" label="State" value={form.state}
                     options={INDIAN_STATES} onChange={handleSelectChange} error={errors.state} />
                   <TextInput name="pincode" label="Pincode" value={form.pincode}
@@ -536,12 +539,12 @@ export default function BusinessDetails() {
                     options={BANK_NAMES} onChange={handleSelectChange} error={errors.bank_name} />
                   <TextInput name="bank_account" label="Account Number" value={form.bank_account}
                     placeholder="9–18 digits" onChange={updateField} onBlur={handleBlur} error={errors.bank_account}
-                    onPaste={(e: any) => e.preventDefault()} />
+                  />
                   <TextInput name="ifsc_code" label="IFSC Code" value={form.ifsc_code}
                     placeholder="e.g. SBIN0002499" onChange={updateField} onBlur={handleBlur} error={errors.ifsc_code}
-                    onPaste={(e: any) => e.preventDefault()} toUpperCase />
+                    toUpperCase />
                   <TextInput name="branch" label="Branch Name" value={form.branch}
-                    onChange={updateField} onBlur={handleBlur} error={errors.branch} />
+                    onChange={updateField} onBlur={handleBlur} error={errors.branch} capitalize />
                   <TextInput name="upi_id" label="UPI ID" value={form.upi_id}
                     placeholder="e.g. name@upi" onChange={updateField} onBlur={handleBlur} error={errors.upi_id} />
                 </CardContent>
