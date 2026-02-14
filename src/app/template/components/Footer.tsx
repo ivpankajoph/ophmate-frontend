@@ -16,8 +16,12 @@ import {
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
+import { useTemplateVariant } from "./useTemplateVariant";
 
 export default function Footer() {
+  const variant = useTemplateVariant();
+  const isStudio = variant.key === "studio";
+  const isTrend = variant.key === "trend";
   const params = useParams();
   const vendor_id = params.vendor_id as string;
 
@@ -75,7 +79,15 @@ export default function Footer() {
   }, [products, vendor_id]);
 
   return (
-    <footer className="w-full border-t mt-10">
+    <footer
+      className={`mt-10 w-full border-t ${
+        isStudio
+          ? "border-slate-800 bg-slate-950 text-slate-100"
+          : isTrend
+            ? "border-rose-200 bg-gradient-to-b from-white via-rose-50/40 to-white text-slate-900"
+            : ""
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
           <div>
@@ -105,7 +117,9 @@ export default function Footer() {
                 <a
                   key={i}
                   href="#"
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 template-accent-soft template-accent"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 template-accent-soft template-accent ${
+                    isTrend ? "border border-rose-200" : ""
+                  }`}
                 >
                   <Icon size={20} />
                 </a>
@@ -194,7 +208,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t">
+      <div className={`border-t ${isTrend ? "border-rose-200" : ""}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <h3 className="text-lg md:text-xl font-semibold mb-1">
@@ -218,7 +232,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t">
+      <div className={`border-t ${isTrend ? "border-rose-200" : ""}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-75">
           <p className="text-center md:text-left">
             © {new Date().getFullYear()}{" "}

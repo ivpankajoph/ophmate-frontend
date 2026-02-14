@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const AUTO_HIDE_MS = 12000;
-const MIN_VISIBLE_MS = 280;
+const START_DELAY_MS = 120;
+const AUTO_HIDE_MS = 3000;
+const MIN_VISIBLE_MS = 150;
 
 export default function PageTransitionLoader() {
   const pathname = usePathname();
@@ -13,6 +14,7 @@ export default function PageTransitionLoader() {
 
   const visibleRef = useRef(false);
   const startedAtRef = useRef(0);
+  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -22,6 +24,10 @@ export default function PageTransitionLoader() {
   }, []);
 
   const clearTimers = useCallback(() => {
+    if (showTimerRef.current) {
+      clearTimeout(showTimerRef.current);
+      showTimerRef.current = null;
+    }
     if (autoHideTimerRef.current) {
       clearTimeout(autoHideTimerRef.current);
       autoHideTimerRef.current = null;
@@ -33,18 +39,23 @@ export default function PageTransitionLoader() {
   }, []);
 
   const beginNavigation = useCallback(() => {
+    if (visibleRef.current || showTimerRef.current) return;
     clearTimers();
-    if (!visibleRef.current) {
+    showTimerRef.current = setTimeout(() => {
+      showTimerRef.current = null;
       startedAtRef.current = Date.now();
       setVisible(true);
-    }
-    autoHideTimerRef.current = setTimeout(() => {
-      setVisible(false);
-    }, AUTO_HIDE_MS);
+      autoHideTimerRef.current = setTimeout(() => {
+        setVisible(false);
+      }, AUTO_HIDE_MS);
+    }, START_DELAY_MS);
   }, [clearTimers, setVisible]);
 
   const finishNavigation = useCallback(() => {
-    if (!visibleRef.current) return;
+    if (!visibleRef.current) {
+      clearTimers();
+      return;
+    }
     const elapsed = Date.now() - startedAtRef.current;
     const delay = Math.max(0, MIN_VISIBLE_MS - elapsed);
     clearTimers();
@@ -54,6 +65,19 @@ export default function PageTransitionLoader() {
   }, [clearTimers, setVisible]);
 
   useEffect(() => {
+    const willChangeUrl = (nextUrlLike: string | URL | null | undefined) => {
+      if (!nextUrlLike) return false;
+      try {
+        const nextUrl = new URL(String(nextUrlLike), window.location.href);
+        return (
+          nextUrl.pathname !== window.location.pathname ||
+          nextUrl.search !== window.location.search
+        );
+      } catch {
+        return false;
+      }
+    };
+
     const handleClick = (event: MouseEvent) => {
       if (event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -98,12 +122,16 @@ export default function PageTransitionLoader() {
     const originalReplaceState = window.history.replaceState;
 
     window.history.pushState = function (...args) {
-      beginNavigation();
+      if (willChangeUrl(args[2] as string | URL | null | undefined)) {
+        beginNavigation();
+      }
       return originalPushState.apply(this, args);
     };
 
     window.history.replaceState = function (...args) {
-      beginNavigation();
+      if (willChangeUrl(args[2] as string | URL | null | undefined)) {
+        beginNavigation();
+      }
       return originalReplaceState.apply(this, args);
     };
 
@@ -124,14 +152,31 @@ export default function PageTransitionLoader() {
   }, [pathname, searchParams, finishNavigation]);
 
   return (
-    <div
-      aria-hidden={!isVisible}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-200 ${
-        isVisible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-      }`}
-    >
-      <div className="absolute inset-0 bg-slate-900/12 backdrop-blur-[2px]" />
-      <span className="relative h-9 w-9 animate-spin rounded-full border-[3px] border-white/70 border-t-orange-500 shadow-[0_8px_30px_-10px_rgba(15,23,42,0.8)]" />
-    </div>
+    <>
+      <div
+        aria-hidden={!isVisible}
+        className={`pointer-events-none fixed inset-0 z-[9999] transition-opacity duration-150 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="absolute left-0 top-0 h-[3px] w-full overflow-hidden bg-orange-500/15">
+          <span className="block h-full w-1/3 animate-[page-loader-slide_1.05s_ease-in-out_infinite] bg-orange-500/90" />
+        </div>
+        <span className="absolute right-4 top-4 h-6 w-6 animate-spin rounded-full border-2 border-slate-300/70 border-t-orange-500" />
+      </div>
+      <style jsx global>{`
+        @keyframes page-loader-slide {
+          0% {
+            transform: translateX(-110%);
+          }
+          50% {
+            transform: translateX(125%);
+          }
+          100% {
+            transform: translateX(310%);
+          }
+        }
+      `}</style>
+    </>
   );
 }

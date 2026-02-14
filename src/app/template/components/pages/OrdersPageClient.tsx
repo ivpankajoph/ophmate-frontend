@@ -47,11 +47,21 @@ export default function TemplateOrdersPage() {
 
   const isStudio = variant.key === "studio";
   const isMinimal = variant.key === "minimal";
+  const isTrend = variant.key === "trend";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
-      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-gray-50";
+      ? "min-h-screen bg-[#f7f7f5] text-slate-900"
+      : isTrend
+        ? "min-h-screen bg-rose-50/50 text-slate-900"
+        : "min-h-screen bg-gray-50";
+  const panelClass = isStudio
+    ? "template-surface-card rounded-md border border-slate-800 bg-slate-900/80 text-slate-100"
+    : isTrend
+      ? "template-surface-card rounded-[1.4rem] border border-rose-200 bg-white"
+      : isMinimal
+        ? "template-surface-card rounded-xl border border-slate-200 bg-white"
+        : "template-surface-card rounded-2xl border border-slate-200 bg-white";
 
   useEffect(() => {
     if (!auth) {
@@ -108,16 +118,16 @@ export default function TemplateOrdersPage() {
 
   if (!auth) {
     return (
-      <div className={pageClass}>
+      <div className={`${pageClass} template-page-shell template-orders-page`}>
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <h1 className="text-2xl font-bold text-slate-900">Login required</h1>
-            <p className="mt-2 text-sm text-slate-500">Sign in to view your orders.</p>
+          <div className={`${panelClass} p-8 text-center shadow-sm`}>
+            <h1 className={isStudio ? "text-2xl font-bold text-slate-100" : "text-2xl font-bold text-slate-900"}>Login required</h1>
+            <p className={isStudio ? "mt-2 text-sm text-slate-300" : "mt-2 text-sm text-slate-500"}>Sign in to view your orders.</p>
             <button
               onClick={() =>
                 router.push(`/template/${vendorId}/login?next=/template/${vendorId}/orders`)
               }
-              className="mt-6 rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white"
+              className="template-primary-button mt-6 rounded-lg px-6 py-3 text-sm font-semibold text-white"
             >
               Go to login
             </button>
@@ -128,40 +138,40 @@ export default function TemplateOrdersPage() {
   }
 
   return (
-    <div className={pageClass}>
+    <div className={`${pageClass} template-page-shell template-orders-page`}>
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">My Orders</h1>
+        <h1 className={`template-section-title text-4xl font-bold mb-6 ${isStudio ? "text-slate-100" : "text-gray-900"}`}>My Orders</h1>
         <div className="h-1 mb-6 template-accent-bg"></div>
 
         {loading ? (
-          <div className="rounded-lg bg-white p-6 text-center text-gray-500">Loading orders...</div>
+          <div className={`${panelClass} p-6 text-center ${isStudio ? "text-slate-300" : "text-slate-500"}`}>Loading orders...</div>
         ) : orders.length ? (
           <div className="space-y-4">
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                className={`${panelClass} p-6 shadow-sm`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm text-slate-500">Order</p>
-                    <p className="text-lg font-semibold text-slate-900">{order.order_number}</p>
+                    <p className={isStudio ? "text-sm text-slate-400" : "text-sm text-slate-500"}>Order</p>
+                    <p className={isStudio ? "text-lg font-semibold text-slate-100" : "text-lg font-semibold text-slate-900"}>{order.order_number}</p>
                   </div>
-                  <div className="text-sm text-slate-500">
+                  <div className={isStudio ? "text-sm text-slate-400" : "text-sm text-slate-500"}>
                     {new Date(order.createdAt).toLocaleString()}
                   </div>
-                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase text-slate-600">
+                  <div className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${isStudio ? "bg-slate-800 text-slate-200" : isTrend ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
                     {order.status}
                   </div>
-                  <div className="text-lg font-semibold text-slate-900">{formatMoney(order.total)}</div>
+                  <div className={isStudio ? "text-lg font-semibold text-slate-100" : "text-lg font-semibold text-slate-900"}>{formatMoney(order.total)}</div>
                 </div>
 
-                <div className="mt-4 grid gap-3 text-sm text-slate-600">
+                <div className={`mt-4 grid gap-3 text-sm ${isStudio ? "text-slate-300" : "text-slate-600"}`}>
                   {order.items.map((item, index) => (
                     <a
                       key={`${order._id}-${item._id || index}`}
                       href={item.product_id ? `/template/${vendorId}/product/${item.product_id}` : "#"}
-                      className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 transition hover:border-slate-300"
+                      className={`template-product-card flex items-start justify-between gap-3 rounded-lg border p-3 transition ${isStudio ? "border-slate-700 bg-slate-900 hover:border-slate-600" : isTrend ? "border-rose-200 bg-white hover:border-rose-300" : "border-slate-200 bg-white hover:border-slate-300"}`}
                     >
                       <div className="flex items-start gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -174,14 +184,14 @@ export default function TemplateOrdersPage() {
                           className="h-12 w-12 rounded-lg object-cover"
                         />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">{item.product_name}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className={isStudio ? "text-sm font-semibold text-slate-100" : "text-sm font-semibold text-slate-900"}>{item.product_name}</p>
+                          <p className={isStudio ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
                             {formatAttrs(item.variant_attributes) || "Default variant"}
                           </p>
-                          <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
+                          <p className={isStudio ? "text-xs text-slate-400" : "text-xs text-slate-500"}>Qty: {item.quantity}</p>
                         </div>
                       </div>
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className={isStudio ? "text-sm font-semibold text-slate-100" : "text-sm font-semibold text-slate-900"}>
                         {formatMoney(item.total_price || 0)}
                       </span>
                     </a>
@@ -189,13 +199,13 @@ export default function TemplateOrdersPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isStudio ? "bg-slate-800 text-slate-200" : isTrend ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
                     {order.items?.length || 0} items
                   </span>
                   <div className="flex flex-wrap gap-2">
                     <a
                       href={`/template/${vendorId}/orders/${order._id}`}
-                      className="inline-flex items-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      className={`inline-flex items-center rounded-lg border px-4 py-2 text-xs font-semibold ${isStudio ? "border-slate-700 text-slate-200 hover:border-slate-600" : isTrend ? "border-rose-200 text-rose-700 hover:border-rose-300" : "border-slate-200 text-slate-700 hover:border-slate-300"}`}
                     >
                       View details
                     </a>
@@ -203,7 +213,7 @@ export default function TemplateOrdersPage() {
                       type="button"
                       onClick={() => downloadInvoice(order._id, order.order_number)}
                       disabled={downloadingOrderId === order._id}
-                      className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                      className="template-primary-button inline-flex items-center rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
                     >
                       {downloadingOrderId === order._id ? "Downloading..." : "Download invoice"}
                     </button>
@@ -213,7 +223,7 @@ export default function TemplateOrdersPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg bg-white p-6 text-center text-gray-500">No orders yet.</div>
+          <div className={`${panelClass} p-6 text-center ${isStudio ? "text-slate-300" : "text-slate-500"}`}>No orders yet.</div>
         )}
       </div>
     </div>

@@ -30,17 +30,22 @@ const DEFAULT_METADATA: Metadata = {
   title: "OPH-mart",
   description: "design and developed by ivpankaj",
 };
+const SEO_LOOKUP_TIMEOUT_MS = 450;
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const headerStore = await headers();
     const currentPath = normalizeSeoPath(headerStore.get("x-current-path") || "/");
     const appSource = resolveSeoAppSourceFromPath(currentPath);
-    const override = await fetchSeoOverride({
-      appSource,
-      path: currentPath,
-      force: true,
-    });
+    const override = await Promise.race([
+      fetchSeoOverride({
+        appSource,
+        path: currentPath,
+      }),
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), SEO_LOOKUP_TIMEOUT_MS),
+      ),
+    ]);
     return mergeMetadataWithSeoOverride(DEFAULT_METADATA, override);
   } catch {
     return DEFAULT_METADATA;

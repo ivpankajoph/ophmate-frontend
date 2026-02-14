@@ -23,10 +23,10 @@ export default async function VendorLayout({
   const { vendor_id } = await params;
   return (
     <TemplateThemeProvider>
-      <div className="min-h-screen flex flex-col">
+      <div className="template-site-shell min-h-screen flex flex-col">
         <TemplateDataLoader vendorId={vendor_id} />
         <Navbar />
-        <main className="flex-grow">{children}</main>
+        <main className="template-site-main flex-grow">{children}</main>
         <Footer />
       </div>
     </TemplateThemeProvider>

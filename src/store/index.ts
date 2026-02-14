@@ -11,9 +11,26 @@ import {
   REGISTER,
 } from "redux-persist";
 
+const PERSIST_WHITELIST = [
+  "auth",
+  "customerAuth",
+  "customerCart",
+  "customerWishlist",
+] as const;
+
 const persistConfig = {
   key: "root",
   storage,
+  whitelist: PERSIST_WHITELIST as unknown as string[],
+  migrate: async (state: any) => {
+    if (!state || typeof state !== "object") return state;
+    return PERSIST_WHITELIST.reduce((acc, key) => {
+      if (Object.prototype.hasOwnProperty.call(state, key)) {
+        acc[key] = state[key];
+      }
+      return acc;
+    }, {} as Record<string, unknown>);
+  },
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

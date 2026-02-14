@@ -19,6 +19,7 @@ type SeoCacheEntry = {
 
 const SEO_CACHE = new Map<string, SeoCacheEntry>();
 const SEO_CACHE_TTL_MS = 30_000;
+const SEO_FETCH_TIMEOUT_MS = 1_200;
 
 const normalizeString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
@@ -99,11 +100,20 @@ export const fetchSeoOverride = async ({
     appSource,
   )}&path=${encodeURIComponent(normalizedPath)}`;
   try {
-    const response = await fetch(url, {
-      cache: "no-store",
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SEO_FETCH_TIMEOUT_MS);
+    const requestOptions: any = {
+      cache: force ? "no-store" : "force-cache",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
+    };
+    if (!force) {
+      requestOptions.next = { revalidate: 120 };
+    }
+    const response = await fetch(url, requestOptions).finally(() => {
+      clearTimeout(timeout);
     });
     if (!response.ok) {
       SEO_CACHE.set(cacheKey, {

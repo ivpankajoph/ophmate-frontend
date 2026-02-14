@@ -70,11 +70,22 @@ export default function TemplateCheckoutPage() {
   const [shippingError, setShippingError] = useState("");
   const isStudio = variant.key === "studio";
   const isMinimal = variant.key === "minimal";
+  const isTrend = variant.key === "trend";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
-      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-gray-50";
+      ? "min-h-screen bg-[#f7f7f5] text-slate-900"
+      : isTrend
+        ? "min-h-screen bg-rose-50/50 text-slate-900"
+        : "min-h-screen bg-gray-50";
+  const panelClass = isStudio
+    ? "template-surface-card bg-slate-900/80 border border-slate-800 text-slate-100 rounded-md"
+    : isTrend
+      ? "template-surface-card bg-white border border-rose-200 rounded-[1.4rem]"
+      : isMinimal
+        ? "template-surface-card bg-white border border-slate-200 rounded-xl"
+        : "template-surface-card bg-white border border-slate-200 rounded-2xl";
+  const mutedTextClass = isStudio ? "text-slate-300" : "text-slate-500";
 
   const [form, setForm] = useState({
     label: "Home",
@@ -318,20 +329,20 @@ export default function TemplateCheckoutPage() {
 
   if (!auth) {
     return (
-      <div className={pageClass}>
+      <div className={`${pageClass} template-page-shell template-checkout-page`}>
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <h1 className="text-2xl font-bold text-slate-900">
+          <div className={`${panelClass} p-8 text-center shadow-sm`}>
+            <h1 className={isStudio ? "text-2xl font-bold text-slate-100" : "text-2xl font-bold text-slate-900"}>
               Login required
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className={`mt-2 text-sm ${mutedTextClass}`}>
               Sign in to continue checkout.
             </p>
             <button
               onClick={() =>
                 router.push(`/template/${vendorId}/login?next=/template/${vendorId}/checkout`)
               }
-              className="mt-6 rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white"
+              className="template-primary-button mt-6 rounded-lg px-6 py-3 text-sm font-semibold text-white"
             >
               Go to login
             </button>
@@ -342,9 +353,9 @@ export default function TemplateCheckoutPage() {
   }
 
   return (
-    <div className={pageClass}>
+    <div className={`${pageClass} template-page-shell template-checkout-page`}>
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">Checkout</h1>
+        <h1 className={`template-section-title text-4xl font-bold mb-6 ${isStudio ? "text-slate-100" : "text-gray-900"}`}>Checkout</h1>
         <div className="h-1 mb-6 template-accent-bg"></div>
 
         {error && (

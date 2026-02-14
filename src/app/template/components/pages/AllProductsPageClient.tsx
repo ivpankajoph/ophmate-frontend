@@ -155,37 +155,61 @@ export default function AllProducts() {
 
   const isStudio = variant.key === "studio";
   const isMinimal = variant.key === "minimal";
+  const isTrend = variant.key === "trend";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
-      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-slate-50";
+      ? "min-h-screen bg-[#f7f7f5] text-slate-900"
+      : isTrend
+        ? "min-h-screen bg-rose-50/50 text-slate-900"
+        : "min-h-screen bg-slate-50";
 
   const searchClass = isStudio
     ? "border border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-400"
+    : isTrend
+      ? "border border-rose-200 bg-white"
     : isMinimal
       ? "border border-slate-300 bg-white"
       : "border border-slate-300 bg-white";
 
   const chipActiveClass = isStudio
     ? "bg-sky-500 text-slate-950"
+    : isTrend
+      ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
     : "bg-indigo-600 text-white";
 
   const chipInactiveClass = isStudio
     ? "bg-slate-900 text-slate-200 hover:bg-slate-800"
+    : isTrend
+      ? "bg-white text-slate-700 hover:bg-rose-50 border border-rose-100"
     : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
 
   const cardClass = isStudio
-    ? "bg-slate-900 border border-slate-800 hover:border-slate-600"
-    : "bg-white border border-slate-200 hover:border-indigo-200";
+    ? "bg-slate-900 border border-slate-800 hover:border-sky-400/40 rounded-md"
+    : isTrend
+      ? "bg-white border border-rose-100 hover:border-rose-300 rounded-[1.7rem]"
+    : isMinimal
+      ? "bg-white border border-slate-200 hover:border-slate-300 rounded-xl"
+      : "bg-white border border-slate-200 hover:border-indigo-200 rounded-3xl";
 
-  const subtleTextClass = isStudio ? "text-slate-300" : "text-slate-500";
+  const subtleTextClass = isStudio ? "text-slate-300" : isTrend ? "text-slate-600" : "text-slate-500";
   const titleTextClass = isStudio ? "text-slate-100" : "text-slate-900";
   const heroClass = isStudio
-    ? "mb-7 rounded-2xl border border-slate-800 bg-slate-900/80 p-6"
-    : "mb-7 rounded-2xl border border-slate-200 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 p-6";
+    ? "mb-7 rounded-md border border-slate-800 bg-slate-900/80 p-6"
+    : isTrend
+      ? "mb-7 rounded-[2rem] border border-rose-200 bg-gradient-to-r from-rose-100 via-white to-pink-100 p-6"
+      : isMinimal
+        ? "mb-8 rounded-2xl border border-slate-200 bg-white p-7"
+        : "mb-7 rounded-3xl border border-slate-200 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 p-6";
   const heroTitleClass = isStudio ? "text-slate-100" : "text-slate-900";
-  const heroSubtextClass = isStudio ? "text-slate-300" : "text-slate-600";
+  const heroSubtextClass = isStudio ? "text-slate-300" : isTrend ? "text-slate-700" : "text-slate-600";
+  const gridClass = isStudio
+    ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+    : isTrend
+      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+      : isMinimal
+        ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+        : "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6";
 
   const handleAddToCart = async (product: any) => {
     if (!vendor_id || !product?._id) return;
@@ -251,10 +275,10 @@ export default function AllProducts() {
   });
 
   return (
-    <div className={`${pageClass} py-10 lg:py-14`}>
+    <div className={`${pageClass} template-page-shell template-products-page py-10 lg:py-14`}>
       <div className="max-w-7xl mx-auto px-6">
-        <div className={heroClass}>
-          <h2 className={`text-3xl lg:text-4xl font-bold text-left ${heroTitleClass}`}>All Products</h2>
+        <div className={`${heroClass} template-page-hero`}>
+          <h2 className={`template-section-title text-3xl lg:text-4xl font-bold text-left ${heroTitleClass}`}>All Products</h2>
           <p className={`mt-2 text-sm ${heroSubtextClass}`}>
             Explore {filteredProducts.length} products and add items to cart directly from this page.
           </p>
@@ -290,7 +314,7 @@ export default function AllProducts() {
         </div>
 
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className={gridClass}>
             {filteredProducts.map(({ product, category }) => {
               const pricing = getProductPricing(product);
               const rating = Math.max(0, Math.min(5, toNumber(product?.rating || 4.2)));
@@ -299,7 +323,7 @@ export default function AllProducts() {
               return (
                 <div
                   key={product._id}
-                  className={`group rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}
+                  className={`template-product-card group shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}
                 >
                   <Link
                     href={`/template/${vendor_id}/product/${product._id}`}
@@ -363,7 +387,11 @@ export default function AllProducts() {
                         type="button"
                         disabled={isAdding || pricing.stockQuantity <= 0}
                         onClick={() => handleAddToCart(product)}
-                        className="inline-flex items-center justify-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                        className={`template-primary-button inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-400 ${
+                          isTrend
+                            ? "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                            : "bg-slate-900 hover:bg-slate-800"
+                        }`}
                       >
                         <ShoppingBag size={15} />
                         {isAdding ? "Adding..." : "Add to Cart"}
@@ -374,6 +402,8 @@ export default function AllProducts() {
                         className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition ${
                           isStudio
                             ? "border-slate-700 text-slate-200 hover:bg-slate-800"
+                            : isTrend
+                              ? "border-rose-200 text-rose-600 hover:bg-rose-50"
                             : "border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
                       >
@@ -388,7 +418,11 @@ export default function AllProducts() {
         ) : (
           <div
             className={`mt-10 rounded-xl border border-dashed p-10 text-center ${
-              isStudio ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white"
+              isStudio
+                ? "border-slate-700 bg-slate-900"
+                : isTrend
+                  ? "border-rose-200 bg-white"
+                  : "border-slate-300 bg-white"
             }`}
           >
             <p className={subtleTextClass}>No products found matching your criteria.</p>

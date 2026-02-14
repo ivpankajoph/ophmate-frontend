@@ -26,32 +26,41 @@ function VendorStoriesSection({
   theme,
 }: {
   stories: VendorStory[];
-  theme: "studio" | "minimal" | "classic";
+  theme: "studio" | "minimal" | "classic" | "trend";
 }) {
   if (stories.length === 0) return null;
 
   const isStudio = theme === "studio";
   const isMinimal = theme === "minimal";
+  const isTrend = theme === "trend";
   const sectionClass = isStudio
     ? "mx-auto max-w-7xl px-6 pb-16"
     : isMinimal
       ? "mx-auto max-w-6xl px-6 pb-16"
+      : isTrend
+        ? "mx-auto max-w-7xl px-6 pb-16"
       : "mt-20";
   const wrapperClass = isStudio
     ? "rounded-3xl border border-slate-800 bg-slate-900/70 p-6"
     : isMinimal
       ? "rounded-3xl border border-slate-200 bg-white p-6"
+      : isTrend
+        ? "rounded-3xl border border-rose-200 bg-white p-6"
       : "rounded-2xl border border-slate-200 bg-white p-8";
   const cardClass = isStudio
     ? "rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
     : isMinimal
       ? "rounded-2xl border border-slate-200 bg-slate-50 p-5"
+      : isTrend
+        ? "rounded-2xl border border-rose-200 bg-rose-50/60 p-5"
       : "rounded-xl border border-slate-200 bg-slate-50 p-5";
-  const titleTone = isStudio ? "text-slate-100" : "text-slate-900";
-  const subtitleTone = isStudio ? "text-slate-400" : "text-slate-500";
-  const bodyTone = isStudio ? "text-slate-300" : "text-slate-700";
+  const titleTone = isStudio ? "text-slate-100" : isTrend ? "text-slate-900" : "text-slate-900";
+  const subtitleTone = isStudio ? "text-slate-400" : isTrend ? "text-slate-600" : "text-slate-500";
+  const bodyTone = isStudio ? "text-slate-300" : isTrend ? "text-slate-700" : "text-slate-700";
   const tagClass = isStudio
     ? "inline-flex rounded-full bg-slate-800 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300"
+    : isTrend
+      ? "inline-flex rounded-full bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-600 border border-rose-200"
     : "inline-flex rounded-full bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 border border-slate-200";
 
   return (
@@ -585,6 +594,150 @@ export default function AboutPage() {
                       {item.label}
                     </p>
                     <p className="mt-2 text-sm text-slate-100 break-words">
+                      {item.value || "Not provided"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (variant.key === "trend") {
+    return (
+      <div className="min-h-screen bg-rose-50/40 text-slate-900">
+        <section className="mx-auto max-w-7xl px-6 py-12">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <span className="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-rose-600">
+                About this store
+              </span>
+              <h1 className="mt-4 text-5xl font-bold text-slate-900">{hero?.title}</h1>
+              <p className="mt-4 text-lg text-slate-600">{hero?.subtitle}</p>
+            </div>
+            <div className="overflow-hidden rounded-3xl border border-rose-200 bg-white p-2">
+              {hero?.backgroundImage ? (
+                <img
+                  src={hero.backgroundImage}
+                  alt="Trend hero"
+                  className="h-full w-full rounded-[1.25rem] object-cover"
+                />
+              ) : (
+                <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.4em] text-slate-400">
+                  Hero image
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-12">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="overflow-hidden rounded-3xl border border-rose-200 bg-white">
+              {story?.image ? (
+                <img
+                  src={story.image}
+                  alt="Story"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.4em] text-slate-400">
+                  Story Image
+                </div>
+              )}
+            </div>
+            <div className="rounded-3xl border border-rose-200 bg-white p-8">
+              <h2 className="text-3xl font-bold text-slate-900">{story?.heading}</h2>
+              <div className="mt-4 space-y-4 text-slate-600">
+                {story?.paragraphs?.map((p: string, i: number) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {values?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <h2 className="text-2xl font-bold text-slate-900">Why shoppers trust us</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {values.map((value: any, index: number) => (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-rose-200 bg-white p-5"
+                >
+                  <div className="mb-3 text-rose-500">
+                    {iconMap[value.icon] || <Leaf size={30} />}
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">{value.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {value.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {team?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <h2 className="text-2xl font-bold text-slate-900">Meet the team</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {team.map((member: any, index: number) => (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-rose-200 bg-white p-5 text-center"
+                >
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="mx-auto h-28 w-28 rounded-full object-cover"
+                  />
+                  <h3 className="mt-3 text-lg font-semibold text-slate-900">{member.name}</h3>
+                  <p className="text-sm text-rose-600">{member.role}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {stats?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <div className="grid gap-4 md:grid-cols-3">
+              {stats.map((item: any, i: number) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-rose-200 bg-gradient-to-br from-white to-rose-50 p-6"
+                >
+                  <p className="text-3xl font-bold text-slate-900">{item.value}</p>
+                  <p className="mt-2 text-sm text-slate-600">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <VendorStoriesSection stories={vendorStories} theme="trend" />
+
+        {vendorDetails.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-16">
+            <div className="rounded-3xl border border-rose-200 bg-white p-6">
+              <h2 className="text-2xl font-bold text-slate-900">
+                Vendor Details
+              </h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {vendorDetails.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.2em] text-rose-600">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-800 break-words">
                       {item.value || "Not provided"}
                     </p>
                   </div>

@@ -235,7 +235,7 @@ export default function TemplateCheckoutBagPageClient() {
 
   return (
     <TemplateCheckoutShell vendorId={vendorId} activeStep="bag">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="template-checkout-page grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="space-y-4">
           {error ? (
             <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -243,7 +243,7 @@ export default function TemplateCheckoutBagPageClient() {
             </div>
           ) : null}
 
-          <div className="rounded-md border border-[#f1e0df] bg-[#fff7f7] px-4 py-4">
+          <div className="template-checkout-card rounded-md border border-[#f1e0df] bg-[#fff7f7] px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-base font-semibold text-slate-900">
@@ -260,14 +260,14 @@ export default function TemplateCheckoutBagPageClient() {
               </div>
               <button
                 onClick={() => router.push(`/template/${vendorId}/checkout/address`)}
-                className="h-10 rounded-md border border-[#ff3f6c] px-5 text-sm font-semibold text-[#ff3f6c] hover:bg-[#fff1f5]"
+                className="template-checkout-accent-outline h-10 rounded-md border border-[#ff3f6c] px-5 text-sm font-semibold text-[#ff3f6c] hover:bg-[#fff1f5]"
               >
                 CHANGE ADDRESS
               </button>
             </div>
           </div>
 
-          <div className="rounded-md border border-slate-200 bg-white p-4">
+          <div className="template-checkout-card rounded-md border border-slate-200 bg-white p-4">
             <p className="text-lg font-semibold text-slate-900">
               {bagItems.length}/{bagItems.length} ITEMS SELECTED
             </p>
@@ -281,7 +281,7 @@ export default function TemplateCheckoutBagPageClient() {
               return (
                 <div
                   key={item._id}
-                  className="rounded-md border border-slate-200 bg-white p-4"
+                  className="template-checkout-card rounded-md border border-slate-200 bg-white p-4"
                 >
                   <div className="flex items-start gap-4">
                     <Link
@@ -348,7 +348,7 @@ export default function TemplateCheckoutBagPageClient() {
           </div>
         </section>
 
-        <aside className="h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
+        <aside className="template-checkout-card h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
           <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-700">
             PRICE DETAILS ({bagItems.length} ITEM{bagItems.length > 1 ? "S" : ""})
           </h3>
@@ -373,7 +373,7 @@ export default function TemplateCheckoutBagPageClient() {
           </div>
           <button
             onClick={() => router.push(`/template/${vendorId}/checkout/address`)}
-            className="mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861]"
+            className="template-checkout-accent mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861]"
           >
             PLACE ORDER
           </button>

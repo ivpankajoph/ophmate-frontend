@@ -315,7 +315,7 @@ export default function TemplateCheckoutAddressPageClient() {
 
   return (
     <TemplateCheckoutShell vendorId={vendorId} activeStep="address">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="template-checkout-page grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="space-y-4">
           {error ? (
             <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -323,14 +323,14 @@ export default function TemplateCheckoutAddressPageClient() {
             </div>
           ) : null}
 
-          <div className="rounded-md border border-slate-200 bg-white p-5">
+          <div className="template-checkout-card rounded-md border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <h2 className="text-3xl font-semibold text-slate-900">
                 Select Delivery Address
               </h2>
               <button
                 onClick={openAddAddress}
-                className="h-11 rounded-md border border-slate-400 px-6 text-sm font-semibold text-slate-900"
+                className="template-checkout-accent-outline h-11 rounded-md border border-slate-400 px-6 text-sm font-semibold text-slate-900"
               >
                 Add New Address
               </button>
@@ -344,7 +344,7 @@ export default function TemplateCheckoutAddressPageClient() {
                     key={address._id}
                     className={`block cursor-pointer rounded-md border p-4 transition ${
                       isSelected
-                        ? "border-[#ff3f6c] bg-[#fff7fa]"
+                        ? "template-checkout-accent-border border-[#ff3f6c] bg-[#fff7fa]"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -352,7 +352,7 @@ export default function TemplateCheckoutAddressPageClient() {
                       <input
                         type="radio"
                         name="selected_address"
-                        className="mt-1 h-4 w-4 accent-[#ff3f6c]"
+                        className="template-checkout-accent-input mt-1 h-4 w-4 accent-[#ff3f6c]"
                         checked={isSelected}
                         onChange={() => {
                           setSelectedAddressId(address._id);
@@ -385,7 +385,7 @@ export default function TemplateCheckoutAddressPageClient() {
                               event.preventDefault();
                               openEditAddress(address);
                             }}
-                            className="h-9 rounded-md border border-slate-400 px-4 text-sm font-semibold text-slate-900"
+                            className="template-checkout-accent-outline h-9 rounded-md border border-slate-400 px-4 text-sm font-semibold text-slate-900"
                           >
                             EDIT
                           </button>
@@ -394,7 +394,7 @@ export default function TemplateCheckoutAddressPageClient() {
                               event.preventDefault();
                               removeAddress(address._id);
                             }}
-                            className="h-9 rounded-md border border-slate-400 px-4 text-sm font-semibold text-slate-900"
+                            className="template-checkout-accent-outline h-9 rounded-md border border-slate-400 px-4 text-sm font-semibold text-slate-900"
                           >
                             REMOVE
                           </button>
@@ -414,7 +414,7 @@ export default function TemplateCheckoutAddressPageClient() {
           </div>
 
           {isFormOpen ? (
-            <div className="rounded-md border border-slate-200 bg-white p-5">
+            <div className="template-checkout-card rounded-md border border-slate-200 bg-white p-5">
               <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-4">
                 <h3 className="text-2xl font-semibold text-slate-900">
                   {editingAddressId ? "Edit Address" : "Add New Address"}
@@ -526,7 +526,7 @@ export default function TemplateCheckoutAddressPageClient() {
               <button
                 onClick={saveAddress}
                 disabled={savingAddress}
-                className="mt-5 h-11 rounded-md bg-[#ff3f6c] px-8 text-sm font-semibold text-white hover:bg-[#e93861] disabled:opacity-60"
+                className="template-checkout-accent mt-5 h-11 rounded-md bg-[#ff3f6c] px-8 text-sm font-semibold text-white hover:bg-[#e93861] disabled:opacity-60"
               >
                 {savingAddress ? "Saving..." : "Save Address"}
               </button>
@@ -534,7 +534,7 @@ export default function TemplateCheckoutAddressPageClient() {
           ) : null}
         </section>
 
-        <aside className="h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
+        <aside className="template-checkout-card h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
           <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-700">
             DELIVERY ESTIMATES
           </h3>
@@ -577,7 +577,7 @@ export default function TemplateCheckoutAddressPageClient() {
           <button
             disabled={!selectedAddress}
             onClick={() => router.push(`/template/${vendorId}/checkout/payment`)}
-            className="mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861] disabled:opacity-50"
+            className="template-checkout-accent mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861] disabled:opacity-50"
           >
             CONTINUE
           </button>

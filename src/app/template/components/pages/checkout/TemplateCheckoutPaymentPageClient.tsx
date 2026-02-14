@@ -380,7 +380,7 @@ export default function TemplateCheckoutPaymentPageClient() {
 
   return (
     <TemplateCheckoutShell vendorId={vendorId} activeStep="payment">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="template-checkout-page grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="space-y-4">
           {error ? (
             <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -388,7 +388,7 @@ export default function TemplateCheckoutPaymentPageClient() {
             </div>
           ) : null}
 
-          <div className="rounded-md border border-slate-200 bg-white p-5">
+          <div className="template-checkout-card rounded-md border border-slate-200 bg-white p-5">
             <p className="text-base font-semibold text-slate-900">Bank Offer</p>
             <p className="mt-2 text-sm text-slate-600">
               10% instant discount on selected cards is available at Razorpay
@@ -396,21 +396,21 @@ export default function TemplateCheckoutPaymentPageClient() {
             </p>
           </div>
 
-          <div className="rounded-md border border-slate-200 bg-white p-5">
+          <div className="template-checkout-card rounded-md border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <h2 className="text-3xl font-semibold text-slate-900">
                 Choose Payment Mode
               </h2>
               <Link
                 href={`/template/${vendorId}/checkout/address`}
-                className="h-9 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                className="template-checkout-accent-outline h-9 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
                 Change Address
               </Link>
             </div>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
-              <div className="rounded-md border border-slate-200">
+              <div className="template-checkout-card rounded-md border border-slate-200">
                 {methodOptions.map((option) => {
                   const Icon = option.icon;
                   const isActive =
@@ -425,7 +425,7 @@ export default function TemplateCheckoutPaymentPageClient() {
                       }
                       className={`flex w-full items-center gap-3 border-b border-slate-200 px-4 py-3 text-left last:border-b-0 ${
                         isActive
-                          ? "bg-[#fff1f5] text-[#ff3f6c]"
+                          ? "template-checkout-accent-soft bg-[#fff1f5] text-[#ff3f6c]"
                           : "text-slate-700 hover:bg-slate-50"
                       }`}
                     >
@@ -448,7 +448,7 @@ export default function TemplateCheckoutPaymentPageClient() {
                     <input
                       type="radio"
                       name="payment_method"
-                      className="mt-1 h-4 w-4 accent-[#ff3f6c]"
+                      className="template-checkout-accent-input mt-1 h-4 w-4 accent-[#ff3f6c]"
                       checked={paymentMethod === "razorpay"}
                       onChange={() => setPaymentMethod("razorpay")}
                     />
@@ -468,7 +468,7 @@ export default function TemplateCheckoutPaymentPageClient() {
                     <input
                       type="radio"
                       name="payment_method"
-                      className="mt-1 h-4 w-4 accent-[#ff3f6c]"
+                      className="template-checkout-accent-input mt-1 h-4 w-4 accent-[#ff3f6c]"
                       checked={paymentMethod === "cod"}
                       onChange={() => setPaymentMethod("cod")}
                     />
@@ -500,7 +500,7 @@ export default function TemplateCheckoutPaymentPageClient() {
                 <button
                   onClick={placeOrder}
                   disabled={!selectedAddressId || paymentProcessing}
-                  className="mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861] disabled:opacity-50"
+                  className="template-checkout-accent mt-5 h-11 w-full rounded-md bg-[#ff3f6c] text-sm font-semibold uppercase tracking-[0.08em] text-white hover:bg-[#e93861] disabled:opacity-50"
                 >
                   {paymentProcessing
                     ? "Processing..."
@@ -513,7 +513,7 @@ export default function TemplateCheckoutPaymentPageClient() {
           </div>
         </section>
 
-        <aside className="h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
+        <aside className="template-checkout-card h-fit rounded-md border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
           <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-700">
             PRICE DETAILS ({orderItems.length} ITEM{orderItems.length > 1 ? "S" : ""})
           </h3>

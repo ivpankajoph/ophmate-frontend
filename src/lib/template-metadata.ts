@@ -365,7 +365,7 @@ export async function buildTemplateMetadata(
 
   if (page === "product-detail" && productId) {
     const productFromCatalog = products.find((product) => product?._id === productId) || null;
-    const fetchedProduct = await fetchProductById(productId);
+    const fetchedProduct = productFromCatalog ? null : await fetchProductById(productId);
     const product = fetchedProduct || productFromCatalog;
     const productMeta = readMetaFromObject(product);
     return applyAdminSeo(makeMetadata({

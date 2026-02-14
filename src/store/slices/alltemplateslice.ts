@@ -8,6 +8,8 @@ interface TemplateState {
   products: any[];
   loading: boolean;
   error: string | null;
+  currentVendorId: string | null;
+  lastFetchedAt: number | null;
 }
 
 const initialState: TemplateState = {
@@ -15,25 +17,51 @@ const initialState: TemplateState = {
   products: [],
   loading: false,
   error: null,
+  currentVendorId: null,
+  lastFetchedAt: null,
 };
 
 const BASE_URL = NEXT_PUBLIC_API_URL;
+const REQUEST_TIMEOUT_MS = 8_000;
+const templateEndpointPreference = new Map<string, "preview" | "fallback">();
+
+const fetchTemplatePayload = async (vendorId: string) => {
+  const preferredEndpoint = templateEndpointPreference.get(vendorId);
+  const previewUrl = `${BASE_URL}/templates/${vendorId}/preview`;
+  const fallbackUrl = `${BASE_URL}/templates/template-all?vendor_id=${vendorId}`;
+
+  const fetchPreview = async () => {
+    const response = await axios.get(previewUrl, { timeout: REQUEST_TIMEOUT_MS });
+    templateEndpointPreference.set(vendorId, "preview");
+    return response.data;
+  };
+
+  const fetchFallback = async () => {
+    const response = await axios.get(fallbackUrl, { timeout: REQUEST_TIMEOUT_MS });
+    templateEndpointPreference.set(vendorId, "fallback");
+    return response.data;
+  };
+
+  if (preferredEndpoint === "fallback") {
+    try {
+      return await fetchFallback();
+    } catch {
+      return fetchPreview();
+    }
+  }
+
+  try {
+    return await fetchPreview();
+  } catch {
+    return fetchFallback();
+  }
+};
 
 export const fetchAlltemplatepageTemplate = createAsyncThunk(
   "template/fetchAlltemplatepageTemplate",
   async (vendor_id: string, { rejectWithValue }) => {
     try {
-      try {
-        const response = await axios.get(
-          `${BASE_URL}/templates/${vendor_id}/preview`
-        );
-        return response.data;
-      } catch {
-        const response = await axios.get(
-          `${BASE_URL}/templates/template-all?vendor_id=${vendor_id}`
-        );
-        return response.data;
-      }
+      return await fetchTemplatePayload(vendor_id);
     } catch (error: any) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -49,18 +77,25 @@ const templateSlice = createSlice({
       state.products = [];
       state.loading = false;
       state.error = null;
+      state.currentVendorId = null;
+      state.lastFetchedAt = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAlltemplatepageTemplate.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchAlltemplatepageTemplate.pending, (state, action) => {
+        const requestedVendorId = action.meta.arg;
+        const hasCachedData =
+          state.currentVendorId === requestedVendorId && Boolean(state.data);
+        state.loading = !hasCachedData;
         state.error = null;
       })
       .addCase(
         fetchAlltemplatepageTemplate.fulfilled,
-        (state, action: PayloadAction<any>) => {
+        (state, action: PayloadAction<any, string, { arg: string }>) => {
           state.loading = false;
+          state.currentVendorId = action.meta.arg;
+          state.lastFetchedAt = Date.now();
           const payload = action.payload;
           const template =
             payload?.data?.template || payload?.data || payload?.template || null;
@@ -81,11 +116,20 @@ const templateSlice = createSlice({
 
       .addCase(
         fetchAlltemplatepageTemplate.rejected,
-        (state, action: PayloadAction<any>) => {
+        (state, action: any) => {
+          const requestedVendorId = action?.meta?.arg;
+          const hasCachedData =
+            state.currentVendorId === requestedVendorId && Boolean(state.data);
           state.loading = false;
-          state.data = null;
-          state.products = [];
-          state.error = action.payload;
+          if (!hasCachedData) {
+            state.data = null;
+            state.products = [];
+            state.currentVendorId = requestedVendorId || state.currentVendorId;
+          }
+          state.error =
+            typeof action.payload === "string"
+              ? action.payload
+              : "Failed to fetch template";
         }
       );
   },

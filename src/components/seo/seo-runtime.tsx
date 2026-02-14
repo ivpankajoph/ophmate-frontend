@@ -25,7 +25,6 @@ export default function SeoRuntime() {
       const override = await fetchSeoOverride({
         appSource,
         path: pathname,
-        force: true,
       });
       if (cancelled || token !== pathTokenRef.current) return;
       currentOverrideRef.current = override;

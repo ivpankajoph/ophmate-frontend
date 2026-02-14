@@ -105,36 +105,52 @@ export default function ShopCategoriesPage() {
 
   const isStudio = variant.key === "studio";
   const isMinimal = variant.key === "minimal";
+  const isTrend = variant.key === "trend";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
-      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-gray-50";
+      ? "min-h-screen bg-[#f7f7f5] text-slate-900"
+      : isTrend
+        ? "min-h-screen bg-rose-50/50 text-slate-900"
+        : "min-h-screen bg-gray-50";
   const panelClass = isStudio
-    ? "bg-slate-900/70 border border-slate-800"
-    : "bg-white border border-slate-200";
+    ? "bg-slate-900/70 border border-slate-800 rounded-md"
+    : isTrend
+      ? "bg-white border border-rose-200 rounded-[1.7rem]"
+    : isMinimal
+      ? "bg-white border border-slate-200 rounded-xl"
+      : "bg-white border border-slate-200 rounded-2xl";
+  const gridClass = isStudio
+    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+    : isTrend
+      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+      : isMinimal
+        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7"
+        : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
 
   return (
-    <div className={pageClass}>
+    <div className={`${pageClass} template-page-shell template-category-page`}>
       <div
-        className={`relative ${isMinimal ? "h-64" : "h-72"} bg-cover bg-center`}
+        className={`template-page-hero relative ${isMinimal ? "h-64" : "h-72"} bg-cover bg-center`}
         style={{
           backgroundImage:
-            "linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=1920&q=80')",
+            isTrend
+              ? "linear-gradient(rgba(244, 63, 94, 0.55), rgba(236, 72, 153, 0.45)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80')"
+              : "linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=1920&q=80')",
         }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-6">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-3">Shop by Category</h1>
+            <h1 className="template-section-title text-4xl lg:text-5xl font-bold mb-3">Shop by Category</h1>
             <p className="text-base lg:text-xl">Explore collections from this storefront</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className={`rounded-2xl p-4 sm:p-5 mb-6 ${panelClass}`}>
+        <div className={`template-surface-card rounded-2xl p-4 sm:p-5 mb-6 ${panelClass}`}>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-            <p className={isStudio ? "text-slate-300" : "text-slate-600"}>
+            <p className={isStudio ? "text-slate-300" : isTrend ? "text-slate-700" : "text-slate-600"}>
               Showing <span className="font-semibold">{filteredCategories.length}</span> categories
             </p>
             <div className="relative w-full sm:w-80">
@@ -144,7 +160,11 @@ export default function ShopCategoriesPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full rounded-lg pl-10 pr-4 py-2.5 template-focus-accent ${
-                  isStudio ? "border border-slate-700 bg-slate-950 text-slate-100" : "border border-slate-300 bg-white"
+                  isStudio
+                    ? "border border-slate-700 bg-slate-950 text-slate-100"
+                    : isTrend
+                      ? "border border-rose-200 bg-white"
+                      : "border border-slate-300 bg-white"
                 }`}
               />
               <Search className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -153,14 +173,14 @@ export default function ShopCategoriesPage() {
         </div>
 
         {filteredCategories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={gridClass}>
             {filteredCategories.map((category) => {
               const categoryPath = category.isObjectId ? category.id : slugify(category.name);
               return (
                 <Link
                   key={category.id}
                   href={`/template/${vendor_id}/category/${categoryPath}`}
-                  className={`group overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${panelClass}`}
+                  className={`template-product-card group overflow-hidden shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${panelClass}`}
                 >
                   <div className="relative h-52 overflow-hidden bg-slate-100">
                     {category.image ? (
@@ -181,10 +201,10 @@ export default function ShopCategoriesPage() {
                     </p>
                   </div>
                   <div className="p-4 flex items-center justify-between">
-                    <span className={isStudio ? "text-slate-300 text-sm" : "text-slate-600 text-sm"}>
+                    <span className={isStudio ? "text-slate-300 text-sm" : isTrend ? "text-slate-700 text-sm" : "text-slate-600 text-sm"}>
                       {category.count} {category.count === 1 ? "product" : "products"}
                     </span>
-                    <span className="text-sm font-semibold template-accent">View</span>
+                    <span className={`text-sm font-semibold ${isTrend ? "text-rose-600" : "template-accent"}`}>View</span>
                   </div>
                 </Link>
               );
@@ -195,6 +215,8 @@ export default function ShopCategoriesPage() {
             className={`rounded-2xl border border-dashed p-12 text-center ${
               isStudio
                 ? "border-slate-800 bg-slate-900/70 text-slate-400"
+                : isTrend
+                  ? "border-rose-200 bg-white text-slate-600"
                 : "border-slate-200 bg-white text-slate-500"
             }`}
           >

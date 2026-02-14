@@ -306,6 +306,225 @@ export function TemplateHomeRenderer() {
     )
   }
 
+  if (variant.key === 'trend') {
+    return (
+      <div className='template-home template-home-trend'>
+        <section className='mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center'>
+          <div>
+            <span className='inline-flex rounded-full bg-rose-100 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-700'>
+              {home.hero_kicker || 'Trending now'}
+            </span>
+            <h1 className='mt-4 text-4xl font-bold text-slate-900 sm:text-5xl'>
+              {home.header_text || 'Shop smart. Save more. Stay in trend.'}
+            </h1>
+            <p className='mt-3 max-w-xl text-base text-slate-600 sm:text-lg'>
+              {home.header_text_small ||
+                'Daily drops, best prices, and fast checkout for every shopper.'}
+            </p>
+            <div className='mt-7 flex flex-wrap gap-3'>
+              <Link
+                href={vendorId ? `/template/${vendorId}/all-products` : '#'}
+                className='rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white'
+              >
+                {home.button_header || 'Shop Deals'}
+              </Link>
+              <Link
+                href={vendorId ? `/template/${vendorId}/category` : '#'}
+                className='rounded-full border border-rose-200 bg-white px-6 py-3 text-sm font-semibold text-rose-600'
+              >
+                {home.button_secondary || 'Browse categories'}
+              </Link>
+            </div>
+            <div className='mt-6 grid max-w-xl grid-cols-3 gap-3'>
+              <div className='rounded-2xl border border-rose-100 bg-white p-3'>
+                <p className='text-xs text-slate-500'>Happy buyers</p>
+                <p className='text-lg font-semibold text-slate-900'>
+                  {description?.percent?.percent_in_number || '92'}%
+                </p>
+              </div>
+              <div className='rounded-2xl border border-rose-100 bg-white p-3'>
+                <p className='text-xs text-slate-500'>Products sold</p>
+                <p className='text-lg font-semibold text-slate-900'>
+                  {description?.sold?.sold_number || '0'}
+                </p>
+              </div>
+              <div className='rounded-2xl border border-rose-100 bg-white p-3'>
+                <p className='text-xs text-slate-500'>Live catalog</p>
+                <p className='text-lg font-semibold text-slate-900'>{products.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className='overflow-hidden rounded-[2rem] border border-rose-100 bg-white p-3 shadow-lg shadow-rose-200/30'>
+            {heroImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={heroImage}
+                alt='Trend hero'
+                className='h-full min-h-[320px] w-full rounded-[1.5rem] object-cover'
+              />
+            ) : (
+              <div className='flex min-h-[320px] items-center justify-center rounded-[1.5rem] bg-rose-50 text-xs uppercase tracking-[0.35em] text-rose-400'>
+                Hero image
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className='mx-auto max-w-7xl px-6 pb-10'>
+          <div className='flex items-end justify-between gap-3'>
+            <div>
+              <p className='text-xs font-semibold uppercase tracking-[0.3em] text-rose-500'>
+                Categories
+              </p>
+              <h2 className='text-2xl font-bold text-slate-900'>Shop by category</h2>
+            </div>
+            <Link
+              href={vendorId ? `/template/${vendorId}/category` : '#'}
+              className='text-sm font-semibold text-rose-600'
+            >
+              See all
+            </Link>
+          </div>
+          <div className='mt-4 flex flex-wrap gap-2'>
+            {categoryEntries.length > 0 ? (
+              categoryEntries.slice(0, 10).map((entry) => {
+                const slug = entry.id || toCategorySlug(entry.label)
+                return (
+                  <Link
+                    key={`${entry.label}-${slug}`}
+                    href={`/template/${vendorId}/category/${slug}`}
+                    className='rounded-full border border-rose-100 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-rose-300 hover:text-rose-600'
+                  >
+                    {entry.label}
+                  </Link>
+                )
+              })
+            ) : (
+              <p className='text-sm text-slate-500'>No categories available yet.</p>
+            )}
+          </div>
+        </section>
+
+        <section className='mx-auto max-w-7xl px-6 pb-12'>
+          <div className='mb-5 flex items-end justify-between gap-3'>
+            <div>
+              <p className='text-xs font-semibold uppercase tracking-[0.3em] text-rose-500'>
+                Hot Picks
+              </p>
+              <h2 className='text-2xl font-bold text-slate-900'>
+                {home?.products_heading || 'Trending products'}
+              </h2>
+            </div>
+            <Link
+              href={vendorId ? `/template/${vendorId}/all-products` : '#'}
+              className='text-sm font-semibold text-rose-600'
+            >
+              View all
+            </Link>
+          </div>
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+            {products.slice(0, 8).map((product, index) => (
+              <div
+                key={product._id || `${product.productName}-${index}`}
+                className='group overflow-hidden rounded-3xl border border-rose-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-200/35'
+              >
+                <Link href={product?._id ? `/template/${vendorId}/product/${product._id}` : '#'}>
+                  <div className='aspect-[4/5] overflow-hidden bg-rose-50'>
+                    {product.defaultImages?.[0]?.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.defaultImages[0].url}
+                        alt={product.productName || 'Product'}
+                        className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
+                      />
+                    ) : (
+                      <div className='flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-rose-300'>
+                        No image
+                      </div>
+                    )}
+                  </div>
+                </Link>
+                <div className='p-4'>
+                  {getCategoryLabel(product) ? (
+                    <span className='text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500'>
+                      {getCategoryLabel(product)}
+                    </span>
+                  ) : null}
+                  <Link href={product?._id ? `/template/${vendorId}/product/${product._id}` : '#'}>
+                    <p className='mt-1 line-clamp-2 text-base font-semibold text-slate-900'>
+                      {product.productName || 'Untitled Product'}
+                    </p>
+                  </Link>
+                  <p className='mt-1 line-clamp-2 text-xs text-slate-500'>
+                    {product.shortDescription || 'No description yet.'}
+                  </p>
+                  <div className='mt-3 flex items-center justify-between gap-2'>
+                    <span className='text-lg font-bold text-slate-900'>
+                      Rs. {getMinPrice(product.variants).toLocaleString()}
+                    </span>
+                    <button
+                      type='button'
+                      className='rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:from-pink-600 hover:to-rose-600 disabled:cursor-not-allowed disabled:opacity-60'
+                      disabled={
+                        !product?._id ||
+                        addingId === product._id ||
+                        (product.variants?.[0]?.stockQuantity ?? 1) <= 0
+                      }
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      {(product.variants?.[0]?.stockQuantity ?? 1) <= 0
+                        ? 'Out'
+                        : addingId === product._id
+                          ? 'Adding'
+                          : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {products.length === 0 && (
+              <div className='col-span-full rounded-2xl border border-dashed border-rose-200 bg-white p-8 text-center text-sm text-slate-500'>
+                No products found for this vendor yet.
+              </div>
+            )}
+          </div>
+          {actionMessage && <p className='mt-3 text-sm text-slate-500'>{actionMessage}</p>}
+        </section>
+
+        <section className='mx-auto max-w-7xl px-6 pb-16'>
+          <div className='rounded-3xl border border-rose-100 bg-white p-6'>
+            <h2 className='text-2xl font-bold text-slate-900'>
+              {faqSection?.heading || 'Frequently Asked Questions'}
+            </h2>
+            <p className='mt-2 text-sm text-slate-600'>
+              {faqSection?.subheading || 'Quick answers to common shopper questions'}
+            </p>
+            <div className='mt-5 grid gap-4 md:grid-cols-2'>
+              {faqItems.slice(0, 6).map((faq: any, index: number) => (
+                <div
+                  key={`${faq?.question || 'faq'}-${index}`}
+                  className='rounded-2xl border border-rose-100 bg-rose-50/40 p-4'
+                >
+                  <h3 className='text-sm font-semibold text-slate-900'>
+                    {faq?.question || 'Question'}
+                  </h3>
+                  <p className='mt-2 text-sm text-slate-600'>
+                    {faq?.answer || 'Answer not available.'}
+                  </p>
+                </div>
+              ))}
+              {faqItems.length === 0 && (
+                <div className='rounded-2xl border border-dashed border-rose-200 bg-white p-8 text-center text-sm text-slate-500 md:col-span-2'>
+                  No FAQs added yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className='template-home template-home-classic'>
       <LandingPageDev />

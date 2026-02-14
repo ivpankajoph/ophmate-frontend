@@ -2,8 +2,6 @@ import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-
-// ✅ Vendor type — based on your response structure
 export interface Vendor {
   _id: string;
   email: string;
@@ -39,29 +37,34 @@ export interface Vendor {
   updatedAt: string;
 }
 
-// ✅ Slice state type
 export interface VendorProfileState {
   vendor: Vendor | null;
   loading: boolean;
   error: string | null;
+  currentVendorId: string | null;
+  lastFetchedAt: number | null;
 }
 
-// ✅ Initial state
 const initialState: VendorProfileState = {
   vendor: null,
   loading: false,
   error: null,
+  currentVendorId: null,
+  lastFetchedAt: null,
 };
 
 export const BASE_URL = NEXT_PUBLIC_API_URL;
-// ✅ Async thunk
+const REQUEST_TIMEOUT_MS = 8_000;
+
 export const fetchVendorProfile = createAsyncThunk<
-  Vendor, // return type
-  string, // input (id)
-  { rejectValue: string } // error type
+  Vendor,
+  string,
+  { rejectValue: string }
 >("vendor/fetchProfile", async (id, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${BASE_URL}/vendors/vendorprofile?id=${id}`);
+    const response = await axios.get(`${BASE_URL}/vendors/vendorprofile?id=${id}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
     const vendor =
       response?.data?.vendor ??
       response?.data?.data?.vendor ??
@@ -78,25 +81,35 @@ export const fetchVendorProfile = createAsyncThunk<
   }
 });
 
-// ✅ Slice
 const vendorProfileSlice = createSlice({
   name: "vendorProfile",
   initialState,
   reducers: {},
-
   extraReducers: (builder) => {
     builder
-      .addCase(fetchVendorProfile.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchVendorProfile.pending, (state, action) => {
+        const requestedVendorId = action.meta.arg;
+        const hasCachedVendor =
+          state.currentVendorId === requestedVendorId && Boolean(state.vendor);
+        state.loading = !hasCachedVendor;
         state.error = null;
       })
-      .addCase(fetchVendorProfile.fulfilled, (state, action: PayloadAction<Vendor>) => {
+      .addCase(fetchVendorProfile.fulfilled, (state, action: PayloadAction<Vendor, string, { arg: string }>) => {
         state.loading = false;
         state.vendor = action.payload;
+        state.currentVendorId = action.meta.arg;
+        state.lastFetchedAt = Date.now();
       })
       .addCase(fetchVendorProfile.rejected, (state, action) => {
+        const requestedVendorId = action.meta.arg;
+        const hasCachedVendor =
+          state.currentVendorId === requestedVendorId && Boolean(state.vendor);
         state.loading = false;
-        state.error = action.payload ?? "Something went wrong";
+        if (!hasCachedVendor) {
+          state.vendor = null;
+          state.currentVendorId = requestedVendorId || state.currentVendorId;
+        }
+        state.error = (action.payload as string) ?? "Something went wrong";
       });
   },
 });

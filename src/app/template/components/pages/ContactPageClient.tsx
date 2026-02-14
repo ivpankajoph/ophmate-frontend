@@ -107,22 +107,27 @@ export default function ContactPage() {
 
   const isStudio = variant.key === "studio";
   const isMinimal = variant.key === "minimal";
+  const isTrend = variant.key === "trend";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
-      ? "min-h-screen bg-[#f5f5f7] text-slate-900"
-      : "min-h-screen bg-white";
+      ? "min-h-screen bg-[#f7f7f5] text-slate-900"
+      : isTrend
+        ? "min-h-screen bg-rose-50/50 text-slate-900"
+        : "min-h-screen bg-white";
   const cardClass = isStudio
-    ? "bg-slate-900/70 border border-slate-800 text-slate-100"
+    ? "template-surface-card bg-slate-900/70 border border-slate-800 text-slate-100 rounded-md"
     : isMinimal
-      ? "bg-white border border-slate-200"
-      : "bg-gray-50";
+      ? "template-surface-card bg-white border border-slate-200 rounded-xl"
+      : isTrend
+        ? "template-surface-card bg-white border border-rose-200 rounded-[1.5rem]"
+        : "template-surface-card bg-gray-50 border border-slate-200 rounded-2xl";
 
   return (
-    <div className={pageClass}>
+    <div className={`${pageClass} template-page-shell template-contact-page`}>
       <div className="group fixed right-6 top-1/2 z-50 -translate-y-1/2">
         <button
-          className={`rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition hover:shadow-xl template-accent ${
+          className={`template-primary-button rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition hover:shadow-xl template-accent ${
             isStudio ? "bg-slate-900 text-slate-100" : "bg-white"
           }`}
         >
@@ -172,14 +177,14 @@ export default function ContactPage() {
       </div>
 
       <div
-        className={`relative ${isMinimal ? "h-72" : "h-96"} bg-cover bg-center`}
+        className={`template-page-hero relative ${isMinimal ? "h-72" : "h-96"} bg-cover bg-center`}
         style={{
           backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('${heroBackground}')`,
         }}
       >
         <div className="absolute inset-0 flex items-center justify-center text-white text-center">
           <div>
-            <h1 className="text-5xl font-bold">{heroTitle}</h1>
+            <h1 className="template-section-title text-5xl font-bold">{heroTitle}</h1>
             <p className="text-xl mt-2">{heroSubtitle}</p>
           </div>
         </div>
@@ -201,7 +206,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-16">
           <form
             onSubmit={handleSubmit}
-            className={`space-y-5 rounded-3xl border p-6 ${
+            className={`template-surface-card space-y-5 rounded-3xl border p-6 ${
               isStudio ? "border-slate-800 bg-slate-900/70" : "border-slate-200 bg-white"
             }`}
           >
@@ -253,7 +258,7 @@ export default function ContactPage() {
 
             <button
               type="submit"
-              className="w-full text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg template-accent-bg template-accent-bg-hover"
+              className="template-primary-button w-full text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg template-accent-bg template-accent-bg-hover"
             >
               <Send size={20} /> Send Message
             </button>
