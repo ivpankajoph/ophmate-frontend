@@ -15,6 +15,9 @@ const DynamicMap = dynamic(() => import("@/app/template/components/MapComponent"
 export default function ContactPage() {
   const variant = useTemplateVariant();
   const contactData = useSelector((state: any) => state?.vendorprofilepage?.vendor);
+  const vendorOverrides = useSelector(
+    (state: any) => state?.alltemplatepage?.data?.components?.vendor_profile
+  );
   const products = useSelector((state: any) => state?.alltemplatepage?.products || []);
   const templateData = useSelector(
     (state: any) => state?.alltemplatepage?.data?.components?.contact_page
@@ -68,20 +71,35 @@ export default function ContactPage() {
 
   const vendorFallbackName =
     templateData?.hero?.title?.replace(/^contact\s*/i, "").trim() || "our team";
+  const mergedVendor = useMemo(
+    () => ({
+      ...(contactData && typeof contactData === "object" ? contactData : {}),
+      ...(vendorOverrides && typeof vendorOverrides === "object" ? vendorOverrides : {}),
+    }),
+    [contactData, vendorOverrides]
+  );
   const contact = {
-    street: contactData?.street || contactData?.address || "Store Address",
-    city: contactData?.city || "",
-    state: contactData?.state || "",
-    pincode: contactData?.pincode || "",
-    phone: contactData?.phone || contactData?.alternate_contact_phone || "+91 9876543210",
-    email: contactData?.email || "support@storefront.com",
+    street: (mergedVendor as any)?.street || (mergedVendor as any)?.address || "Store Address",
+    city: (mergedVendor as any)?.city || "",
+    state: (mergedVendor as any)?.state || "",
+    pincode: (mergedVendor as any)?.pincode || "",
+    phone:
+      (mergedVendor as any)?.phone ||
+      (mergedVendor as any)?.alternate_contact_phone ||
+      "+91 9876543210",
+    email: (mergedVendor as any)?.email || "support@storefront.com",
   };
+  const workingHours = (mergedVendor as any)?.operating_hours || "Mon - Fri: 9AM - 6PM";
   const contactAddress = [contact.street, contact.city, contact.state]
     .filter((item) => typeof item === "string" && item.trim())
     .join(", ");
   const heroTitle = templateData?.hero?.title || "Contact Us";
   const heroSubtitle =
     templateData?.hero?.subtitle || `Have a question? Reach out to ${vendorFallbackName}.`;
+  const detailsTitle = templateData?.section_2?.hero_title || "Visit or message our team";
+  const detailsSubtitle =
+    templateData?.section_2?.hero_subtitle ||
+    "Share your requirements and we will respond with the best options.";
   const heroBackground =
     templateData?.hero?.backgroundImage ||
     "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1600&q=80";
@@ -106,8 +124,12 @@ export default function ContactPage() {
   };
 
   const isStudio = variant.key === "studio";
-  const isMinimal = variant.key === "minimal";
-  const isTrend = variant.key === "trend";
+  const isMinimal =
+    variant.key === "minimal" ||
+    variant.key === "mquiq" ||
+    variant.key === "poupqz" ||
+    variant.key === "whiterose";
+  const isTrend = variant.key === "trend" || variant.key === "oragze";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
@@ -178,29 +200,86 @@ export default function ContactPage() {
 
       <div
         className={`template-page-hero relative ${isMinimal ? "h-72" : "h-96"} bg-cover bg-center`}
+        data-template-section="hero"
+        data-template-path="components.contact_page.hero.backgroundImage"
+        data-template-component="components.contact_page.hero.backgroundImage"
         style={{
           backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 60%, transparent), color-mix(in srgb, var(--template-banner-color) 60%, transparent)), url('${heroBackground}')`,
         }}
       >
         <div className="absolute inset-0 flex items-center justify-center text-white text-center">
           <div>
-            <h1 className="template-section-title text-5xl font-bold">{heroTitle}</h1>
-            <p className="text-xl mt-2">{heroSubtitle}</p>
+            <h1
+              className="template-section-title text-5xl font-bold"
+              data-template-path="components.contact_page.hero.title"
+              data-template-section="hero"
+            >
+              {heroTitle}
+            </h1>
+            <p
+              className="text-xl mt-2"
+              data-template-path="components.contact_page.hero.subtitle"
+              data-template-section="hero"
+            >
+              {heroSubtitle}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mb-8 max-w-3xl" data-template-section="details">
+          <h2
+            className="text-3xl font-bold"
+            data-template-path="components.contact_page.section_2.hero_title"
+            data-template-section="details"
+          >
+            {detailsTitle}
+          </h2>
+          <p
+            className="mt-2 text-base text-slate-600"
+            data-template-path="components.contact_page.section_2.hero_subtitle"
+            data-template-section="details"
+          >
+            {detailsSubtitle}
+          </p>
+        </div>
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          data-template-section="vendor"
+        >
           <InfoCard
             Icon={MapPin}
             title="Visit Us"
             details={`${contactAddress || "Store Address"}${contact.pincode ? ` - ${contact.pincode}` : ""}`}
             className={cardClass}
+            dataPath="components.vendor_profile.address"
+            sectionId="vendor"
           />
-          <InfoCard Icon={Phone} title="Call Us" details={contact.phone} className={cardClass} />
-          <InfoCard Icon={Mail} title="Email" details={contact.email} className={cardClass} />
-          <InfoCard Icon={Clock} title="Working Hours" details="Mon - Fri: 9AM - 6PM" className={cardClass} />
+          <InfoCard
+            Icon={Phone}
+            title="Call Us"
+            details={contact.phone}
+            className={cardClass}
+            dataPath="components.vendor_profile.phone"
+            sectionId="vendor"
+          />
+          <InfoCard
+            Icon={Mail}
+            title="Email"
+            details={contact.email}
+            className={cardClass}
+            dataPath="components.vendor_profile.email"
+            sectionId="vendor"
+          />
+          <InfoCard
+            Icon={Clock}
+            title="Working Hours"
+            details={workingHours}
+            className={cardClass}
+            dataPath="components.vendor_profile.operating_hours"
+            sectionId="vendor"
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-16">
@@ -265,9 +344,16 @@ export default function ContactPage() {
           </form>
 
           {hasMapCoordinates ? (
-            <DynamicMap lat={mapLat} long={mapLong} />
+            <div
+              data-template-section="map"
+              data-template-component="components.contact_page.section_2.lat"
+            >
+              <DynamicMap lat={mapLat} long={mapLong} />
+            </div>
           ) : (
             <div
+              data-template-section="map"
+              data-template-component="components.contact_page.section_2.lat"
               className={`rounded-3xl border p-8 text-center ${
                 isStudio ? "border-slate-800 bg-slate-900/70 text-slate-300" : "border-slate-200 bg-white text-slate-500"
               }`}
@@ -281,7 +367,7 @@ export default function ContactPage() {
   );
 }
 
-function InfoCard({ Icon, title, details, className }: any) {
+function InfoCard({ Icon, title, details, className, dataPath, sectionId }: any) {
   const isDark = typeof className === "string" && className.includes("text-slate-100");
   return (
     <div className={`rounded-lg p-6 text-center shadow-md ${className || ""}`}>
@@ -289,7 +375,13 @@ function InfoCard({ Icon, title, details, className }: any) {
         <Icon size={22} className="template-accent" />
       </div>
       <h3 className="text-lg font-semibold">{title}</h3>
-      <p className={isDark ? "text-slate-200" : "text-gray-700"}>{details}</p>
+      <p
+        className={isDark ? "text-slate-200" : "text-gray-700"}
+        data-template-path={dataPath}
+        data-template-section={sectionId}
+      >
+        {details}
+      </p>
     </div>
   );
 }

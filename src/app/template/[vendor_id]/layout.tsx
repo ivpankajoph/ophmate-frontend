@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { TemplateThemeProvider } from "../components/TemplateThemeProvider";
 import { TemplateDataLoader } from "../components/TemplateDataLoader";
+import { TemplatePreviewRealtimeSync } from "../components/TemplatePreviewRealtimeSync";
+import { TemplateInlineEditorBridge } from "../components/TemplateInlineEditorBridge";
 import { buildTemplateMetadata } from "@/lib/template-metadata";
 
 type LayoutProps = {
@@ -24,7 +26,9 @@ export default async function VendorLayout({
   return (
     <TemplateThemeProvider>
       <div className="template-site-shell min-h-screen flex flex-col">
+        <TemplatePreviewRealtimeSync vendorId={vendor_id} />
         <TemplateDataLoader vendorId={vendor_id} />
+        <TemplateInlineEditorBridge />
         <Navbar />
         <main className="template-site-main flex-grow">{children}</main>
         <Footer />

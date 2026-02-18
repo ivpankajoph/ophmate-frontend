@@ -19,6 +19,10 @@ import axios from "axios";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { clearTemplateAuth, getTemplateAuth, templateApiFetch } from "./templateAuth";
 import { useTemplateVariant } from "./useTemplateVariant";
+import { MquiqNavbar } from "./mquiq/MquiqNavbar";
+import { PoupqzNavbar } from "./poupqz/PoupqzNavbar";
+import { OragzeNavbar } from "./oragze/OragzeNavbar";
+import { WhiteRoseNavbar } from "./whiterose/WhiteRoseNavbar";
 
 export default function Navbar() {
   const variant = useTemplateVariant();
@@ -44,6 +48,11 @@ export default function Navbar() {
   const menuItems = ["Home", "About", "Contact"];
   const isStudio = variant.key === "studio";
   const isTrend = variant.key === "trend";
+  const isMquiq = variant.key === "mquiq";
+  const isPoupqz = variant.key === "poupqz";
+  const isOragze = variant.key === "oragze";
+  const isWhiteRose = variant.key === "whiterose";
+  const isCustomVariant = isMquiq || isPoupqz || isOragze || isWhiteRose;
   const desktopLinkTone = isStudio
     ? "text-slate-100 hover:text-sky-300"
     : isTrend
@@ -66,6 +75,8 @@ export default function Navbar() {
       : "text-slate-500 hover:text-slate-900";
 
   useEffect(() => {
+    if (isCustomVariant) return;
+
     const load = async () => {
       try {
         const [categoriesRes, subcategoriesRes] = await Promise.all([
@@ -81,9 +92,11 @@ export default function Navbar() {
     };
 
     load();
-  }, []);
+  }, [isCustomVariant]);
 
   useEffect(() => {
+    if (isCustomVariant) return;
+
     if (!vendor_id) return;
     const currentVendorId = String(vendor_id);
 
@@ -140,7 +153,7 @@ export default function Navbar() {
       window.removeEventListener("focus", refreshCart);
       window.removeEventListener("storage", onStorage);
     };
-  }, [vendor_id]);
+  }, [isCustomVariant, vendor_id]);
 
   const subcategoriesByCategory = useMemo(() => {
     return subcategories.reduce<Record<string, any[]>>((acc, sub) => {
@@ -154,6 +167,8 @@ export default function Navbar() {
   }, [subcategories]);
 
   useEffect(() => {
+    if (isCustomVariant) return;
+
     if (!categories.length) return;
     if (!activeCategoryId) {
       setActiveCategoryId(categories[0]?._id || null);
@@ -162,7 +177,20 @@ export default function Navbar() {
     if (!categories.find((category) => category?._id === activeCategoryId)) {
       setActiveCategoryId(categories[0]?._id || null);
     }
-  }, [categories, activeCategoryId]);
+  }, [isCustomVariant, categories, activeCategoryId]);
+
+  if (isMquiq) {
+    return <MquiqNavbar />;
+  }
+  if (isPoupqz) {
+    return <PoupqzNavbar />;
+  }
+  if (isOragze) {
+    return <OragzeNavbar />;
+  }
+  if (isWhiteRose) {
+    return <WhiteRoseNavbar />;
+  }
 
   return (
     <nav
@@ -176,7 +204,10 @@ export default function Navbar() {
     >
       {/* Logo Section */}
       <div className="flex items-center gap-3 md:gap-4">
-        <div className="w-12 h-12 rounded-full border flex items-center justify-center overflow-hidden shadow-sm">
+        <div
+          className="w-12 h-12 rounded-full border flex items-center justify-center overflow-hidden shadow-sm"
+          data-template-section="branding"
+        >
           <img
             src={
               homepage?.components?.logo ||
@@ -184,6 +215,9 @@ export default function Navbar() {
             }
             alt="Business Logo"
             className="w-full h-full object-cover"
+            data-template-path="components.logo"
+            data-template-section="branding"
+            data-template-component="components.logo"
           />
         </div>
 

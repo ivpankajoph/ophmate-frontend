@@ -26,13 +26,25 @@ function VendorStoriesSection({
   theme,
 }: {
   stories: VendorStory[];
-  theme: "studio" | "minimal" | "classic" | "trend";
+  theme:
+    | "studio"
+    | "minimal"
+    | "classic"
+    | "trend"
+    | "mquiq"
+    | "poupqz"
+    | "oragze"
+    | "whiterose";
 }) {
   if (stories.length === 0) return null;
 
   const isStudio = theme === "studio";
-  const isMinimal = theme === "minimal";
-  const isTrend = theme === "trend";
+  const isMinimal =
+    theme === "minimal" ||
+    theme === "mquiq" ||
+    theme === "poupqz" ||
+    theme === "whiterose";
+  const isTrend = theme === "trend" || theme === "oragze";
   const sectionClass = isStudio
     ? "mx-auto max-w-7xl px-6 pb-16"
     : isMinimal
@@ -86,10 +98,11 @@ function VendorStoriesSection({
 
 export default function AboutPage() {
   const variant = useTemplateVariant();
-  const { aboutpage, vendor, loading } = useSelector(
+  const { aboutpage, vendor, vendorOverrides, loading } = useSelector(
     (state: any) => ({
       aboutpage: state.alltemplatepage?.data?.components?.about_page,
       vendor: state?.vendorprofilepage?.vendor,
+      vendorOverrides: state.alltemplatepage?.data?.components?.vendor_profile,
       loading: state.alltemplatepage?.loading,
     })
   );
@@ -108,18 +121,29 @@ export default function AboutPage() {
     }
     return "";
   };
-  const vendorRecord =
+  const vendorBaseRecord =
     vendor && typeof vendor === "object"
       ? (vendor as Record<string, unknown>)
       : {};
-  const getVendorRaw = (...keys: string[]) => {
+  const vendorOverrideRecord =
+    vendorOverrides && typeof vendorOverrides === "object"
+      ? (vendorOverrides as Record<string, unknown>)
+      : {};
+  const vendorRecord = {
+    ...vendorBaseRecord,
+    ...vendorOverrideRecord,
+  };
+  const getVendorMatch = (...keys: string[]) => {
     for (const key of keys) {
       const value = vendorRecord[key];
       if (value === null || value === undefined) continue;
       if (typeof value === "string" && !value.trim()) continue;
-      return value;
+      return { key, value };
     }
-    return undefined;
+    return null;
+  };
+  const getVendorRaw = (...keys: string[]) => {
+    return getVendorMatch(...keys)?.value;
   };
   const formatUnknown = (value: unknown): string => {
     if (value === null || value === undefined) return "";
@@ -142,6 +166,8 @@ export default function AboutPage() {
     return "";
   };
   const getVendorText = (...keys: string[]) => formatUnknown(getVendorRaw(...keys));
+  const getVendorPathKey = (...keys: string[]) =>
+    getVendorMatch(...keys)?.key || keys[0] || "";
   const toLabel = (key: string) =>
     key
       .replace(/_/g, " ")
@@ -442,6 +468,7 @@ export default function AboutPage() {
   const additionalVendorDetails = Object.entries(vendorRecord)
     .filter(([key]) => !usedKeys.has(key))
     .map(([key, value]) => ({
+      key,
       label: toLabel(key),
       value:
         key === "createdAt" || key === "updatedAt"
@@ -450,9 +477,17 @@ export default function AboutPage() {
     }))
     .filter((item) => item.value);
 
-  const vendorDetails: Array<{ label: string; value: string }> = [
-    ...baseVendorDetails.map(({ label, value }) => ({ label, value })),
-    ...additionalVendorDetails,
+  const vendorDetails: Array<{ label: string; value: string; pathKey: string }> = [
+    ...baseVendorDetails.map(({ label, value, keys }) => ({
+      label,
+      value,
+      pathKey: getVendorPathKey(...keys),
+    })),
+    ...additionalVendorDetails.map(({ label, value, key }) => ({
+      label,
+      value,
+      pathKey: key,
+    })),
   ];
 
   if (variant.key === "studio") {
@@ -581,7 +616,10 @@ export default function AboutPage() {
         <VendorStoriesSection stories={vendorStories} theme="studio" />
 
         {vendorDetails.length > 0 && (
-          <section className="mx-auto max-w-7xl px-6 pb-16">
+          <section
+            className="mx-auto max-w-7xl px-6 pb-16"
+            data-template-section="vendor"
+          >
             <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
               <h2 className="text-3xl font-semibold">Vendor Details</h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -593,7 +631,469 @@ export default function AboutPage() {
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
                       {item.label}
                     </p>
-                    <p className="mt-2 text-sm text-slate-100 break-words">
+                    <p
+                      className="mt-2 text-sm text-slate-100 break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
+                      {item.value || "Not provided"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (variant.key === "mquiq") {
+    return (
+      <div className="min-h-screen bg-[#f3f3f3] text-[#2f3136]">
+        <section className="mx-auto max-w-7xl px-6 py-14" data-template-section="hero">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <p className="inline-flex rounded-full bg-[#e8eef7] px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[#f4b400]">
+                Built for Industry
+              </p>
+              <h1
+                className="mt-4 text-5xl font-bold leading-tight text-[#2f3136]"
+                data-template-path="components.about_page.hero.title"
+                data-template-section="hero"
+              >
+                {hero?.title}
+              </h1>
+              <p
+                className="mt-4 max-w-2xl text-lg text-[#566173]"
+                data-template-path="components.about_page.hero.subtitle"
+                data-template-section="hero"
+              >
+                {hero?.subtitle}
+              </p>
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                {stats?.slice(0, 3).map((item: any, i: number) => (
+                  <div key={i} className="rounded-xl border border-[#d7dde7] bg-white p-4">
+                    <p className="text-2xl font-bold text-[#2f3136]">{item.value}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#6b7280]">
+                      {item.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-[#d7dde7] bg-white p-2 shadow-sm">
+              {hero?.backgroundImage ? (
+                <img
+                  src={hero.backgroundImage}
+                  alt="Mquiq hero"
+                  className="h-full w-full rounded-xl object-cover"
+                  data-template-path="components.about_page.hero.backgroundImage"
+                  data-template-section="hero"
+                  data-template-component="components.about_page.hero.backgroundImage"
+                />
+              ) : (
+                <div className="flex h-80 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Hero image
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-12" data-template-section="story">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="overflow-hidden rounded-2xl border border-[#d7dde7] bg-white">
+              {story?.image ? (
+                <img
+                  src={story.image}
+                  alt="Story"
+                  className="h-full w-full object-cover"
+                  data-template-path="components.about_page.story.image"
+                  data-template-section="story"
+                  data-template-component="components.about_page.story.image"
+                />
+              ) : (
+                <div className="flex h-80 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Story image
+                </div>
+              )}
+            </div>
+            <div className="rounded-2xl border border-[#d7dde7] bg-white p-8">
+              <h2
+                className="text-3xl font-bold text-[#2f3136]"
+                data-template-path="components.about_page.story.heading"
+                data-template-section="story"
+              >
+                {story?.heading}
+              </h2>
+              <div className="mt-4 space-y-4 text-[#566173]">
+                {story?.paragraphs?.map((paragraph: string, index: number) => (
+                  <p
+                    key={index}
+                    data-template-path={`components.about_page.story.paragraphs.${index}`}
+                    data-template-section="story"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {values?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12" data-template-section="values">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {values.map((value: any, index: number) => (
+                <div key={index} className="rounded-2xl border border-[#d7dde7] bg-white p-5">
+                  <div className="mb-3 text-[#f4b400]">{iconMap[value.icon] || <Leaf size={30} />}</div>
+                  <h3
+                    className="text-lg font-semibold text-[#2f3136]"
+                    data-template-path={`components.about_page.values.${index}.title`}
+                    data-template-section="values"
+                  >
+                    {value.title}
+                  </h3>
+                  <p
+                    className="mt-2 text-sm text-[#5f6b7c]"
+                    data-template-path={`components.about_page.values.${index}.description`}
+                    data-template-section="values"
+                  >
+                    {value.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <VendorStoriesSection stories={vendorStories} theme="mquiq" />
+
+        {vendorDetails.length > 0 && (
+          <section
+            className="mx-auto max-w-7xl px-6 pb-16"
+            data-template-section="vendor"
+          >
+            <div className="rounded-2xl border border-[#d7dde7] bg-white p-6">
+              <h2 className="text-2xl font-bold text-[#2f3136]">Vendor Details</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {vendorDetails.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[#d7dde7] bg-[#f8fafc] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#f4b400]">{item.label}</p>
+                    <p
+                      className="mt-2 text-sm text-[#2f3136] break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
+                      {item.value || "Not provided"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (variant.key === "poupqz") {
+    return (
+      <div className="min-h-screen bg-[#f3f4f6] text-[#1f2937]">
+        <section className="mx-auto max-w-7xl px-6 py-14">
+          <div className="rounded-3xl border border-[#dce2eb] bg-white p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0b74c6]">Warehouse Experts</p>
+            <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <div>
+                <h1 className="text-5xl font-bold leading-tight text-[#111827]">{hero?.title}</h1>
+                <p className="mt-4 text-lg text-[#4b5563]">{hero?.subtitle}</p>
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-[#dce2eb]">
+                {hero?.backgroundImage ? (
+                  <img src={hero.backgroundImage} alt="Poupqz hero" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Hero image
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-12">
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="rounded-2xl border border-[#dce2eb] bg-white p-7">
+              <h2 className="text-3xl font-semibold text-[#111827]">{story?.heading}</h2>
+              <div className="mt-4 space-y-4 text-[#4b5563]">
+                {story?.paragraphs?.map((paragraph: string, index: number) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-[#dce2eb] bg-white">
+              {story?.image ? (
+                <img src={story.image} alt="Story" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Story image
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {values?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {values.map((value: any, index: number) => (
+                <div key={index} className="rounded-2xl border border-[#dce2eb] bg-white p-5">
+                  <div className="mb-3 text-[#0b74c6]">{iconMap[value.icon] || <Leaf size={28} />}</div>
+                  <h3 className="text-lg font-semibold text-[#111827]">{value.title}</h3>
+                  <p className="mt-2 text-sm text-[#4b5563]">{value.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {team?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <h2 className="text-2xl font-semibold text-[#111827]">Operational Team</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {team.map((member: any, index: number) => (
+                <div key={index} className="rounded-2xl border border-[#dce2eb] bg-white p-5 text-center">
+                  <img src={member.image} alt={member.name} className="mx-auto h-28 w-28 rounded-full object-cover" />
+                  <h3 className="mt-3 text-lg font-semibold text-[#111827]">{member.name}</h3>
+                  <p className="text-sm text-[#0b74c6]">{member.role}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <VendorStoriesSection stories={vendorStories} theme="poupqz" />
+
+        {vendorDetails.length > 0 && (
+          <section
+            className="mx-auto max-w-7xl px-6 pb-16"
+            data-template-section="vendor"
+          >
+            <div className="rounded-2xl border border-[#dce2eb] bg-white p-6">
+              <h2 className="text-2xl font-semibold text-[#111827]">Vendor Details</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {vendorDetails.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[#dce2eb] bg-[#f8fbff] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#0b74c6]">{item.label}</p>
+                    <p
+                      className="mt-2 text-sm text-[#1f2937] break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
+                      {item.value || "Not provided"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (variant.key === "oragze") {
+    return (
+      <div className="min-h-screen bg-[#f1f2ef] text-[#1f2a1f]">
+        <section className="mx-auto max-w-7xl px-6 py-14">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+            <div>
+              <p className="inline-flex rounded-full bg-[#e8f3db] px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[#5b8f2f]">
+                Organic Story
+              </p>
+              <h1 className="mt-4 text-5xl font-bold leading-tight text-[#203520]">{hero?.title}</h1>
+              <p className="mt-4 text-lg text-[#4f5f48]">{hero?.subtitle}</p>
+            </div>
+            <div className="overflow-hidden rounded-3xl border border-[#d8dccf] bg-white p-2">
+              {hero?.backgroundImage ? (
+                <img src={hero.backgroundImage} alt="Oragze hero" className="h-full w-full rounded-2xl object-cover" />
+              ) : (
+                <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Hero image
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-12">
+          <div className="rounded-3xl border border-[#d8dccf] bg-white p-8">
+            <h2 className="text-3xl font-semibold text-[#203520]">{story?.heading}</h2>
+            <div className="mt-4 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+              <div className="space-y-4 text-[#4f5f48]">
+                {story?.paragraphs?.map((paragraph: string, index: number) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-[#d8dccf]">
+                {story?.image ? (
+                  <img src={story.image} alt="Story" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-64 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Story image
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {values?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {values.map((value: any, index: number) => (
+                <div key={index} className="rounded-2xl border border-[#d8dccf] bg-white p-5">
+                  <div className="mb-3 text-[#6dbf4b]">{iconMap[value.icon] || <Leaf size={30} />}</div>
+                  <h3 className="text-lg font-semibold text-[#203520]">{value.title}</h3>
+                  <p className="mt-2 text-sm text-[#4f5f48]">{value.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {stats?.length > 0 && (
+          <section className="mx-auto max-w-7xl px-6 pb-12">
+            <div className="grid gap-4 md:grid-cols-3">
+              {stats.map((item: any, index: number) => (
+                <div key={index} className="rounded-2xl border border-[#d8dccf] bg-[#f8fbf4] p-6">
+                  <p className="text-3xl font-bold text-[#203520]">{item.value}</p>
+                  <p className="mt-2 text-sm text-[#4f5f48]">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <VendorStoriesSection stories={vendorStories} theme="oragze" />
+
+        {vendorDetails.length > 0 && (
+          <section
+            className="mx-auto max-w-7xl px-6 pb-16"
+            data-template-section="vendor"
+          >
+            <div className="rounded-2xl border border-[#d8dccf] bg-white p-6">
+              <h2 className="text-2xl font-semibold text-[#203520]">Vendor Details</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {vendorDetails.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[#d8dccf] bg-[#f8fbf4] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#6dbf4b]">{item.label}</p>
+                    <p
+                      className="mt-2 text-sm text-[#203520] break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
+                      {item.value || "Not provided"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (variant.key === "whiterose") {
+    return (
+      <div className="min-h-screen bg-[#f6f6f6] text-[#2b2f36]">
+        <section className="mx-auto max-w-[1500px] px-6 py-12">
+          <div className="rounded-2xl border border-[#dce2eb] bg-white p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0b74c6]">Premium Furniture Story</p>
+            <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <div>
+                <h1 className="text-5xl font-semibold leading-tight text-[#1f2937]">{hero?.title}</h1>
+                <p className="mt-4 text-lg text-[#4b5563]">{hero?.subtitle}</p>
+                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                  {stats?.slice(0, 3).map((item: any, index: number) => (
+                    <div key={index} className="rounded-xl border border-[#dce2eb] bg-[#f8fafc] p-4">
+                      <p className="text-2xl font-semibold text-[#1f2937]">{item.value}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#6b7280]">
+                        {item.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-[#dce2eb]">
+                {hero?.backgroundImage ? (
+                  <img src={hero.backgroundImage} alt="White Rose hero" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Hero image
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1500px] px-6 pb-12">
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="overflow-hidden rounded-xl border border-[#dce2eb] bg-white">
+              {story?.image ? (
+                <img src={story.image} alt="Story" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Story image
+                </div>
+              )}
+            </div>
+            <div className="rounded-xl border border-[#dce2eb] bg-white p-8">
+              <h2 className="text-3xl font-semibold text-[#1f2937]">{story?.heading}</h2>
+              <div className="mt-4 space-y-4 text-[#4b5563]">
+                {story?.paragraphs?.map((paragraph: string, index: number) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {values?.length > 0 && (
+          <section className="mx-auto max-w-[1500px] px-6 pb-12">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {values.map((value: any, index: number) => (
+                <div key={index} className="rounded-xl border border-[#dce2eb] bg-white p-5">
+                  <div className="mb-3 text-[#0b74c6]">{iconMap[value.icon] || <Leaf size={28} />}</div>
+                  <h3 className="text-lg font-semibold text-[#1f2937]">{value.title}</h3>
+                  <p className="mt-2 text-sm text-[#4b5563]">{value.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <VendorStoriesSection stories={vendorStories} theme="whiterose" />
+
+        {vendorDetails.length > 0 && (
+          <section
+            className="mx-auto max-w-[1500px] px-6 pb-16"
+            data-template-section="vendor"
+          >
+            <div className="rounded-xl border border-[#dce2eb] bg-white p-6">
+              <h2 className="text-2xl font-semibold text-[#1f2937]">Vendor Details</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {vendorDetails.map((item) => (
+                  <div key={item.label} className="rounded-lg border border-[#dce2eb] bg-[#f8fafc] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#0b74c6]">{item.label}</p>
+                    <p
+                      className="mt-2 text-sm text-[#1f2937] break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
                       {item.value || "Not provided"}
                     </p>
                   </div>
@@ -723,7 +1223,10 @@ export default function AboutPage() {
         <VendorStoriesSection stories={vendorStories} theme="trend" />
 
         {vendorDetails.length > 0 && (
-          <section className="mx-auto max-w-7xl px-6 pb-16">
+          <section
+            className="mx-auto max-w-7xl px-6 pb-16"
+            data-template-section="vendor"
+          >
             <div className="rounded-3xl border border-rose-200 bg-white p-6">
               <h2 className="text-2xl font-bold text-slate-900">
                 Vendor Details
@@ -737,7 +1240,11 @@ export default function AboutPage() {
                     <p className="text-xs uppercase tracking-[0.2em] text-rose-600">
                       {item.label}
                     </p>
-                    <p className="mt-2 text-sm text-slate-800 break-words">
+                    <p
+                      className="mt-2 text-sm text-slate-800 break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
                       {item.value || "Not provided"}
                     </p>
                   </div>
@@ -827,7 +1334,10 @@ export default function AboutPage() {
         <VendorStoriesSection stories={vendorStories} theme="minimal" />
 
         {vendorDetails.length > 0 && (
-          <section className="mx-auto max-w-6xl px-6 pb-16">
+          <section
+            className="mx-auto max-w-6xl px-6 pb-16"
+            data-template-section="vendor"
+          >
             <div className="rounded-3xl border border-slate-200 bg-white p-6">
               <h2 className="text-3xl font-semibold text-slate-900">
                 Vendor Details
@@ -841,7 +1351,11 @@ export default function AboutPage() {
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                       {item.label}
                     </p>
-                    <p className="mt-2 text-sm text-slate-800 break-words">
+                    <p
+                      className="mt-2 text-sm text-slate-800 break-words"
+                      data-template-path={`components.vendor_profile.${item.pathKey}`}
+                      data-template-section="vendor"
+                    >
                       {item.value || "Not provided"}
                     </p>
                   </div>
@@ -970,7 +1484,10 @@ export default function AboutPage() {
         <VendorStoriesSection stories={vendorStories} theme="classic" />
 
         {vendorDetails.length > 0 && (
-          <div className="mt-20 rounded-2xl border border-slate-200 bg-white p-8">
+          <div
+            className="mt-20 rounded-2xl border border-slate-200 bg-white p-8"
+            data-template-section="vendor"
+          >
             <h2 className="text-3xl font-bold text-gray-900 mb-6">
               Vendor Details
             </h2>
@@ -983,7 +1500,11 @@ export default function AboutPage() {
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                     {item.label}
                   </p>
-                  <p className="mt-2 text-sm text-slate-800 break-words">
+                  <p
+                    className="mt-2 text-sm text-slate-800 break-words"
+                    data-template-path={`components.vendor_profile.${item.pathKey}`}
+                    data-template-section="vendor"
+                  >
                     {item.value || "Not provided"}
                   </p>
                 </div>
@@ -1011,4 +1532,3 @@ export default function AboutPage() {
     </div>
   );
 }
-

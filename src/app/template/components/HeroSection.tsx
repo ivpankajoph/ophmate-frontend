@@ -36,10 +36,13 @@ export default function LandingPageDev() {
     "https://images.unsplash.com/photo-1463320726281-696a485928c7?w=1920&q=80";
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative" data-template-section="hero">
       {/* ✅ Banner Image from Cloudinary */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        data-template-section="branding"
+        data-template-path="components.home_page.backgroundImage"
+        data-template-component="components.home_page.backgroundImage"
         style={{
           backgroundImage: `linear-gradient(color-mix(in srgb, var(--template-banner-color) 55%, transparent), color-mix(in srgb, var(--template-banner-color) 55%, transparent)), url(${bannerImage})`,
         }}
@@ -49,17 +52,29 @@ export default function LandingPageDev() {
 
         {/* Hero Section */}
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-100px)] px-6 text-center">
-          <p className="text-white text-sm lg:text-base tracking-widest mb-6 uppercase">
+          <p
+            className="text-white text-sm lg:text-base tracking-widest mb-6 uppercase"
+            data-template-path="components.home_page.header_text_small"
+            data-template-section="hero"
+          >
             {homepage?.header_text_small || "Welcome to APi Urban Jungle Co."}
           </p>
 
-          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight mb-8 max-w-6xl">
+          <h1
+            className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight mb-8 max-w-6xl"
+            data-template-path="components.home_page.header_text"
+            data-template-section="hero"
+          >
             {homepage?.header_text ||
               "Discover the Beauty of Nature at Your Fingertips"}
           </h1>
 
           <Link href={`/template/${vendor_id}/all-products`}>
-            <button className="text-white px-10 cursor-pointer py-4 rounded-full text-lg lg:text-xl font-semibold transition-all transform hover:scale-105 shadow-lg template-accent-bg template-accent-bg-hover">
+            <button
+              className="text-white px-10 cursor-pointer py-4 rounded-full text-lg lg:text-xl font-semibold transition-all transform hover:scale-105 shadow-lg template-accent-bg template-accent-bg-hover"
+              data-template-path="components.home_page.button_header"
+              data-template-section="hero"
+            >
               {homepage?.button_header || "Shop all Products"}
             </button>
           </Link>

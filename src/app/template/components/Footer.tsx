@@ -17,11 +17,19 @@ import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 import { useTemplateVariant } from "./useTemplateVariant";
+import { MquiqFooter } from "./mquiq/MquiqFooter";
+import { PoupqzFooter } from "./poupqz/PoupqzFooter";
+import { OragzeFooter } from "./oragze/OragzeFooter";
+import { WhiteRoseFooter } from "./whiterose/WhiteRoseFooter";
 
 export default function Footer() {
   const variant = useTemplateVariant();
   const isStudio = variant.key === "studio";
   const isTrend = variant.key === "trend";
+  const isMquiq = variant.key === "mquiq";
+  const isPoupqz = variant.key === "poupqz";
+  const isOragze = variant.key === "oragze";
+  const isWhiteRose = variant.key === "whiterose";
   const params = useParams();
   const vendor_id = params.vendor_id as string;
 
@@ -77,6 +85,19 @@ export default function Footer() {
     });
     return Array.from(map.values()).slice(0, 6);
   }, [products, vendor_id]);
+
+  if (isMquiq) {
+    return <MquiqFooter />;
+  }
+  if (isPoupqz) {
+    return <PoupqzFooter />;
+  }
+  if (isOragze) {
+    return <OragzeFooter />;
+  }
+  if (isWhiteRose) {
+    return <WhiteRoseFooter />;
+  }
 
   return (
     <footer

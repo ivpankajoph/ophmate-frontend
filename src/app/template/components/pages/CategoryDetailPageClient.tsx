@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -18,8 +18,12 @@ export default function CategoryProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
   const isStudio = variant.key === "studio";
-  const isMinimal = variant.key === "minimal";
-  const isTrend = variant.key === "trend";
+  const isMinimal =
+    variant.key === "minimal" ||
+    variant.key === "mquiq" ||
+    variant.key === "poupqz" ||
+    variant.key === "whiterose";
+  const isTrend = variant.key === "trend" || variant.key === "oragze";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
@@ -181,7 +185,7 @@ export default function CategoryProductsPage() {
                   {product.shortDescription || "No description"}
                 </p>
                 <p className="text-lg font-semibold">
-                  â‚¹{product?.variants?.[0]?.finalPrice || product?.finalPrice || "--"}
+                  ₹{product?.variants?.[0]?.finalPrice || product?.finalPrice || "--"}
                 </p>
               </Link>
             ))}
@@ -203,4 +207,3 @@ export default function CategoryProductsPage() {
     </div>
   );
 }
-

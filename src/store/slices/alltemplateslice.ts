@@ -25,6 +25,40 @@ const BASE_URL = NEXT_PUBLIC_API_URL;
 const REQUEST_TIMEOUT_MS = 8_000;
 const templateEndpointPreference = new Map<string, "preview" | "fallback">();
 
+const asRecord = (value: unknown): Record<string, any> =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+
+const mergeTemplateDraft = (
+  existingTemplate: unknown,
+  incomingTemplate: unknown,
+  sectionOrder?: string[]
+) => {
+  const existing = asRecord(existingTemplate);
+  const incoming = asRecord(incomingTemplate);
+
+  const merged = {
+    ...existing,
+    ...incoming,
+    components: {
+      ...asRecord(existing.components),
+      ...asRecord(incoming.components),
+    },
+  } as Record<string, any>;
+
+  if (Array.isArray(sectionOrder) && sectionOrder.length > 0) {
+    merged.section_order = sectionOrder;
+    merged.sectionOrder = sectionOrder;
+    merged.components = {
+      ...asRecord(merged.components),
+      section_order: sectionOrder,
+    };
+  }
+
+  return merged;
+};
+
 const fetchTemplatePayload = async (vendorId: string) => {
   const preferredEndpoint = templateEndpointPreference.get(vendorId);
   const previewUrl = `${BASE_URL}/templates/${vendorId}/preview`;
@@ -79,6 +113,25 @@ const templateSlice = createSlice({
       state.error = null;
       state.currentVendorId = null;
       state.lastFetchedAt = null;
+    },
+    applyTemplatePreviewUpdate: (
+      state,
+      action: PayloadAction<{
+        vendorId?: string;
+        payload?: unknown;
+        sectionOrder?: string[];
+      }>
+    ) => {
+      const { vendorId, payload, sectionOrder } = action.payload;
+      if (!payload || typeof payload !== "object") return;
+
+      if (typeof vendorId === "string" && vendorId) {
+        state.currentVendorId = vendorId;
+      }
+
+      state.data = mergeTemplateDraft(state.data, payload, sectionOrder);
+      state.lastFetchedAt = Date.now();
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -135,5 +188,6 @@ const templateSlice = createSlice({
   },
 });
 
-export const { clearTemplate } = templateSlice.actions;
+export const { clearTemplate, applyTemplatePreviewUpdate } =
+  templateSlice.actions;
 export default templateSlice.reducer;

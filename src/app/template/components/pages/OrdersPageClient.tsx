@@ -46,8 +46,12 @@ export default function TemplateOrdersPage() {
   const [downloadingOrderId, setDownloadingOrderId] = useState("");
 
   const isStudio = variant.key === "studio";
-  const isMinimal = variant.key === "minimal";
-  const isTrend = variant.key === "trend";
+  const isMinimal =
+    variant.key === "minimal" ||
+    variant.key === "mquiq" ||
+    variant.key === "poupqz" ||
+    variant.key === "whiterose";
+  const isTrend = variant.key === "trend" || variant.key === "oragze";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal

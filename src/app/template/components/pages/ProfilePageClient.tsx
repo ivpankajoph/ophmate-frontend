@@ -47,7 +47,12 @@ export default function TemplateProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const isStudio = variant.key === "studio";
-  const isMinimal = variant.key === "minimal";
+  const isMinimal =
+    variant.key === "minimal" ||
+    variant.key === "mquiq" ||
+    variant.key === "poupqz" ||
+    variant.key === "oragze" ||
+    variant.key === "whiterose";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal
@@ -205,4 +210,3 @@ export default function TemplateProfilePage() {
     </div>
   );
 }
-

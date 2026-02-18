@@ -127,8 +127,12 @@ export default function ProductDetailPage() {
   });
 
   const isStudio = variantTheme.key === "studio";
-  const isMinimal = variantTheme.key === "minimal";
-  const isTrend = variantTheme.key === "trend";
+  const isMinimal =
+    variantTheme.key === "minimal" ||
+    variantTheme.key === "mquiq" ||
+    variantTheme.key === "poupqz" ||
+    variantTheme.key === "whiterose";
+  const isTrend = variantTheme.key === "trend" || variantTheme.key === "oragze";
   const pageClass = isStudio
     ? "min-h-screen bg-slate-950 text-slate-100"
     : isMinimal

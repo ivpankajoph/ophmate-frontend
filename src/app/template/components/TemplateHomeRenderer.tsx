@@ -7,6 +7,10 @@ import { useSelector } from 'react-redux'
 import LandingPageDev from './HeroSection'
 import { useTemplateVariant } from './useTemplateVariant'
 import { getTemplateAuth, templateApiFetch } from './templateAuth'
+import { MquiqHome } from './mquiq/MquiqHome'
+import { PoupqzHome } from './poupqz/PoupqzHome'
+import { OragzeHome } from './oragze/OragzeHome'
+import { WhiteRoseHome } from './whiterose/WhiteRoseHome'
 
 type Product = {
   _id?: string
@@ -124,19 +128,44 @@ export function TemplateHomeRenderer() {
     }
   }
 
+  if (variant.key === 'mquiq') {
+    return <MquiqHome />
+  }
+  if (variant.key === 'poupqz') {
+    return <PoupqzHome />
+  }
+  if (variant.key === 'oragze') {
+    return <OragzeHome />
+  }
+  if (variant.key === 'whiterose') {
+    return <WhiteRoseHome />
+  }
+
   if (variant.key === 'studio') {
     return (
       <div className='template-home template-home-studio'>
-        <section className='px-6 py-16 lg:px-12'>
+        <section className='px-6 py-16 lg:px-12' data-template-section='hero'>
           <div className='mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]'>
             <div>
-              <p className='text-xs uppercase tracking-[0.5em] text-slate-400'>
+              <p
+                className='text-xs uppercase tracking-[0.5em] text-slate-400'
+                data-template-path='components.home_page.hero_kicker'
+                data-template-section='hero'
+              >
                 {home.hero_kicker || 'Studio collection'}
               </p>
-              <h1 className='mt-4 text-5xl font-semibold text-white'>
+              <h1
+                className='mt-4 text-5xl font-semibold text-white'
+                data-template-path='components.home_page.header_text'
+                data-template-section='hero'
+              >
                 {home.header_text || 'Design-forward storefronts'}
               </h1>
-              <p className='mt-4 text-lg text-slate-300'>
+              <p
+                className='mt-4 text-lg text-slate-300'
+                data-template-path='components.home_page.header_text_small'
+                data-template-section='hero'
+              >
                 {home.header_text_small ||
                   'High contrast, editorial layouts, bold product grids.'}
               </p>
@@ -144,21 +173,32 @@ export function TemplateHomeRenderer() {
                 <Link
                   href={vendorId ? `/template/${vendorId}/all-products` : '#'}
                   className='rounded-none bg-gradient-to-r from-sky-400 to-indigo-500 px-6 py-3 text-xs font-semibold uppercase tracking-[0.4em] text-slate-900'
+                  data-template-path='components.home_page.button_header'
+                  data-template-section='hero'
                 >
                   {home.button_header || 'Explore'}
                 </Link>
-                <span className='text-xs uppercase tracking-[0.3em] text-slate-400'>
+                <span
+                  className='text-xs uppercase tracking-[0.3em] text-slate-400'
+                  data-template-path='components.home_page.button_secondary'
+                  data-template-section='hero'
+                >
                   {home.button_secondary || 'Limited drops'}
                 </span>
               </div>
             </div>
-            <div className='overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70'>
+            <div
+              className='overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70'
+              data-template-section='branding'
+            >
               {home.backgroundImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={home.backgroundImage}
                   alt='Studio hero'
                   className='h-full w-full object-cover'
+                  data-template-path='components.home_page.backgroundImage'
+                  data-template-section='branding'
                 />
               ) : (
                 <div className='flex h-80 items-center justify-center text-xs uppercase tracking-[0.4em] text-slate-500'>
@@ -188,9 +228,15 @@ export function TemplateHomeRenderer() {
           </div>
         </section>
 
-        <section className='mx-auto max-w-7xl px-6 pb-16 lg:px-12'>
+        <section className='mx-auto max-w-7xl px-6 pb-16 lg:px-12' data-template-section='products'>
           <div className='flex items-center justify-between'>
-            <h2 className='text-2xl font-semibold text-white'>Latest products</h2>
+            <h2
+              className='text-2xl font-semibold text-white'
+              data-template-path='components.home_page.products_heading'
+              data-template-section='products'
+            >
+              {home?.products_heading || 'Latest products'}
+            </h2>
             <Link
               href={vendorId ? `/template/${vendorId}/all-products` : '#'}
               className='text-xs uppercase tracking-[0.3em] text-slate-400'
@@ -232,38 +278,61 @@ export function TemplateHomeRenderer() {
   if (variant.key === 'minimal') {
     return (
       <div className='template-home template-home-minimal'>
-        <section className='mx-auto max-w-6xl px-6 py-16'>
+        <section className='mx-auto max-w-6xl px-6 py-16' data-template-section='hero'>
           <div className='grid items-center gap-10 lg:grid-cols-[1fr_1fr]'>
             <div>
-              <p className='text-xs uppercase tracking-[0.4em] text-slate-400'>
+              <p
+                className='text-xs uppercase tracking-[0.4em] text-slate-400'
+                data-template-path='components.home_page.hero_kicker'
+                data-template-section='hero'
+              >
                 {home.hero_kicker || 'Simple storefront'}
               </p>
-              <h1 className='mt-4 text-5xl font-semibold text-slate-900'>
+              <h1
+                className='mt-4 text-5xl font-semibold text-slate-900'
+                data-template-path='components.home_page.header_text'
+                data-template-section='hero'
+              >
                 {home.header_text || 'Minimal, clean, product-first'}
               </h1>
-              <p className='mt-4 text-lg text-slate-600'>
+              <p
+                className='mt-4 text-lg text-slate-600'
+                data-template-path='components.home_page.header_text_small'
+                data-template-section='hero'
+              >
                 {home.header_text_small || 'No clutter. Just your products.'}
               </p>
               <div className='mt-8 flex flex-wrap items-center gap-4'>
                 <Link
                   href={vendorId ? `/template/${vendorId}/all-products` : '#'}
                   className='rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white'
+                  data-template-path='components.home_page.button_header'
+                  data-template-section='hero'
                 >
                   {home.button_header || 'Shop now'}
                 </Link>
-                <span className='text-sm text-slate-500'>
+                <span
+                  className='text-sm text-slate-500'
+                  data-template-path='components.home_page.button_secondary'
+                  data-template-section='hero'
+                >
                   {home.button_secondary || 'Fresh arrivals'}
                 </span>
               </div>
             </div>
 
-            <div className='overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm'>
+            <div
+              className='overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm'
+              data-template-section='branding'
+            >
               {heroImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={heroImage}
                   alt='Storefront hero'
                   className='h-72 w-full object-cover sm:h-80 lg:h-[420px]'
+                  data-template-path='components.home_page.backgroundImage'
+                  data-template-section='branding'
                 />
               ) : (
                 <div className='flex h-72 items-center justify-center text-xs uppercase tracking-[0.3em] text-slate-400 sm:h-80 lg:h-[420px]'>
@@ -309,15 +378,30 @@ export function TemplateHomeRenderer() {
   if (variant.key === 'trend') {
     return (
       <div className='template-home template-home-trend'>
-        <section className='mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center'>
+        <section
+          className='mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center'
+          data-template-section='hero'
+        >
           <div>
-            <span className='inline-flex rounded-full bg-rose-100 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-700'>
+            <span
+              className='inline-flex rounded-full bg-rose-100 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-700'
+              data-template-path='components.home_page.hero_kicker'
+              data-template-section='hero'
+            >
               {home.hero_kicker || 'Trending now'}
             </span>
-            <h1 className='mt-4 text-4xl font-bold text-slate-900 sm:text-5xl'>
+            <h1
+              className='mt-4 text-4xl font-bold text-slate-900 sm:text-5xl'
+              data-template-path='components.home_page.header_text'
+              data-template-section='hero'
+            >
               {home.header_text || 'Shop smart. Save more. Stay in trend.'}
             </h1>
-            <p className='mt-3 max-w-xl text-base text-slate-600 sm:text-lg'>
+            <p
+              className='mt-3 max-w-xl text-base text-slate-600 sm:text-lg'
+              data-template-path='components.home_page.header_text_small'
+              data-template-section='hero'
+            >
               {home.header_text_small ||
                 'Daily drops, best prices, and fast checkout for every shopper.'}
             </p>
@@ -325,12 +409,16 @@ export function TemplateHomeRenderer() {
               <Link
                 href={vendorId ? `/template/${vendorId}/all-products` : '#'}
                 className='rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white'
+                data-template-path='components.home_page.button_header'
+                data-template-section='hero'
               >
                 {home.button_header || 'Shop Deals'}
               </Link>
               <Link
                 href={vendorId ? `/template/${vendorId}/category` : '#'}
                 className='rounded-full border border-rose-200 bg-white px-6 py-3 text-sm font-semibold text-rose-600'
+                data-template-path='components.home_page.button_secondary'
+                data-template-section='hero'
               >
                 {home.button_secondary || 'Browse categories'}
               </Link>
@@ -354,13 +442,18 @@ export function TemplateHomeRenderer() {
               </div>
             </div>
           </div>
-          <div className='overflow-hidden rounded-[2rem] border border-rose-100 bg-white p-3 shadow-lg shadow-rose-200/30'>
+          <div
+            className='overflow-hidden rounded-[2rem] border border-rose-100 bg-white p-3 shadow-lg shadow-rose-200/30'
+            data-template-section='branding'
+          >
             {heroImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={heroImage}
                 alt='Trend hero'
                 className='h-full min-h-[320px] w-full rounded-[1.5rem] object-cover'
+                data-template-path='components.home_page.backgroundImage'
+                data-template-section='branding'
               />
             ) : (
               <div className='flex min-h-[320px] items-center justify-center rounded-[1.5rem] bg-rose-50 text-xs uppercase tracking-[0.35em] text-rose-400'>
@@ -531,14 +624,22 @@ export function TemplateHomeRenderer() {
 
       <section className='mx-auto max-w-7xl px-6 py-16'>
         <div className='grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[1.2fr_0.8fr]'>
-          <div className='space-y-4'>
+          <div className='space-y-4' data-template-section='description'>
             <p className='text-xs font-semibold uppercase tracking-[0.32em] text-slate-400'>
               Brand Story
             </p>
-            <h2 className='text-2xl font-semibold text-slate-900 sm:text-3xl'>
+            <h2
+              className='text-2xl font-semibold text-slate-900 sm:text-3xl'
+              data-template-path='components.home_page.description.large_text'
+              data-template-section='description'
+            >
               {description?.large_text || 'A storefront built for modern shoppers.'}
             </h2>
-            <p className='text-sm text-slate-600 sm:text-base'>
+            <p
+              className='text-sm text-slate-600 sm:text-base'
+              data-template-path='components.home_page.description.summary'
+              data-template-section='description'
+            >
               {description?.summary ||
                 'Curate products, tell your story, and convert shoppers faster.'}
             </p>
@@ -587,17 +688,29 @@ export function TemplateHomeRenderer() {
         </section>
       )}
 
-      <section className='mx-auto max-w-7xl px-6 pb-16'>
+      <section className='mx-auto max-w-7xl px-6 pb-16' data-template-section='products'>
         <div className='flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
           <div>
-            <p className='text-xs font-semibold uppercase tracking-[0.32em] text-slate-400'>
+            <p
+              className='text-xs font-semibold uppercase tracking-[0.32em] text-slate-400'
+              data-template-path='components.home_page.products_kicker'
+              data-template-section='products'
+            >
               {home?.products_kicker || 'Catalog'}
             </p>
-            <h3 className='text-2xl font-semibold text-slate-900'>
+            <h3
+              className='text-2xl font-semibold text-slate-900'
+              data-template-path='components.home_page.products_heading'
+              data-template-section='products'
+            >
               {home?.products_heading || 'Products in this store'}
             </h3>
           </div>
-          <p className='text-sm text-slate-500'>
+          <p
+            className='text-sm text-slate-500'
+            data-template-path='components.home_page.products_subtitle'
+            data-template-section='products'
+          >
             {home?.products_subtitle || `${products.length} products available`}
           </p>
         </div>
@@ -693,11 +806,19 @@ export function TemplateHomeRenderer() {
         {actionMessage && <p className='mt-3 text-sm text-slate-500'>{actionMessage}</p>}
       </section>
 
-      <section className='mx-auto max-w-7xl px-6 pb-16'>
-        <h2 className='text-3xl font-semibold text-slate-900'>
+      <section className='mx-auto max-w-7xl px-6 pb-16' data-template-section='description'>
+        <h2
+          className='text-3xl font-semibold text-slate-900'
+          data-template-path='components.social_page.faqs.heading'
+          data-template-section='description'
+        >
           {faqSection?.heading || 'Frequently Asked Questions'}
         </h2>
-        <p className='mt-2 text-sm text-slate-600'>
+        <p
+          className='mt-2 text-sm text-slate-600'
+          data-template-path='components.social_page.faqs.subheading'
+          data-template-section='description'
+        >
           {faqSection?.subheading || 'Quick answers to common questions'}
         </p>
 
