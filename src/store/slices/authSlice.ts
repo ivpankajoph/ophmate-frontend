@@ -105,6 +105,13 @@ const authSlice = createSlice({
       state.error = null
       state.data = null
     },
+    logoutAuth: (state) => {
+      state.loading = false
+      state.success = false
+      state.error = null
+      state.data = null
+      state.token = null
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(sendOtp.pending, (state) => {
@@ -172,5 +179,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { resetOtpState } = authSlice.actions
+export const { resetOtpState, logoutAuth } = authSlice.actions
 export default authSlice.reducer
