@@ -41,6 +41,9 @@ type BuildTemplateMetadataOptions = {
 const DEFAULT_SITE_TITLE = "OPH-mart";
 const DEFAULT_SITE_DESCRIPTION = "Discover products from trusted stores on OPH-mart.";
 const DEFAULT_KEYWORDS = ["oph-mart", "online shopping", "vendor store"];
+const TEMPLATE_NOT_FOUND_COOLDOWN_MS = 60 * 1000;
+const metadataNotFoundByVendor = new Map<string, number>();
+const metadataEndpointPreference = new Map<string, "preview" | "fallback">();
 
 const getApiBase = () => {
   const value = process.env.NEXT_PUBLIC_API_URL || "";
@@ -151,16 +154,35 @@ const toSlug = (value: unknown) =>
     ? value.trim().toLowerCase().replace(/\s+/g, "-")
     : "";
 
-const fetchJson = async (url: string) => {
+type FetchJsonResult = {
+  ok: boolean;
+  status: number;
+  data: any;
+};
+
+const fetchJson = async (url: string): Promise<FetchJsonResult> => {
   try {
     const response = await fetch(url, {
       next: { revalidate: 60 },
       headers: { "Content-Type": "application/json" },
     });
-    if (!response.ok) return null;
-    return response.json();
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+    return {
+      ok: response.ok,
+      status: response.status,
+      data,
+    };
   } catch {
-    return null;
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+    };
   }
 };
 
@@ -170,32 +192,55 @@ const fetchTemplatePreview = cache(
     if (!apiBase || !vendorId) {
       return { template: null, products: [] };
     }
+    const now = Date.now();
+    const blockedUntil = metadataNotFoundByVendor.get(vendorId) || 0;
+    if (blockedUntil > now) {
+      return { template: null, products: [] };
+    }
 
     const previewUrl = `${apiBase}/templates/${encodeURIComponent(vendorId)}/preview`;
     const fallbackUrl = `${apiBase}/templates/template-all?vendor_id=${encodeURIComponent(vendorId)}`;
+    const preferredEndpoint = metadataEndpointPreference.get(vendorId);
+    const endpointOrder =
+      preferredEndpoint === "fallback"
+        ? (["fallback", "preview"] as const)
+        : (["preview", "fallback"] as const);
 
-    const previewResponse = await fetchJson(previewUrl);
-    if (previewResponse?.data?.template || previewResponse?.data?.products) {
-      return {
-        template: previewResponse?.data?.template || null,
-        products: Array.isArray(previewResponse?.data?.products)
-          ? previewResponse.data.products
-          : [],
-      };
+    let notFoundResponses = 0;
+
+    for (const endpoint of endpointOrder) {
+      const response = await fetchJson(endpoint === "preview" ? previewUrl : fallbackUrl);
+      if (!response.ok) {
+        if (response.status === 404) {
+          notFoundResponses += 1;
+        }
+        continue;
+      }
+
+      const payload = response.data;
+      const template =
+        payload?.data?.template ||
+        payload?.data ||
+        payload?.template ||
+        null;
+      const products = Array.isArray(payload?.data?.products)
+        ? payload.data.products
+        : [];
+
+      if (template || products.length > 0) {
+        metadataEndpointPreference.set(vendorId, endpoint);
+        metadataNotFoundByVendor.delete(vendorId);
+        return { template, products };
+      }
     }
 
-    const fallbackResponse = await fetchJson(fallbackUrl);
-    const fallbackTemplate =
-      fallbackResponse?.data?.template ||
-      fallbackResponse?.data ||
-      fallbackResponse?.template ||
-      null;
+    if (notFoundResponses === endpointOrder.length) {
+      metadataNotFoundByVendor.set(vendorId, now + TEMPLATE_NOT_FOUND_COOLDOWN_MS);
+    }
 
     return {
-      template: fallbackTemplate,
-      products: Array.isArray(fallbackResponse?.data?.products)
-        ? fallbackResponse.data.products
-        : [],
+      template: null,
+      products: [],
     };
   }
 );
@@ -205,7 +250,9 @@ const fetchProductById = cache(async (productId: string) => {
   if (!apiBase || !productId) return null;
 
   const response = await fetchJson(`${apiBase}/products/${encodeURIComponent(productId)}`);
-  return response?.product || response?.data?.product || response?.data || null;
+  if (!response.ok || !response.data) return null;
+  const payload = response.data;
+  return payload?.product || payload?.data?.product || payload?.data || null;
 });
 
 const getStoreName = (template: UnknownRecord | null) =>

@@ -5,7 +5,7 @@ type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const DEFAULT_TEMPLATE_APP_URL = "http://localhost:3001";
+const DEFAULT_TEMPLATE_APP_URL = process.env.NEXT_PUBLIC_VENDOR_TEMPLATE_URL 
 
 const getTemplateAppBaseUrl = () => {
   const configured = process.env.NEXT_PUBLIC_VENDOR_TEMPLATE_URL;
@@ -33,7 +33,7 @@ const serializeSearchParams = (
   const serialized = query.toString();
   return serialized ? `?${serialized}` : "";
 };
-
+ 
 export default async function TemplateRedirectPage({
   params,
   searchParams,
