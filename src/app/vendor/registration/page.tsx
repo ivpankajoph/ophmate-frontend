@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +15,59 @@ import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 
+const COUNTRY_CODES = [
+  {
+    label: "India",
+    dialCode: "+91",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/in.png",
+  },
+  {
+    label: "United States",
+    dialCode: "+1",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/us.png",
+  },
+  {
+    label: "United Kingdom",
+    dialCode: "+44",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/gb.png",
+  },
+  {
+    label: "United Arab Emirates",
+    dialCode: "+971",
+    minLength: 8,
+    maxLength: 9,
+    flagUrl: "https://flagcdn.com/w20/ae.png",
+  },
+  {
+    label: "Australia",
+    dialCode: "+61",
+    minLength: 9,
+    maxLength: 9,
+    flagUrl: "https://flagcdn.com/w20/au.png",
+  },
+  {
+    label: "Singapore",
+    dialCode: "+65",
+    minLength: 8,
+    maxLength: 8,
+    flagUrl: "https://flagcdn.com/w20/sg.png",
+  },
+];
+
 export default function VendorRegistrationPage() {
+  const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
-  const otpRefs = useRef<HTMLInputElement[]>([]);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const { success, error } = useSelector((state: any) => state.auth);
 
@@ -35,13 +80,46 @@ export default function VendorRegistrationPage() {
     }
   }, [showOtp, timer]);
 
+  const selectedCountry =
+    COUNTRY_CODES.find((country) => country.dialCode === countryCode) ?? COUNTRY_CODES[0];
+
+  const phonePlaceholder =
+    selectedCountry.minLength === selectedCountry.maxLength
+      ? `Enter ${selectedCountry.maxLength}-digit mobile number`
+      : "Enter mobile number";
+
+  const isPhoneValid =
+    phone.length >= selectedCountry.minLength &&
+    phone.length <= selectedCountry.maxLength;
+
+  const getFullPhone = () => {
+    const dialCodeDigits = countryCode.replace(/\D/g, "");
+    return `${dialCodeDigits}${phone}`;
+  };
+
+  const focusOtpInput = (index: number) => {
+    const input = otpRefs.current[index];
+    if (input) input.focus();
+  };
+
+  const handleCountryCodeChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const newCode = e.target.value;
+    const nextCountry =
+      COUNTRY_CODES.find((country) => country.dialCode === newCode) ??
+      COUNTRY_CODES[0];
+    setCountryCode(newCode);
+    setPhone((prev) => prev.slice(0, nextCountry.maxLength));
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
-    if (value.length <= 10) setPhone(value);
+    if (value.length <= selectedCountry.maxLength) setPhone(value);
   };
 
   const handleContinue = async () => {
-    if (phone.length !== 10) return;
+    if (!isPhoneValid) return;
 
     const sent = await handleSubmit();
     if (!sent) return;
@@ -61,7 +139,7 @@ export default function VendorRegistrationPage() {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    if (value && index < otp.length - 1) otpRefs.current[index + 1]?.focus();
+    if (value && index < otp.length - 1) focusOtpInput(index + 1);
   };
 
   const handleOtpKeyDown = (
@@ -69,7 +147,7 @@ export default function VendorRegistrationPage() {
     index: number,
   ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
+      focusOtpInput(index - 1);
     }
   };
 
@@ -77,9 +155,12 @@ export default function VendorRegistrationPage() {
     e.preventDefault();
     const pasteData = e.clipboardData.getData("text").slice(0, 6);
     if (/^\d+$/.test(pasteData)) {
-      const newOtp = pasteData.split("");
+      const newOtp = ["", "", "", "", "", ""];
+      pasteData.split("").forEach((digit, index) => {
+        newOtp[index] = digit;
+      });
       setOtp(newOtp);
-      otpRefs.current[newOtp.length - 1]?.focus();
+      focusOtpInput(Math.min(pasteData.length, 6) - 1);
     }
   };
   const router = useRouter();
@@ -87,14 +168,20 @@ export default function VendorRegistrationPage() {
   const dispatch = useDispatch<AppDispatch>();
 
   const handleSubmit = async () => {
-    if (!phone) {
-      Swal.fire("Warning", "Please enter a phone number", "warning");
+    if (!isPhoneValid) {
+      Swal.fire(
+        "Warning",
+        `Please enter a valid mobile number for ${selectedCountry.label}`,
+        "warning",
+      );
       return false;
     }
 
     try {
-      await dispatch(sendOtp(phone)).unwrap();
-      sessionStorage.setItem("vendor_phone", phone);
+      const displayPhone = `${countryCode}${phone}`;
+      await dispatch(sendOtp({ phone, countryCode })).unwrap();
+      sessionStorage.setItem("vendor_phone", displayPhone);
+      sessionStorage.setItem("vendor_country_code", countryCode);
       Swal.fire("Success", "OTP sent successfully", "success");
       return true;
     } catch (err: any) {
@@ -134,14 +221,15 @@ export default function VendorRegistrationPage() {
     const otpString: string = Array.isArray(otp)
       ? otp.join("")
       : String(otp).trim();
+    const fullPhone = getFullPhone();
 
-    if (!phone || !otpString) {
+    if (!isPhoneValid || !otpString) {
       Swal.fire("Warning", "Please enter both phone number and OTP", "warning");
       return;
     }
 
     try {
-      await dispatch(verifyOtp({ phone, otp: otpString })).unwrap();
+      await dispatch(verifyOtp({ phone: fullPhone, otp: otpString })).unwrap();
       Swal.fire("Success", "OTP verified successfully", "success");
 
       router.push("/vendor/registration/personal-details");
@@ -157,7 +245,6 @@ export default function VendorRegistrationPage() {
   };
 
   const isOtpComplete = otp.join("").length === 6;
-  const temp_otp = sessionStorage.getItem("vendor_otp");
   return (
     <>
       <PromotionalBanner />
@@ -195,25 +282,34 @@ export default function VendorRegistrationPage() {
               {!showOtp ? (
                 <>
                   {/* Phone Input */}
-                  <div className="flex items-center gap-3 border rounded-lg px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {/* Using img to avoid next/image config */}
+                  <div className="flex items-center gap-3 border rounded-lg px-3 py-2">
+                    <div className="h-10 shrink-0 rounded-md border border-input bg-background px-2 flex items-center gap-1">
                       <img
-                        src="https://flagcdn.com/w20/in.png"
-                        alt="India Flag"
-                        width={24}
-                        height={24}
-                        className="rounded-sm"
+                        src={selectedCountry.flagUrl}
+                        alt={`${selectedCountry.label} flag`}
+                        width={18}
+                        height={14}
+                        className="rounded-[2px] object-cover"
                       />
-                      <span className="text-lg font-medium text-foreground">
-                        +91
-                      </span>
+                      <select
+                        value={countryCode}
+                        onChange={handleCountryCodeChange}
+                        className="h-full w-16 bg-transparent text-sm outline-none"
+                        aria-label="Country code"
+                      >
+                        {COUNTRY_CODES.map((country) => (
+                          <option key={country.dialCode} value={country.dialCode}>
+                            {country.dialCode}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <Input
                       type="tel"
-                      placeholder="Enter 10-digit mobile number"
+                      placeholder={phonePlaceholder}
                       value={phone}
                       onChange={handlePhoneChange}
+                      maxLength={selectedCountry.maxLength}
                       className="flex-1 border-none focus-visible:ring-0 text-lg"
                     />
                   </div>
@@ -223,7 +319,7 @@ export default function VendorRegistrationPage() {
                       size="lg"
                       className="w-full text-lg mt-4"
                       onClick={handleContinue}
-                      disabled={phone.length < 10}
+                      disabled={!isPhoneValid}
                     >
                       Continue
                     </Button>
@@ -235,7 +331,9 @@ export default function VendorRegistrationPage() {
                   <div className="text-center space-y-3">
                     <p className="text-lg text-muted-foreground">
                       OTP sent to{" "}
-                      <span className="font-semibold">+91 {phone}</span>
+                      <span className="font-semibold">
+                        {countryCode} {phone}
+                      </span>
                     </p>
                     <Button
                       variant="link"
@@ -252,7 +350,7 @@ export default function VendorRegistrationPage() {
                       <Input
                         key={index}
                         ref={(el) => {
-                          otpRefs.current[index] = el!;
+                          otpRefs.current[index] = el;
                         }}
                         type="text"
                         inputMode="numeric"

@@ -38,8 +38,41 @@ export const updateVendorBusiness = createAsyncThunk(
       console.log("Business update response:", response,response.data);
       return response.data;
     } catch (error: any) {
+      const responseData = error?.response?.data || {};
+      const backendMessage =
+        typeof responseData?.message === "string" ? responseData.message.trim() : "";
+      const backendError =
+        typeof responseData?.error === "string" ? responseData.error.trim() : "";
+
+      let parsedMessage = backendMessage || backendError;
+
+      if (!parsedMessage || /^server error$/i.test(parsedMessage)) {
+        parsedMessage = backendError || backendMessage;
+      }
+
+      const duplicateSource = `${backendMessage} ${backendError}`.toLowerCase();
+      if (
+        duplicateSource.includes("e11000") ||
+        duplicateSource.includes("duplicate key")
+      ) {
+        if (duplicateSource.includes("gst_number")) {
+          parsedMessage =
+            "GST number already exists. Please use a different GST number.";
+        } else if (duplicateSource.includes("pan_number")) {
+          parsedMessage =
+            "PAN number already exists. Please use a different PAN number.";
+        } else if (duplicateSource.includes("email")) {
+          parsedMessage = "Email is already registered with another vendor.";
+        } else if (duplicateSource.includes("phone")) {
+          parsedMessage = "Phone number is already registered with another vendor.";
+        } else {
+          parsedMessage =
+            "Duplicate value found. Please use a different value and try again.";
+        }
+      }
+
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update business details"
+        parsedMessage || "Failed to update business details"
       );
     }
   }

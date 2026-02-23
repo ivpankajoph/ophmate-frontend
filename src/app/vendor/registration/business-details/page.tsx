@@ -22,6 +22,60 @@ import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 
+const PHONE_COUNTRY_CODES = [
+  {
+    label: "India",
+    dialCode: "+91",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/in.png",
+  },
+  {
+    label: "United States",
+    dialCode: "+1",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/us.png",
+  },
+  {
+    label: "United Kingdom",
+    dialCode: "+44",
+    minLength: 10,
+    maxLength: 10,
+    flagUrl: "https://flagcdn.com/w20/gb.png",
+  },
+  {
+    label: "United Arab Emirates",
+    dialCode: "+971",
+    minLength: 8,
+    maxLength: 9,
+    flagUrl: "https://flagcdn.com/w20/ae.png",
+  },
+  {
+    label: "Australia",
+    dialCode: "+61",
+    minLength: 9,
+    maxLength: 9,
+    flagUrl: "https://flagcdn.com/w20/au.png",
+  },
+  {
+    label: "Singapore",
+    dialCode: "+65",
+    minLength: 8,
+    maxLength: 8,
+    flagUrl: "https://flagcdn.com/w20/sg.png",
+  },
+];
+
+const DOCUMENT_FILE_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+];
+
 // OPTIMIZATION: Memoized input component to prevent re-renders
 const TextInput = memo(({
   name, label, value, placeholder, disabled, error,
@@ -99,7 +153,7 @@ const SelectInput = memo(({ name, label, value, options, error, onChange }: any)
 const FileInput = memo(({ name, label, error, onChange }: any) => (
   <div>
     <label className="block text-sm font-medium mb-1">{label}</label>
-    <Input type="file" name={name} onChange={onChange} accept=".pdf,.jpg,.jpeg,.png" />
+    <Input type="file" name={name} onChange={onChange} accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.avif" />
     {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
   </div>
 ));
@@ -216,6 +270,16 @@ export default function BusinessDetails() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [alternateCountryCode, setAlternateCountryCode] = useState("+91");
+
+  const selectedAlternateCountry =
+    PHONE_COUNTRY_CODES.find((country) => country.dialCode === alternateCountryCode) ??
+    PHONE_COUNTRY_CODES[0];
+
+  const alternatePhonePlaceholder =
+    selectedAlternateCountry.minLength === selectedAlternateCountry.maxLength
+      ? `Enter ${selectedAlternateCountry.maxLength}-digit number`
+      : "Enter mobile number";
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("vendor_email") || "";
@@ -249,13 +313,51 @@ export default function BusinessDetails() {
     });
   }, []);
 
+  const handleAlternateCountryCodeChange = useCallback(
+    (e: ChangeEvent<HTMLSelectElement>) => {
+      const newCode = e.target.value;
+      const nextCountry =
+        PHONE_COUNTRY_CODES.find((country) => country.dialCode === newCode) ??
+        PHONE_COUNTRY_CODES[0];
+
+      setAlternateCountryCode(newCode);
+      setForm((prev) => ({
+        ...prev,
+        alternate_contact_phone: prev.alternate_contact_phone
+          .replace(/\D/g, "")
+          .slice(0, nextCountry.maxLength),
+      }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.alternate_contact_phone;
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleAlternatePhoneChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+        .replace(/\D/g, "")
+        .slice(0, selectedAlternateCountry.maxLength);
+
+      setForm((prev) => ({ ...prev, alternate_contact_phone: value }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.alternate_contact_phone;
+        return next;
+      });
+    },
+    [selectedAlternateCountry.maxLength],
+  );
+
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     if (files?.[0]) {
       const file = files[0];
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
-      if (!allowedTypes.includes(file.type)) {
-        setErrors((prev) => ({ ...prev, [name]: "Only PDF, JPG, or PNG allowed." }));
+      if (!DOCUMENT_FILE_MIME_TYPES.includes(file.type)) {
+        setErrors((prev) => ({ ...prev, [name]: "Only PDF or image files (JPG/PNG/WEBP/AVIF) are allowed." }));
         return;
       }
       setForm((prev) => ({ ...prev, [name]: file }));
@@ -283,8 +385,15 @@ export default function BusinessDetails() {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setErrors((prev) => ({ ...prev, avatar: "Only image files are allowed." }));
+    const avatarAllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
+    const hasAllowedExtension = avatarAllowedExtensions.some((ext) =>
+      file.name.toLowerCase().endsWith(ext),
+    );
+    if (!file.type.startsWith("image/") && !hasAllowedExtension) {
+      setErrors((prev) => ({
+        ...prev,
+        avatar: "Only JPG, PNG, WEBP, or AVIF image files are allowed.",
+      }));
       return;
     }
 
@@ -314,8 +423,25 @@ export default function BusinessDetails() {
         if (value && !validatePAN(value)) error = "Invalid PAN format";
         break;
       case "phone_no":
-      case "alternate_contact_phone":
         if (value && !validatePhone(value)) error = "Invalid phone number";
+        break;
+      case "alternate_contact_phone":
+        if (value) {
+          const digitsOnly = String(value).replace(/\D/g, "");
+          if (digitsOnly !== value) {
+            error = "Invalid phone number";
+          } else if (
+            selectedAlternateCountry.dialCode === "+91" &&
+            !validatePhone(digitsOnly)
+          ) {
+            error = "Invalid phone number";
+          } else if (
+            digitsOnly.length < selectedAlternateCountry.minLength ||
+            digitsOnly.length > selectedAlternateCountry.maxLength
+          ) {
+            error = "Invalid phone number";
+          }
+        }
         break;
       case "pincode":
         if (value && !validatePincode(value)) error = "Invalid pincode";
@@ -348,7 +474,7 @@ export default function BusinessDetails() {
       }
       return next;
     });
-  }, [form]);
+  }, [form, selectedAlternateCountry]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -385,6 +511,11 @@ export default function BusinessDetails() {
       Object.entries(form).forEach(([key, value]) => {
         if (value) data.append(key, value as any);
       });
+      if (form.alternate_contact_phone) {
+        const dialCodeDigits = alternateCountryCode.replace(/\D/g, "");
+        const altPhoneDigits = form.alternate_contact_phone.replace(/\D/g, "");
+        data.set("alternate_contact_phone", `${dialCodeDigits}${altPhoneDigits}`);
+      }
       const result = await dispatch(updateVendorBusiness({ formData: data }));
 
       console.log("Update dispatch result:", result);
@@ -465,8 +596,12 @@ export default function BusinessDetails() {
                         )}
                       </div>
                       <div className="space-y-1">
-                        <Input type="file" accept="image/*" onChange={handleAvatarChange} />
-                        <p className="text-xs text-gray-500">JPG, PNG, or WEBP up to 5MB</p>
+                        <Input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.webp,.avif,image/*"
+                          onChange={handleAvatarChange}
+                        />
+                        <p className="text-xs text-gray-500">JPG, PNG, WEBP, or AVIF up to 5MB</p>
                         {errors.avatar && <div className="text-red-500 text-xs">{errors.avatar}</div>}
                       </div>
                     </div>
@@ -488,8 +623,46 @@ export default function BusinessDetails() {
                     placeholder="e.g. ABCDE1234F" onChange={updateField} onBlur={handleBlur} error={errors.pan_number} toUpperCase />
                   <TextInput name="alternate_contact_name" label="Alternate Contact Name" value={form.alternate_contact_name}
                     onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_name} capitalize />
-                  <TextInput name="alternate_contact_phone" label="Alternate Contact Phone" value={form.alternate_contact_phone}
-                    placeholder="10-digit number" onChange={updateField} onBlur={handleBlur} error={errors.alternate_contact_phone} />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Alternate Contact Phone</label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 shrink-0 rounded-md border border-input bg-transparent px-2 flex items-center gap-1">
+                        <img
+                          src={selectedAlternateCountry.flagUrl}
+                          alt={`${selectedAlternateCountry.label} flag`}
+                          width={18}
+                          height={14}
+                          className="rounded-[2px] object-cover"
+                        />
+                        <select
+                          value={alternateCountryCode}
+                          onChange={handleAlternateCountryCodeChange}
+                          className="h-full w-16 bg-transparent text-sm outline-none"
+                          aria-label="Alternate contact country code"
+                        >
+                          {PHONE_COUNTRY_CODES.map((country) => (
+                            <option key={country.dialCode} value={country.dialCode}>
+                              {country.dialCode}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <Input
+                        name="alternate_contact_phone"
+                        type="tel"
+                        value={form.alternate_contact_phone}
+                        placeholder={alternatePhonePlaceholder}
+                        onChange={handleAlternatePhoneChange}
+                        onBlur={() => handleBlur("alternate_contact_phone")}
+                        maxLength={selectedAlternateCountry.maxLength}
+                      />
+                    </div>
+                    {errors.alternate_contact_phone && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {errors.alternate_contact_phone}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -574,9 +747,9 @@ export default function BusinessDetails() {
               <Card>
                 <CardHeader><CardTitle>Documents</CardTitle></CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-4">
-                  <FileInput name="gst_cert" label="GST Certificate (PDF/JPG/PNG)"
+                  <FileInput name="gst_cert" label="GST Certificate (PDF/JPG/PNG/WEBP/AVIF)"
                     onChange={handleFileChange} error={errors.gst_cert} />
-                  <FileInput name="pan_card" label="PAN Card (PDF/JPG/PNG)"
+                  <FileInput name="pan_card" label="PAN Card (PDF/JPG/PNG/WEBP/AVIF)"
                     onChange={handleFileChange} error={errors.pan_card} />
                 </CardContent>
               </Card>

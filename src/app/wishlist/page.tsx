@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { AppDispatch, RootState } from "@/store";
+import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { Button } from "@/components/ui/button";
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
@@ -31,6 +33,54 @@ export default function WishlistPage() {
   const items = useSelector(
     (state: RootState) => state.customerWishlist?.items || [],
   );
+
+  useEffect(() => {
+    if (!items.length || !NEXT_PUBLIC_API_URL) return;
+
+    let cancelled = false;
+
+    const pruneUnavailableWishlistItems = async () => {
+      const checks = await Promise.allSettled(
+        items.map(async (item) => {
+          const response = await fetch(
+            `${NEXT_PUBLIC_API_URL}/products/${encodeURIComponent(item.product_id)}`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              cache: "no-store",
+            },
+          );
+
+          return {
+            id: item.product_id,
+            status: response.status,
+          };
+        }),
+      );
+
+      if (cancelled) return;
+
+      const staleIds = checks
+        .filter(
+          (result): result is PromiseFulfilledResult<{ id: string; status: number }> =>
+            result.status === "fulfilled" &&
+            [400, 404].includes(result.value.status),
+        )
+        .map((result) => result.value.id);
+
+      if (!staleIds.length) return;
+
+      staleIds.forEach((id) => {
+        dispatch(removeWishlistItem(id));
+      });
+    };
+
+    pruneUnavailableWishlistItems();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, items]);
 
   const addToCartFromWishlist = async (item: (typeof items)[number]) => {
     if (!item?.variant_id) {

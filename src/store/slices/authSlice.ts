@@ -23,11 +23,13 @@ const BASE_URL = NEXT_PUBLIC_API_URL
 
 export const sendOtp = createAsyncThunk<
   any,
-  string,
+  { phone: string; countryCode: string },
   { rejectValue: string }
->('auth/sendOtp', async (phone, { rejectWithValue }) => {
+>('auth/sendOtp', async ({ phone, countryCode }, { rejectWithValue }) => {
   try {
-    const goodPhone = `91${phone}`
+    const dialCodeDigits = String(countryCode || '').replace(/\D/g, '')
+    const localPhoneDigits = String(phone || '').replace(/\D/g, '')
+    const goodPhone = `${dialCodeDigits}${localPhoneDigits}`
     const response = await axios.post(`${BASE_URL}/vendors/send-otp`, { goodPhone })
     console.log("sdadas",response,response.data)
     sessionStorage.setItem("vendor_otp",response.data.otp)
