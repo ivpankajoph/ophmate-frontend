@@ -27,6 +27,7 @@ import type { AppDispatch, RootState } from "@/store";
 import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
 import { createWishlistItem } from "@/lib/wishlist";
 import { toastSuccess } from "@/lib/toast";
+import { buildProductPath } from "@/lib/product-route";
 
 interface Variant {
   _id: string;
@@ -262,8 +263,13 @@ export default function SubCategoryDetailPage() {
     return filtered;
   }, [flattenedProducts, searchTerm, sortBy, priceRange, selectedBrands]);
 
-  const handleProductClick = (categoryId: string, productId: string) => {
-    router.push(`/product/${categoryId}/${productId}`);
+  const handleProductClick = (productSlugOrId: string) => {
+    router.push(
+      buildProductPath({
+        category: categorySlug,
+        productId: productSlugOrId,
+      }),
+    );
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -282,8 +288,9 @@ export default function SubCategoryDetailPage() {
       toggleWishlistItem(
         createWishlistItem({
           product_id: product._id,
+          product_slug: product.slug,
           product_name: product.productName,
-          product_category: product.productCategory || "unknown",
+          product_category: categorySlug || "unknown",
           image_url:
             variant?.variantsImageUrls?.[0]?.url ||
             product.defaultImages?.[0]?.url ||
@@ -639,8 +646,7 @@ const metaDescription = subCategory?.description || "";
                         key={`${item.product._id}-${item.variant._id}`}
                         onClick={() =>
                           handleProductClick(
-                            item.product.productCategory,
-                            item.product._id
+                            item.product.slug || item.product._id
                           )
                         }
                         className="group bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1"

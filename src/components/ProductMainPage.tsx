@@ -13,6 +13,7 @@ import { Heart } from "lucide-react";
 import { createWishlistItem } from "@/lib/wishlist";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { trackAddToCart } from "@/lib/analytics-events";
+import { buildProductPath } from "@/lib/product-route";
 
 const formatPrice = (value: number) =>
   `Rs. ${Number(value || 0).toLocaleString()}`;
@@ -38,7 +39,11 @@ const ProductCard = ({ product }: { product: any }) => {
   const firstVariant =
     product?.variants?.find((variant: any) => variant?.isActive) ||
     product?.variants?.[0];
-  const productCategory = product?.productCategory || "unknown";
+  const productCategory =
+    product?.productCategoryData?.slug ||
+    product?.category?.slug ||
+    product?.productCategory ||
+    "unknown";
   const finalPrice = Number(firstVariant?.finalPrice || 0);
   const actualPrice = Number(firstVariant?.actualPrice || 0);
   const discountPercent = Number(firstVariant?.discountPercent || 0);
@@ -99,8 +104,9 @@ const ProductCard = ({ product }: { product: any }) => {
       toggleWishlistItem(
         createWishlistItem({
           product_id: product._id,
+          product_slug: product.slug,
           product_name: product.productName,
-          product_category: product.productCategory || "unknown",
+          product_category: productCategory,
           image_url: imageUrl,
           final_price: finalPrice,
           actual_price: actualPrice || finalPrice,
@@ -118,7 +124,11 @@ const ProductCard = ({ product }: { product: any }) => {
   return (
     <div className="group h-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <Link
-        href={`/product/${productCategory}/${product?._id || ""}`}
+        href={buildProductPath({
+          category: productCategory,
+          productId: product?._id,
+          productSlug: product?.slug,
+        })}
         className="block"
       >
         <div className="relative aspect-square overflow-hidden bg-slate-50 p-3">

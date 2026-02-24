@@ -21,6 +21,7 @@ import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
+import { buildProductPath } from "@/lib/product-route";
 
 // Hide scrollbar styles
 if (typeof document !== "undefined") {
@@ -449,7 +450,11 @@ export default function VendorCatalogPage({ params }: VendorCatalogPageProps) {
                       whileTap={{ scale: 0.98 }}
                     >
                       <Link
-                        href={`/product/${getProductCategoryPath(product)}/${product._id}`}
+                        href={buildProductPath({
+                          category: getProductCategoryPath(product),
+                          productId: product._id,
+                          productSlug: product?.slug,
+                        })}
                         className="block h-full"
                       >
                         <Card className="h-full flex flex-col overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 rounded-xl">

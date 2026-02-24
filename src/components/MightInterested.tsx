@@ -3,29 +3,56 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { buildProductPath } from "@/lib/product-route";
 
 interface Product {
   _id?: string;
   productName?: string;
   slug?: string;
-  defaultImages?: { url?: string }[];
+  defaultImages?: Array<{ url?: string } | string>;
   variants?: {
     finalPrice?: number;
     actualPrice?: number;
+    variantsImageUrls?: Array<{ url?: string } | string>;
   }[];
 }
 
-const MightInterested = () => {
+type MightInterestedProps = {
+  categoryId?: string;
+  categorySlug?: string;
+};
+
+const MightInterested = ({
+  categoryId: categoryIdProp,
+  categorySlug: categorySlugProp,
+}: MightInterestedProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const parts = pathname.split("/").filter(Boolean);
-  const categoryId = parts[1];
+  const categoryFromPath = parts[1];
+  const categoryId = categoryIdProp || categoryFromPath;
+  const categorySlug = categorySlugProp || categoryFromPath || "unknown";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const getImageUrl = (product?: Product) => {
+    const defaultImage = product?.defaultImages?.[0];
+    const defaultImageUrl =
+      typeof defaultImage === "string"
+        ? defaultImage
+        : defaultImage?.url;
+
+    const variantImage = product?.variants?.[0]?.variantsImageUrls?.[0];
+    const variantImageUrl =
+      typeof variantImage === "string"
+        ? variantImage
+        : variantImage?.url;
+
+    return defaultImageUrl || variantImageUrl || "/logo.png";
+  };
 
   useEffect(() => {
     if (!categoryId) return;
@@ -67,8 +94,7 @@ const MightInterested = () => {
 
       <div className="no-scrollbar flex gap-4 overflow-x-auto py-2">
         {products.map((product, i) => {
-          const imageUrl =
-            product?.defaultImages?.[0]?.url || "/placeholder.png";
+          const imageUrl = getImageUrl(product);
 
           const price =
             product?.variants?.[0]?.finalPrice ??
@@ -79,16 +105,17 @@ const MightInterested = () => {
             <motion.div
               key={product?._id ?? i}
               whileHover={{ scale: 1.03 }}
-              onClick={() => handleNavigate(product?._id)}
+              onClick={() => handleNavigate(product)}
               className="min-w-[220px] p-3 rounded-xl border bg-white cursor-pointer"
             >
               <div className="relative h-40 w-full rounded-md overflow-hidden mb-3 bg-gray-100">
-                <Image
+                <img
                   src={imageUrl}
                   alt={product?.productName ?? "Product"}
-                  fill
-                  className="object-cover"
-                  sizes="220px"
+                  className="h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = "/logo.png";
+                  }}
                 />
               </div>
 
@@ -119,9 +146,15 @@ const MightInterested = () => {
     </div>
   );
 
-  function handleNavigate(productId?: string) {
-    if (!categoryId || !productId) return;
-    router.push(`/product/${categoryId}/${productId}`);
+  function handleNavigate(product?: Product) {
+    if (!categorySlug || !product?._id) return;
+    router.push(
+      buildProductPath({
+        category: categorySlug,
+        productId: product._id,
+        productSlug: product.slug,
+      }),
+    );
   }
 };
 

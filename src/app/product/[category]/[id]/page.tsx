@@ -59,7 +59,10 @@ const retailBenefits = [
 
 
 export default function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, category: routeCategory } = useParams<{
+    id: string;
+    category: string;
+  }>();
   const pathname = usePathname();
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -195,8 +198,10 @@ export default function ProductDetailPage() {
       toggleWishlistItem(
         createWishlistItem({
           product_id: product._id,
+          product_slug: product.slug,
           product_name: product.productName,
-          product_category: product.productCategory || "unknown",
+          product_category:
+            product.productCategoryData?.slug || routeCategory || "unknown",
           image_url:
             variant?.variantsImageUrls?.[0]?.url ||
             product.defaultImages?.[0]?.url ||
@@ -292,13 +297,31 @@ export default function ProductDetailPage() {
     product.mainCategoryData?.name ||
     product.mainCategory ||
     "Unassigned";
+  const mainCategorySlug =
+    product.mainCategoryData?.slug || "";
   const categoryLabel =
     product.productCategoryData?.name ||
     product.productCategory ||
     "Unassigned";
+  const categorySlug =
+    product.productCategoryData?.slug || routeCategory || "";
+  const primarySubCategory = product.productSubCategoryData?.find(
+    (sub:any) => sub?.slug && sub?.name,
+  );
   const subCategoryNames =
     product.productSubCategoryData?.map((sub:any) => sub.name).filter(Boolean) ??
     [];
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    ...(mainCategorySlug
+      ? [{ label: mainCategoryLabel, href: `/main-categories/${mainCategorySlug}` }]
+      : []),
+    ...(categorySlug ? [{ label: categoryLabel, href: `/categories/${categorySlug}` }] : []),
+    ...(primarySubCategory
+      ? [{ label: primarySubCategory.name, href: `/sub-categories/${primarySubCategory.slug}` }]
+      : []),
+    { label: product.productName },
+  ];
   const specificationEntries =
     product.specifications
       ?.flatMap((item:any) =>
@@ -310,8 +333,29 @@ export default function ProductDetailPage() {
       <PromotionalBanner />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+            {breadcrumbs.map((crumb, index) => (
+              <React.Fragment key={`${crumb.label}-${index}`}>
+                {index > 0 && (
+                  <li className="text-slate-400">
+                    <ChevronRight className="h-4 w-4" />
+                  </li>
+                )}
+                <li>
+                  {crumb.href ? (
+                    <Link href={crumb.href} className="hover:text-indigo-600 transition-colors">
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-slate-900">{crumb.label}</span>
+                  )}
+                </li>
+              </React.Fragment>
+            ))}
+          </ol>
+        </nav>
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left: Image Gallery */}
           <div className="w-full lg:w-1/2 lg:sticky lg:top-8 self-start">
             <div className="flex gap-4">
               <div className="flex flex-col gap-3">
@@ -339,7 +383,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex-1 relative">
-                <div className="relative w-full min-h-[520px] rounded-[32px] overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100 shadow-2xl border border-white p-4">
+                <div className="">
                   <div className="relative w-full h-[520px] md:h-[560px] rounded-[28px] overflow-hidden bg-white flex items-center justify-center">
                     <Image
                       src={selectedImage || "/placeholder.jpg"}
@@ -757,7 +801,10 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        <MightInterested />
+        <MightInterested
+          categoryId={String(product?.productCategory || "")}
+          categorySlug={categorySlug}
+        />
 
         {/* Mobile Floating Bar */}
         <div className="fixed left-0 right-0 bottom-0 md:hidden z-50">

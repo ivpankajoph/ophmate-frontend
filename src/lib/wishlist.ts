@@ -1,5 +1,6 @@
 export type WishlistItem = {
   product_id: string;
+  product_slug?: string;
   product_name: string;
   product_category: string;
   image_url: string;
@@ -15,6 +16,7 @@ export type WishlistItem = {
 
 type CreateWishlistItemInput = {
   product_id: string;
+  product_slug?: string;
   product_name: string;
   product_category: string;
   image_url?: string;
@@ -37,6 +39,7 @@ export const createWishlistItem = (
   input: CreateWishlistItemInput,
 ): WishlistItem => ({
   product_id: String(input.product_id || ""),
+  product_slug: input.product_slug ? String(input.product_slug) : undefined,
   product_name: String(input.product_name || "Untitled Product"),
   product_category: String(input.product_category || "unknown"),
   image_url: String(input.image_url || "/placeholder.png"),

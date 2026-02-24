@@ -18,6 +18,7 @@ import {
   removeWishlistItem,
 } from "@/store/slices/customerWishlistSlice";
 import { toastError, toastSuccess } from "@/lib/toast";
+import { buildProductPath } from "@/lib/product-route";
 
 const formatAmount = (value: number) =>
   `Rs. ${Number(value || 0).toLocaleString(undefined, {
@@ -153,7 +154,11 @@ export default function WishlistPage() {
                   className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                 >
                   <Link
-                    href={`/product/${item.product_category}/${item.product_id}`}
+                    href={buildProductPath({
+                      category: item.product_category,
+                      productId: item.product_id,
+                      productSlug: item.product_slug,
+                    })}
                     className="block"
                   >
                     <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">

@@ -12,6 +12,7 @@ import { fetchAllProducts } from "@/store/slices/productSlice";
 import { useRouter } from "next/navigation";
 import { NEXT_PUBLIC_API_URL_BANNERS } from "@/config/variables";
 import { AppDispatch } from "@/store";
+import { buildProductPath } from "@/lib/product-route";
 
 const BASE_URL = NEXT_PUBLIC_API_URL_BANNERS;
 
@@ -31,8 +32,19 @@ export default function EcommerceHeroPage() {
 
   const handleCardClick = (p: any) => {
     try {
-      const categoryName = p.productCategory || p.category?.name || "unknown";
-      router.push(`/product/${encodeURIComponent(categoryName)}/${p._id}`);
+      const categorySegment =
+        p?.productCategoryData?.slug ||
+        p?.category?.slug ||
+        p?.productCategory ||
+        p?.category?.name ||
+        "unknown";
+      router.push(
+        buildProductPath({
+          category: categorySegment,
+          productId: p?._id,
+          productSlug: p?.slug,
+        }),
+      );
     } catch (error) {
       console.error("Navigation error:", error);
     }

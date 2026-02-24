@@ -27,6 +27,7 @@ import {
   getSavedCheckoutPaymentMethod,
   saveCheckoutAddressId,
 } from "../components/checkout-utils";
+import { buildProductPath } from "@/lib/product-route";
 
 type CheckoutAddress = {
   _id: string;
@@ -169,6 +170,8 @@ export default function CheckoutBagPage() {
 
   const getItemId = (item: any) =>
     item?.product_id || item?.productId || item?.product?._id || item?._id;
+  const getItemSlug = (item: any) =>
+    item?.product_slug || item?.productSlug || item?.product?.slug;
 
   if (!token) return null;
 
@@ -228,7 +231,11 @@ export default function CheckoutBagPage() {
             {cart.items.map((item: any) => {
               const productCategory = getItemCategory(item);
               const productId = getItemId(item);
-              const productUrl = `/product/${productCategory}/${productId}`;
+              const productUrl = buildProductPath({
+                category: productCategory,
+                productId,
+                productSlug: getItemSlug(item),
+              });
               const variantText =
                 Object.values(item.variant_attributes || {}).join(" / ") ||
                 "Default variant";

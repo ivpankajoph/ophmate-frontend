@@ -14,6 +14,7 @@ import Footer from "@/components/footer"
 import Image from "next/image"
 import Link from "next/link"
 import userApi from "@/lib/userApi"
+import { buildProductPath } from "@/lib/product-route"
 
 const formatMoney = (value: number) => `Rs. ${Number(value || 0).toFixed(2)}`
 
@@ -30,6 +31,8 @@ export default function OrdersPage() {
     "unknown"
   const getItemId = (item: any) =>
     item?.product_id || item?.productId || item?.product?._id || item?._id
+  const getItemSlug = (item: any) =>
+    item?.product_slug || item?.productSlug || item?.product?.slug
   const getItemImage = (item: any) =>
     item?.image_url ||
     item?.image ||
@@ -118,7 +121,11 @@ export default function OrdersPage() {
                   {order.items.map((item: any) => {
                     const productId = getItemId(item)
                     const productCategory = getItemCategory(item)
-                    const productUrl = `/product/${productCategory}/${productId}`
+                    const productUrl = buildProductPath({
+                      category: productCategory,
+                      productId,
+                      productSlug: getItemSlug(item),
+                    })
                     return (
                       <Link
                         key={item._id || item.variant_id}
