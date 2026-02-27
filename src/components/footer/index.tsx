@@ -8,6 +8,8 @@ import {
   MapPin,
 } from "lucide-react";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import CustomerQueryForm from "./CustomerQueryForm";
 
 export default function Footer() {
   return (
@@ -109,10 +111,15 @@ export default function Footer() {
                 Data Deletion
               </Link>
             </li>
+            {useSelector((state: any) => state.customerAuth?.user) && (
+              <li>
+                <CustomerQueryForm />
+              </li>
+            )}
           </ul>
         </div>
 
-        
+
 
         <div>
           <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
