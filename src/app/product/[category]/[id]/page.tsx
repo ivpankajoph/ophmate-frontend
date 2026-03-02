@@ -38,9 +38,11 @@ import PromotionalBanner from "@/components/promotional-banner";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import MightInterested from "@/components/MightInterested";
+import ProductShare from "@/components/ProductShare";
 import Link from "next/link";
 import { FAQ, Variant } from "../../type/type";
 import { createWishlistItem } from "@/lib/wishlist";
+import CustomerQueryForm from "@/components/footer/CustomerQueryForm";
 import ProductReviewsSection, {
   ProductReviewSummary,
 } from "@/components/reviews/ProductReviewsSection";
@@ -171,6 +173,36 @@ export default function ProductDetailPage() {
       toastSuccess("Added to cart");
     } catch (error: any) {
       toastError(error || "Failed to add to cart");
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!selectedVariant || !product) return;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    try {
+      await dispatch(
+        addCartItem({
+          product_id: product._id,
+          variant_id: selectedVariant._id,
+          quantity,
+        }),
+      ).unwrap();
+      trackAddToCart({
+        vendorId: product?.vendor?._id,
+        userId: user?._id || user?.id || "",
+        productId: product._id,
+        productName: product.productName,
+        productPrice: selectedVariant.finalPrice || 0,
+        quantity,
+      });
+      toastSuccess("Proceeding to checkout");
+      // Redirect to checkout/bag page
+      router.push("/checkout/bag");
+    } catch (error: any) {
+      toastError(error || "Failed to proceed to checkout");
     }
   };
 
@@ -438,9 +470,11 @@ export default function ProductDetailPage() {
                     />{" "}
                     {wishlisted ? "Added to Favorites" : "Add to Favorites"}
                   </Button>
-                  <Button variant="outline" className="flex-1">
-                    Share
-                  </Button>
+                  <ProductShare
+                    productName={product.productName}
+                    productUrl={typeof window !== "undefined" ? window.location.href : ""}
+                    productImage={selectedImage || product.defaultImages?.[0]?.url}
+                  />
                 </div>
               </div>
             </div>
@@ -630,6 +664,8 @@ export default function ProductDetailPage() {
                 <Button
                   variant="outline"
                   className="flex-1 h-14 text-lg font-semibold border-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+                  onClick={handleBuyNow}
+                  disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
                 >
                   Buy Now
                   <ChevronRight className="ml-2" />
@@ -718,6 +754,13 @@ export default function ProductDetailPage() {
                 loginPath={`/login?next=${encodeURIComponent(pathname || "/")}`}
                 onSummaryChange={setReviewSummary}
               />
+            {/* product-specific query */}
+            <div className="mb-6">
+              <CustomerQueryForm
+                productId={String(product._id)}
+                productName={product.productName}
+              />
+            </div>
             {product.faqs && product.faqs.length > 0 && (
               <section className="bg-white rounded-xl p-6 shadow-md border">
                 <h2 className="text-2xl font-bold mb-4">

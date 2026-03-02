@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,6 +31,7 @@ const querySchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z.string().optional(),
     orderId: z.string().optional(),
+    productId: z.string().optional(),
     issueType: z.enum([
         "Delivery delayed",
         "Wrong product delivered",
@@ -48,7 +49,12 @@ const querySchema = z.object({
 
 type QueryFormValues = z.infer<typeof querySchema>;
 
-export default function CustomerQueryForm() {
+interface CustomerQueryFormProps {
+    productId?: string;
+    productName?: string;
+}
+
+export default function CustomerQueryForm({ productId, productName }: CustomerQueryFormProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const user = useSelector((state: any) => state.customerAuth?.user);
@@ -65,13 +71,25 @@ export default function CustomerQueryForm() {
             fullName: user?.name || "",
             email: user?.email || "",
             phone: user?.phone || "",
+            productId: productId || undefined,
+            issueType: productId ? "Other" : undefined,
         },
     });
+
+    // whenever productId exists, ensure issueType is pre-filled
+    useEffect(() => {
+        if (productId) {
+            setValue("issueType", "Other");
+        }
+    }, [productId, setValue]);
 
     const onSubmit = async (data: QueryFormValues) => {
         setLoading(true);
         try {
-            const response = await userApi.post("/support/queries/submit", data);
+            // include productId if provided in props
+            const payload = { ...data } as any;
+            if (productId) payload.productId = productId;
+            const response = await userApi.post("/support/queries/submit", payload);
             if (response.data.success) {
                 setIsOpen(false);
                 reset();
@@ -99,15 +117,34 @@ export default function CustomerQueryForm() {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <button className="text-sm hover:underline text-left">
-                    Submit Complaint
-                </button>
+                {user ? (
+                    <Button variant="outline" size="sm" className="capitalize">
+                        {productName ? `Ask a question about "${productName}"` : "Submit Complaint"}
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline" size="sm" className="capitalize"
+                        onClick={() => {
+                            window.location.href = `/login?next=${encodeURIComponent(
+                                typeof window !== 'undefined' ? window.location.pathname : '/'
+                            )}`
+                        }}
+                    >
+                        {productName ? `Ask a question about "${productName}"` : "Submit Complaint"}
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">Contact Support</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                    {productName && (
+                        <div className="space-y-1">
+                            <Label>Product</Label>
+                            <p className="text-sm font-medium">{productName}</p>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <Label htmlFor="fullName">Full Name *</Label>
@@ -145,6 +182,7 @@ export default function CustomerQueryForm() {
                                 {...register("phone")}
                             />
                         </div>
+                        {!productId && (
                         <div className="space-y-1">
                             <Label htmlFor="orderId">Order ID</Label>
                             <Input
@@ -153,8 +191,10 @@ export default function CustomerQueryForm() {
                                 {...register("orderId")}
                             />
                         </div>
+                        )}
                     </div>
 
+                    {!productId && (
                     <div className="space-y-1">
                         <Label htmlFor="issueType">Issue Type *</Label>
                         <Select onValueChange={(value) => setValue("issueType", value as any)}>
@@ -176,6 +216,7 @@ export default function CustomerQueryForm() {
                             <p className="text-xs text-destructive">{errors.issueType.message}</p>
                         )}
                     </div>
+                    )}
 
                     <div className="space-y-1">
                         <Label htmlFor="message">Message *</Label>

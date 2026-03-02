@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Star, X } from "lucide-react";
+import { Loader2, Star, X, ShieldCheck, Store } from "lucide-react";
 import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { toastError, toastSuccess } from "@/lib/toast";
@@ -13,11 +13,19 @@ type ReviewImage = {
   publicId?: string;
 };
 
+type ReviewReply = {
+  _id?: string;
+  senderRole: "Admin" | "Vendor";
+  message: string;
+  createdAt?: string;
+};
+
 type ProductReview = {
   _id: string;
   rating: number;
   comment: string;
   images?: ReviewImage[];
+  replies?: ReviewReply[];
   reviewer?: {
     name?: string;
     avatar?: string;
@@ -324,13 +332,12 @@ export default function ProductReviewsSection({
                   aria-label={`Set ${value} stars`}
                 >
                   <Star
-                    className={`h-6 w-6 ${
-                      value <= rating
+                    className={`h-6 w-6 ${value <= rating
                         ? "fill-amber-400 text-amber-400"
                         : isStudio
                           ? "text-slate-600"
                           : "text-slate-300"
-                    }`}
+                      }`}
                   />
                 </button>
               );
@@ -341,20 +348,18 @@ export default function ProductReviewsSection({
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             placeholder="Share your experience with this product..."
-            className={`min-h-24 w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 ${
-              isStudio
+            className={`min-h-24 w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 ${isStudio
                 ? "border-slate-700 bg-slate-950 text-slate-100 focus:ring-slate-500"
                 : "border-slate-200 bg-white text-slate-900 focus:ring-indigo-300"
-            }`}
+              }`}
           />
 
           <div className="mt-3">
             <label
-              className={`inline-flex cursor-pointer items-center rounded-lg border px-3 py-2 text-sm font-medium ${
-                isStudio
+              className={`inline-flex cursor-pointer items-center rounded-lg border px-3 py-2 text-sm font-medium ${isStudio
                   ? "border-slate-700 text-slate-200 hover:bg-slate-800"
                   : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
+                }`}
             >
               Upload photos
               <input
@@ -448,6 +453,57 @@ export default function ProductReviewsSection({
                       alt="Review attachment"
                       className="h-16 w-full rounded-md object-cover"
                     />
+                  ))}
+                </div>
+              )}
+
+              {/* Admin / Vendor Replies */}
+              {Array.isArray(review.replies) && review.replies.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {review.replies.map((reply, replyIndex) => (
+                    <div
+                      key={replyIndex}
+                      className={`flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm ${isStudio
+                          ? "bg-slate-800/60 border border-slate-700"
+                          : reply.senderRole === "Admin"
+                            ? "bg-indigo-50 border border-indigo-100"
+                            : "bg-blue-50 border border-blue-100"
+                        }`}
+                    >
+                      {/* Icon */}
+                      <div
+                        className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${reply.senderRole === "Admin"
+                            ? isStudio ? "bg-indigo-900 text-indigo-300" : "bg-indigo-100 text-indigo-600"
+                            : isStudio ? "bg-blue-900 text-blue-300" : "bg-blue-100 text-blue-600"
+                          }`}
+                      >
+                        {reply.senderRole === "Admin" ? (
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                        ) : (
+                          <Store className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span
+                            className={`text-xs font-semibold ${reply.senderRole === "Admin"
+                                ? isStudio ? "text-indigo-300" : "text-indigo-700"
+                                : isStudio ? "text-blue-300" : "text-blue-700"
+                              }`}
+                          >
+                            {reply.senderRole === "Admin" ? "Admin Response" : "Seller Response"}
+                          </span>
+                          {reply.createdAt && (
+                            <span className={`text-[10px] ${isStudio ? "text-slate-500" : "text-slate-400"}`}>
+                              {formatReviewDate(reply.createdAt)}
+                            </span>
+                          )}
+                        </div>
+                        <p className={isStudio ? "text-slate-200" : "text-slate-700"}>
+                          {reply.message}
+                        </p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
