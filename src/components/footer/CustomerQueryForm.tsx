@@ -26,23 +26,25 @@ import userApi from "@/lib/userApi";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 
+const issueTypes = [
+    "Delivery delayed",
+    "Wrong product delivered",
+    "Damaged product received",
+    "Product not as described",
+    "Missing items in package",
+    "Refund not received",
+    "Payment issue",
+    "Other",
+] as const;
+
 const querySchema = z.object({
     fullName: z.string().min(2, "Full name is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().optional(),
     orderId: z.string().optional(),
     productId: z.string().optional(),
-    issueType: z.enum([
-        "Delivery delayed",
-        "Wrong product delivered",
-        "Damaged product received",
-        "Product not as described",
-        "Missing items in package",
-        "Refund not received",
-        "Payment issue",
-        "Other",
-    ], {
-        required_error: "Please select an issue type",
+    issueType: z.enum(issueTypes, {
+        error: "Please select an issue type",
     }),
     message: z.string().min(10, "Message must be at least 10 characters"),
 });
