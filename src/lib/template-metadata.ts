@@ -38,9 +38,9 @@ type BuildTemplateMetadataOptions = {
   slug?: string;
 };
 
-const DEFAULT_SITE_TITLE = "OPH-mart";
-const DEFAULT_SITE_DESCRIPTION = "Discover products from trusted stores on OPH-mart.";
-const DEFAULT_KEYWORDS = ["oph-mart", "online shopping", "vendor store"];
+const DEFAULT_SITE_TITLE = "Sellerslogin";
+const DEFAULT_SITE_DESCRIPTION = "Discover products from trusted stores on sellerslogin";
+const DEFAULT_KEYWORDS = ["sellerslogin", "online shopping", "vendor store"];
 const TEMPLATE_NOT_FOUND_COOLDOWN_MS = 60 * 1000;
 const metadataNotFoundByVendor = new Map<string, number>();
 const metadataEndpointPreference = new Map<string, "preview" | "fallback">();

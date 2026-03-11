@@ -3,12 +3,22 @@
 import { useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, X, Plus, Minus } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "@/store"
-import { fetchCart, removeCartItem, updateCartItem } from "@/store/slices/customerCartSlice"
+import {
+  fetchCart,
+  removeCartItem,
+  updateCartItem,
+} from "@/store/slices/customerCartSlice"
 import Link from "next/link"
 import { toastError, toastSuccess } from "@/lib/toast"
 
@@ -50,10 +60,10 @@ export default function CartDrawer() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative rounded-full">
           <ShoppingCart className="h-5 w-5" />
           {token && cartItems.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center">
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white">
               {cartItems.length}
             </span>
           )}
@@ -62,63 +72,60 @@ export default function CartDrawer() {
 
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 flex flex-col"
+        className="flex w-full flex-col p-0 sm:max-w-md"
       >
-        {/* Header */}
-        <SheetHeader className="p-4 border-b">
+        <SheetHeader className="border-b p-4">
           <SheetTitle className="text-lg font-semibold">My Cart</SheetTitle>
         </SheetHeader>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+        <div className="flex-1 space-y-6 overflow-y-auto px-4 py-4">
           {!token ? (
-            <div className="text-center text-muted-foreground mt-10">
+            <div className="mt-10 text-center text-muted-foreground">
               <p className="mb-4">Please login to view your cart.</p>
               <Button asChild>
                 <Link href="/login">Go to Login</Link>
               </Button>
             </div>
           ) : cartItems.length === 0 ? (
-            <p className="text-center text-muted-foreground mt-10">
-              {loading ? "Loading cart..." : "Your cart is empty 🛒"}
+            <p className="mt-10 text-center text-muted-foreground">
+              {loading ? "Loading cart..." : "Your cart is empty."}
             </p>
           ) : (
             cartItems.map((item: any) => (
               <div
                 key={item._id}
-                className="flex items-center gap-4 border rounded-lg p-3 hover:bg-muted/30 transition-colors"
+                className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/30"
               >
-                {/* Image */}
                 <div className="relative h-16 w-16 flex-shrink-0">
                   <Image
                     src={item.image_url || "/placeholder.png"}
                     alt={item.product_name}
                     fill
-                    className="object-cover rounded-md"
+                    className="rounded-md object-cover"
                   />
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-medium text-sm line-clamp-1">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between">
+                    <h4 className="line-clamp-1 text-sm font-medium">
                       {item.product_name}
                     </h4>
                     <button onClick={() => removeItem(item._id)}>
                       <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {Object.values(item.variant_attributes || {}).join(" / ")}
                   </p>
 
-                  {/* Quantity + Price */}
-                  <div className="flex justify-between items-center mt-3">
-                    <div className="flex items-center border rounded-md">
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center rounded-md border">
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => updateQuantity(item._id, -1, item.quantity)}
+                        onClick={() =>
+                          updateQuantity(item._id, -1, item.quantity)
+                        }
                         className="h-6 w-6"
                       >
                         <Minus className="h-3 w-3" />
@@ -133,8 +140,8 @@ export default function CartDrawer() {
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
-                    <span className="text-sm font-medium whitespace-nowrap">
-                      ₹{(item.total_price || 0).toFixed(2)}
+                    <span className="whitespace-nowrap text-sm font-medium">
+                      Rs. {(item.total_price || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -143,17 +150,16 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* Footer */}
         {token && (
-          <div className="border-t px-4 py-4 space-y-3 bg-background">
+          <div className="space-y-3 border-t bg-background px-4 py-4">
             <Separator />
-            <div className="flex justify-between font-semibold text-base">
+            <div className="flex justify-between text-base font-semibold">
               <span>Total</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+              <span>Rs. {subtotal.toFixed(2)}</span>
             </div>
 
             <Button
-              className="mt-4 w-full py-6 text-base font-semibold rounded-full"
+              className="mt-4 w-full rounded-full py-6 text-base font-semibold"
               asChild
               disabled={cartItems.length === 0}
             >
@@ -165,4 +171,3 @@ export default function CartDrawer() {
     </Sheet>
   )
 }
-

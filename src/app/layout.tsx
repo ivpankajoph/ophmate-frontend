@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 });
 
 const DEFAULT_METADATA: Metadata = {
-  title: "OPH-mart",
+  title: "Sellerslogin",
   description: "design and developed by ivpankaj",
 };
 const SEO_LOOKUP_TIMEOUT_MS = 450;
