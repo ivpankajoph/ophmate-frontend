@@ -441,7 +441,7 @@ export default function BusinessDetails() {
           ) {
             error = "Invalid phone number";
           }
-        }
+        } 
         break;
       case "pincode":
         if (value && !validatePincode(value)) error = "Invalid pincode";

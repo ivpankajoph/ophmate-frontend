@@ -127,6 +127,10 @@
   height: 100% !important;
 }
 
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
 .template-theme {
   --template-color: #0f172a;
   --template-banner-color: #0f172a;

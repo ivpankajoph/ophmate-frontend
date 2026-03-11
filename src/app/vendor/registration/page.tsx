@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store";
@@ -444,8 +445,62 @@ export default function VendorRegistrationPage() {
             “Your journey to success begins with a single registration.”
           </p>
         </motion.div>
+
+        {/* Start Selling CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="mt-16 w-full max-w-5xl mx-auto"
+        >
+          <div className="grid overflow-hidden rounded-3xl bg-card border border-border shadow-lg md:grid-cols-[1.1fr_1fr]">
+            <div className="p-10 flex flex-col items-center text-center justify-center gap-4">
+              <h3 className="text-3xl md:text-4xl font-extrabold">
+                Start selling today!
+              </h3>
+              <p className="text-muted-foreground text-lg">
+                Put your products in front of millions of customers who search
+                for SellersLogin every day.
+              </p>
+              <div>
+                <Button size="lg" className="px-8" asChild>
+                  <Link href="/vendor/registration">Start selling</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="relative min-h-[260px] bg-muted">
+              <img
+                src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
+                alt="Vendor packing products"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* SellersLogin Footer Bar */}
+        <div className="mt-20 w-full bg-neutral-900 text-white/90 rounded-t-2xl">
+          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm">
+            <div className="font-semibold text-base">SellersLogin</div>
+            <div className="flex flex-wrap gap-6">
+              <Link href="/privacy" className="hover:text-white transition">
+                Confidentiality Policy
+              </Link>
+              <Link href="/terms" className="hover:text-white transition">
+                Terms of Use
+              </Link>
+              <Link href="/cookies" className="hover:text-white transition">
+                Cookies
+              </Link>
+            </div>
+            <div className="text-white/70">
+              (c) 2026 SellersLogin. All rights reserved.
+            </div>
+          </div>
+        </div>
       </div>
       <Footer />
     </>
   );
 }
+
