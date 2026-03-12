@@ -234,13 +234,13 @@ export default function VendorRegistrationPage() {
       Swal.fire("Success", "OTP verified successfully", "success");
 
       router.push("/vendor/registration/personal-details");
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error verifying OTP:", error);
       const message =
         typeof error === "string"
           ? error
           : error?.message ??
-            "Something went wrong while verifying OTP. Please try again.";
+          "Something went wrong while verifying OTP. Please try again.";
       Swal.fire("Error", message, "error");
     }
   };
@@ -251,19 +251,31 @@ export default function VendorRegistrationPage() {
       <PromotionalBanner />
       <Navbar />
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background px-6 py-20 text-foreground">
-        {/* Header Quote */}
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 max-w-2xl"
+          className="text-center mb-16 max-w-3xl mx-auto"
         >
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
-            Join India’s Fastest-Growing Marketplace 🚀
+          {/* Heading with Purple Gradient */}
+          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">
+            Join India’s
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
+              {" "}Fastest-Growing{" "}
+            </span>
+            Marketplace <span className="inline-block drop-shadow-md"></span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground">
-            “Empowering small businesses with big technology.”
+
+          {/* Subtext with soft purple/slate mix */}
+          <p className="text-lg md:text-2xl font-medium text-purple-900/70 leading-relaxed">
+            <span className="text-purple-500 font-serif">“</span>
+            Empowering small businesses with big technology
+            <span className="text-purple-500 font-serif">”</span>
           </p>
+
+          {/* Optional: Simple purple underline accent */}
+          <div className="mt-6 h-1 w-20 bg-purple-600 mx-auto rounded-full opacity-20" />
         </motion.div>
 
         {/* Main Registration Card */}
@@ -271,8 +283,8 @@ export default function VendorRegistrationPage() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
-        >
+          className="w-full max-w-md">
+
           <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-lg">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-4xl md:text-5xl font-bold">
@@ -282,7 +294,7 @@ export default function VendorRegistrationPage() {
             <CardContent className="mt-8 space-y-8">
               {!showOtp ? (
                 <>
-                  {/* Phone Input */}
+
                   <div className="flex items-center gap-3 border rounded-lg px-3 py-2">
                     <div className="h-10 shrink-0 rounded-md border border-input bg-background px-2 flex items-center gap-1">
                       <img
@@ -328,7 +340,7 @@ export default function VendorRegistrationPage() {
                 </>
               ) : (
                 <>
-                  {/* OTP Section */}
+
                   <div className="text-center space-y-3">
                     <p className="text-lg text-muted-foreground">
                       OTP sent to{" "}
@@ -345,7 +357,7 @@ export default function VendorRegistrationPage() {
                     </Button>
                   </div>
 
-                  {/* OTP Boxes */}
+
                   <div className="flex justify-center gap-3">
                     {otp.map((digit, index) => (
                       <Input
@@ -400,104 +412,236 @@ export default function VendorRegistrationPage() {
         <Separator className="my-16 w-3/4 max-w-xl" />
 
         {/* Extra Info Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-center max-w-3xl space-y-6"
-        >
-          <h3 className="text-3xl font-bold">Why Join Us?</h3>
-          <p className="text-muted-foreground text-lg">
-            We help vendors reach customers across India with zero setup hassle.
-            Our platform offers advanced analytics, easy payment settlements,
-            and a powerful dashboard to track growth.
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-6 mt-10">
-            {[
-              {
-                title: "0% Listing Fee",
-                desc: "Start your online store instantly without hidden charges.",
-              },
-              {
-                title: "24/7 Support",
-                desc: "Our vendor success team is always available to assist you.",
-              },
-              {
-                title: "Sell Anywhere",
-                desc: "Expand beyond borders and reach new markets with one click.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.05 }}
-                className="bg-card border border-border rounded-2xl shadow-md p-6"
-              >
-                <h4 className="text-xl font-semibold text-primary mb-2">
-                  {item.title}
-                </h4>
-                <p className="text-muted-foreground">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <p className="mt-12 text-lg italic text-muted-foreground">
-            “Your journey to success begins with a single registration.”
-          </p>
-        </motion.div>
-
-        {/* Start Selling CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="mt-16 w-full max-w-5xl mx-auto"
-        >
-          <div className="grid overflow-hidden rounded-3xl bg-card border border-border shadow-lg md:grid-cols-[1.1fr_1fr]">
-            <div className="p-10 flex flex-col items-center text-center justify-center gap-4">
-              <h3 className="text-3xl md:text-4xl font-extrabold">
-                Start selling today!
-              </h3>
-              <p className="text-muted-foreground text-lg">
-                Put your products in front of millions of customers who search
-                for SellersLogin every day.
+        {/* <section className="w-full max-w-6xl mx-auto">
+          <div className="grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-start">
+            <div className="space-y-4">
+              <h2 className="text-3xl pt-35 md:text-4xl font-extrabold text-neutral-900">
+                Why Sellers Love SellersLogin
+              </h2>
+              <p className="text-base md:text-lg text-muted-foreground">
+                All the benefits that come with selling on SellersLogin are designed
+                to help you sell more, and make it easier to grow your business.
               </p>
-              <div>
-                <Button size="lg" className="px-8" asChild>
-                  <Link href="/vendor/registration">Start selling</Link>
-                </Button>
+            </div>
+
+            <div className="rounded-3xl border border-purple-100 bg-white shadow-[0_20px_40px_-28px_rgba(88,28,135,0.45)] divide-y divide-purple-100">
+              {[
+                {
+                  title: "0% Commission Fee",
+                  desc:
+                    "Suppliers selling on SellersLogin keep 100% of their profit by not paying any commission.",
+                },
+                {
+                  title: "0 Penalty Charges",
+                  desc:
+                    "Sell online without the fear of order cancellation charges with 0 penalty for late dispatch or order cancellations.",
+                },
+                {
+                  title: "Growth for Every Supplier",
+                  desc:
+                    "From small to large and unbranded to branded, SellersLogin fuels growth for all suppliers.",
+                },
+                {
+                  title: "Ease of Doing Business",
+                  desc:
+                    "Easy product listing, lowest cost shipping, and 7-day payment cycle from the delivery date.",
+                },
+              ].map((item) => (
+                <div key={item.title} className="p-6 flex gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                    %
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900">{item.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section> */}
+
+        <section className="w-full max-w-6xl mx-auto px-6 py-20">
+          <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr] items-center">
+
+            {/* Left Side: Text Content */}
+            <div className="space-y-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-sm font-bold tracking-wide uppercase">
+                Seller Benefits
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+                Why Sellers Love <span className="text-purple-600">SellersLogin</span>
+              </h2>
+              <p className="text-lg md:text-xl text-slate-600 leading-relaxed">
+                All the benefits that come with selling on SellersLogin are designed
+                to help you sell more, and make it easier to grow your business.
+              </p>
+
+              {/* Decorative background element */}
+              <div className="hidden lg:block h-1 w-20 bg-gradient-to-r from-purple-600 to-transparent rounded-full" />
+            </div>
+
+            {/* Right Side: Feature Cards Grid */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                {
+                  title: "0% Commission",
+                  desc: "Keep 100% of your profit. No hidden charges or commissions.",
+                  icon: "💰",
+                  color: "bg-blue-50 text-blue-600"
+                },
+                {
+                  title: "0 Penalty Charges",
+                  desc: "No fear of cancellation charges or late dispatch penalties.",
+                  icon: "🛡️",
+                  color: "bg-green-50 text-green-600"
+                },
+                {
+                  title: "Growth Driven",
+                  desc: "From small to large brands, we fuel growth for everyone.",
+                  icon: "📈",
+                  color: "bg-purple-50 text-purple-600"
+                },
+                {
+                  title: "7-Day Payments",
+                  desc: "Fastest payment cycle in the industry from delivery date.",
+                  icon: "⚡",
+                  color: "bg-orange-50 text-orange-600"
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="group p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className={`h-12 w-12 rounded-2xl ${item.color} flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform`}>
+                    {item.icon}
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2, duration: 0.8 }}
+          className="mt-24 w-full max-w-6xl mx-auto px-6 mb-20"
+        >
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 shadow-2xl">
+            {/* Animated Background Glows */}
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-purple-600/20 blur-[120px] rounded-full" />
+            <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full" />
+
+            <div className="grid md:grid-cols-2 items-center relative z-10">
+              {/* Content Side */}
+              <div className="p-10 md:p-16 space-y-6 text-center md:text-left">
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest">
+                  Limited Time Offer
+                </div>
+                <h3 className="text-4xl md:text-5xl font-black text-white leading-[1.1]">
+                  Ready to grow <br />
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
+                    your business?
+                  </span>
+                </h3>
+                <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-md">
+                  Join thousands of successful sellers and put your products in front of millions of shoppers today.
+                </p>
+
+                <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                  <Button
+                    size="lg"
+                    className="h-14 px-10 text-lg font-bold rounded-2xl bg-purple-600 hover:bg-purple-500 text-white shadow-[0_10px_20px_-10px_rgba(147,51,234,0.6)] transition-all hover:scale-105 active:scale-95"
+                    asChild
+                  >
+                    <Link href="/vendor/registration">Start selling today →</Link>
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-center md:justify-start gap-4 text-slate-500 text-sm font-medium">
+                  <span className="flex items-center gap-1">✅ 0% Commission</span>
+                  <span className="flex items-center gap-1">✅ Quick Setup</span>
+                </div>
+              </div>
+
+              {/* Image Side */}
+              <div className="relative h-[350px] md:h-full min-h-[450px] overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
+                  alt="Vendor packing products"
+                  className="absolute inset-0 h-full w-full object-cover grayscale-[30%] hover:grayscale-0 transition-all duration-1000 scale-105 hover:scale-100"
+                />
+                {/* Gradient Blending */}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/20 to-transparent hidden md:block" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent md:hidden" />
               </div>
             </div>
-            <div className="relative min-h-[260px] bg-muted">
-              <img
-                src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
-                alt="Vendor packing products"
-                className="h-full w-full object-cover"
-              />
-            </div>
           </div>
         </motion.div>
+        <footer className="mt-20 w-full bg-white border-t border-purple-100">
+          <div className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+            {/* Upper Section: Brand & Links */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+              <div className="space-y-4">
+                {/* Logo with Purple Accent */}
+                <div className="text-2xl font-black text-slate-900 tracking-tighter">
+                  Sellers<span className="text-purple-600">Login</span>
+                </div>
+                <p className="text-sm leading-relaxed text-slate-500 max-w-xs">
+                  Empowering Indian sellers with 0% commission and world-class technology to scale businesses globally.
+                </p>
+              </div>
 
-        {/* SellersLogin Footer Bar */}
-        <div className="mt-20 w-full bg-neutral-900 text-white/90 rounded-t-2xl">
-          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm">
-            <div className="font-semibold text-base">SellersLogin</div>
-            <div className="flex flex-wrap gap-6">
-              <Link href="/privacy" className="hover:text-white transition">
-                Confidentiality Policy
-              </Link>
-              <Link href="/terms" className="hover:text-white transition">
-                Terms of Use
-              </Link>
-              <Link href="/cookies" className="hover:text-white transition">
-                Cookies
-              </Link>
+              <div className="grid grid-cols-2 gap-8 md:col-span-2 md:justify-items-end">
+                {/* Column 1 */}
+                <div className="space-y-4">
+                  <h4 className="text-slate-900 font-bold text-xs uppercase tracking-widest">Platform</h4>
+                  <ul className="space-y-2 text-sm text-slate-500">
+                    <li><Link href="/sell" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Start Selling</Link></li>
+                    <li><Link href="/pricing" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Pricing</Link></li>
+                    <li><Link href="/success-stories" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Success Stories</Link></li>
+                  </ul>
+                </div>
+                {/* Column 2 */}
+                <div className="space-y-4">
+                  <h4 className="text-slate-900 font-bold text-xs uppercase tracking-widest">Support</h4>
+                  <ul className="space-y-2 text-sm text-slate-500">
+                    <li><Link href="/help" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Help Center</Link></li>
+                    <li><Link href="/contact" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Contact Us</Link></li>
+                    <li><Link href="/shipping" className="hover:text-purple-600 hover:translate-x-1 transition-all inline-block">Shipping Policy</Link></li>
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="text-white/70">
-              (c) 2026 SellersLogin. All rights reserved.
+
+            {/* Elegant Divider: Soft purple gradient */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-100 to-transparent mb-8" />
+
+            {/* Bottom Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold text-slate-400">
+                <Link href="/privacy" className="hover:text-purple-600 transition-colors">Confidentiality Policy</Link>
+                <Link href="/terms" className="hover:text-purple-600 transition-colors">Terms of Use</Link>
+                <Link href="/cookies" className="hover:text-purple-600 transition-colors">Cookies</Link>
+              </div>
+
+              <div className="text-xs text-slate-400 font-medium">
+                &copy; 2026 <span className="text-slate-900">SellersLogin</span>. Made for India 🇮🇳
+              </div>
             </div>
           </div>
-        </div>
+        </footer>
+
       </div>
       <Footer />
     </>

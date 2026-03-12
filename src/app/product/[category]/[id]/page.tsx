@@ -655,7 +655,7 @@ export default function ProductDetailPage() {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                  className="flex-1 h-14 text-lg font-semibold bg-purple-400 hover:bg-purple-500 transition-all"
                   onClick={handleAddToCart}
                   disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
                 >

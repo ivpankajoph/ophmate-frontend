@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,21 +14,95 @@ import {
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import PromotionalBanner from "@/components/promotional-banner";
+import userApi from "@/lib/userApi";
+import Swal from "sweetalert2";
 
 export default function VendorPage() {
   const router = useRouter();
+  const [queryForm, setQueryForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    topic: "",
+    message: "",
+  });
+  const [isSubmittingQuery, setIsSubmittingQuery] = useState(false);
+
+  const handleQueryChange = (
+    field: keyof typeof queryForm,
+    value: string,
+  ) => {
+    setQueryForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleVendorQuerySubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (
+      !queryForm.fullName.trim() ||
+      !queryForm.email.trim() ||
+      !queryForm.phone.trim() ||
+      !queryForm.topic.trim() ||
+      !queryForm.message.trim()
+    ) {
+      Swal.fire("Missing details", "Please fill in all required fields.", "warning");
+      return;
+    }
+
+    setIsSubmittingQuery(true);
+    try {
+      const payload = {
+        fullName: queryForm.fullName.trim(),
+        email: queryForm.email.trim(),
+        phone: queryForm.phone.trim(),
+        issueType: queryForm.topic.trim(),
+        message: queryForm.message.trim(),
+      };
+
+      const response = await userApi.post(
+        "/support/queries/vendor-onboarding/submit",
+        payload,
+      );
+
+      if (response.data?.success) {
+        Swal.fire(
+          "Query Submitted",
+          "Thanks for reaching out. Our team will contact you soon.",
+          "success",
+        );
+        setQueryForm({
+          fullName: "",
+          email: "",
+          phone: "",
+          topic: "",
+          message: "",
+        });
+      }
+    } catch (error: any) {
+      console.error("Vendor query submission failed:", error);
+      Swal.fire(
+        "Submission Failed",
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again later.",
+        "error",
+      );
+    } finally {
+      setIsSubmittingQuery(false);
+    }
+  };
 
   return (
     <>
       <PromotionalBanner />
       <Navbar />
+
       <div className="min-h-screen flex flex-col items-center bg-background text-foreground overflow-hidden">
         <section className="w-full bg-[#f7f2ff]">
           <div className="max-w-7xl mx-auto px-6 py-20 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
             <div className="space-y-6">
               <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight animate-in fade-in slide-in-from-left-8 duration-500">
                 Launch your business
-                <br />
+                <br /> 
                 & get benefits up to
                 <span className="block text-purple-600">₹41,000*</span>
 
@@ -158,62 +233,66 @@ export default function VendorPage() {
 
         <section className="w-full bg-[#f7f3ff]">
           <div className="max-w-7xl mx-auto px-6 py-20">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-purple-700">
-              Your Journey on SellersLogin
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              <span className="text-purple-700">Your Journey</span>{" "}
+              <span className="text-neutral-900">on SellersLogin</span>
             </h2>
-            <p className="mt-3 text-base md:text-lg text-muted-foreground max-w-3xl">
-              Starting your online business with SellersLogin is easy. Thousands of
-              sellers trust us to grow their business every day.
+            <p className="mt-4 text-base md:text-lg text-neutral-500 max-w-4xl leading-relaxed">
+              Starting your online business with SellersLogin is straightforward. Build your store,
+              list products, manage incoming orders, dispatch shipments, and track payouts from one
+              composed working surface.
             </p>
 
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 {
                   title: "Create",
-                  desc: "Register quickly with GST, address, and bank details.",
+                  desc:
+                    "Register in minutes with your GST details, business address, and payout account from one guided onboarding flow.",
                   image:
                     "https://static-assets-web.flixcart.com/fk-sp-static/images/create-icon.svg",
                 },
                 {
                   title: "List",
-                  desc: "Add your products and publish them in minutes.",
+                  desc:
+                    "Add products, pricing, and category data through a clean catalog workspace built for real teams and large assortments.",
                   image:
                     "https://static-assets-web.flixcart.com/fk-sp-static/images/prelogin/icons/Group_2_1.svg",
                 },
                 {
                   title: "Orders",
-                  desc: "Receive orders from customers across India.",
+                  desc:
+                    "Receive storefront orders in one operational view, with queue visibility for packing, approvals, and dispatch.",
                   image:
                     "https://static-assets-web.flixcart.com/fk-sp-static/images/orders-icon.svg",
                 },
                 {
                   title: "Shipment",
-                  desc: "We ensure smooth, reliable delivery of your products.",
+                  desc:
+                    "Move shipments forward with tracking checkpoints, delivery coordination, and courier visibility that stays readable.",
                   image:
                     "https://static-assets-web.flixcart.com/fk-sp-static/images/shipment-icon.svg",
                 },
                 {
-                  title: "Payment",
-                  desc: "Get secure payouts with transparent settlement timelines.",
+                  title: "Payments",
+                  desc:
+                    "Monitor settlements, payout status, and reconciliation without bouncing between payment dashboards and reports.",
                   image:
                     "https://static-assets-web.flixcart.com/fk-sp-static/images/payment-icon.svg",
                 },
               ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-border/70 bg-white p-6 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.35)] hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.4)] transition-shadow"
-                >
-                  <div className="h-36 rounded-2xl bg-purple-50 flex items-center justify-center">
+                <div key={item.title} className="text-left">
+                  <div className="h-28 w-28 rounded-3xl bg-gradient-to-br from-purple-50 to-white shadow-[0_12px_30px_-24px_rgba(76,29,149,0.45)] flex items-center justify-center">
                     <img
                       src={item.image}
                       alt={`${item.title} illustration`}
-                      className="h-24 w-auto"
+                      className="h-16 w-auto"
                     />
                   </div>
-                  <h3 className="mt-6 text-xl font-semibold text-neutral-900">
+                  <h3 className="mt-6 text-2xl font-semibold text-neutral-900">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-3 text-sm leading-relaxed text-neutral-500">
                     {item.desc}
                   </p>
                 </div>
@@ -222,66 +301,153 @@ export default function VendorPage() {
           </div>
         </section>
 
-        <section className="w-full max-w-7xl px-6 py-24 grid md:grid-cols-3 gap-10">
-          {[
-            {
-              title: "Expand Your Reach",
-              desc: "Access customers from all over the world and grow your audience.",
-            },
-            {
-              title: "Easy Store Management",
-              desc: "Track orders, manage stock, and view analytics in real time.",
-            },
-            {
-              title: "Boost Your Brand",
-              desc: "Promote your products with our marketing and SEO tools.",
-            },
-          ].map((item, index) => (
-            <div
-              key={index}
-              className="group animate-in fade-in slide-in-from-bottom-6 duration-700"
-              style={{ animationDelay: `${index * 120}ms` }}
-            >
-              <Card className="h-full rounded-2xl border border-purple-100/70 bg-gradient-to-br from-white to-purple-50/60 shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
-                <CardHeader>
-                  <div className="mb-4 h-11 w-11 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[22px]">
-                      {index === 0
-                        ? "public"
-                        : index === 1
-                        ? "inventory_2"
-                        : "campaign"}
-                    </span>
-                  </div>
-                  <CardTitle className="text-2xl font-semibold text-neutral-900">
-                    {item.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    {item.desc}
-                  </p>
-                </CardContent>
-              </Card>
+        <section className="w-full bg-[#f7f3ed]">
+          <div className="max-w-7xl mx-auto px-6 py-16 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
+            <div className="space-y-6">
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+                From home-grown
+                <br />
+                to well-known
+                <span className="block text-purple-600"> with SellersLogin</span>
+              </h2>
+              <p className="text-base md:text-lg text-neutral-700 max-w-xl">
+                Register with a valid GSTIN and an active bank account to become a
+                SellersLogin seller.
+              </p>
+              <Button
+                size="lg"
+                onClick={() => router.push("/vendor/registration")}
+                className="rounded-full bg-purple-600 px-8 py-6 text-lg hover:bg-purple-700"
+              >
+                Start selling
+              </Button>
             </div>
-          ))}
+
+            <div className="relative">
+              <div className="rounded-3xl overflow-hidden shadow-xl bg-white">
+                <img
+                  src="/shipping.avif"
+                  alt="Seller working with products"
+                  className="h-[260px] w-full object-cover sm:h-[320px]"
+                />
+                <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-white/95 px-5 py-1.5 text-xs font-semibold text-purple-700 shadow-md">
+                  SellersLogin
+                </div>
+                <div className="pointer-events-none absolute bottom-4 left-4 h-8 w-20 rounded-full bg-white/95 shadow-md" />
+              </div>
+              <div className="absolute -left-6 bottom-6 rounded-2xl bg-white/95 px-4 py-2 text-xs font-semibold text-purple-700 shadow-md">
+                PRODUCT LISTED
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full">
+            <div className="mx-auto max-w-7xl px-6 pb-10">
+              <div className="h-5 w-full rounded-full bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 shadow-inner" />
+            </div>
+          </div>
         </section>
 
-        <section className="w-full py-24 flex flex-col items-center text-center bg-gradient-to-b from-background to-[#f6f0ff]">
+      
+
+        <section className="w-full bg-white">
+          <div className="max-w-7xl mx-auto px-6 py-20">
+            <div className="rounded-2xl bg-neutral-900 text-white px-6 py-4 text-center shadow-lg">
+              <p className="text-sm sm:text-base font-semibold">
+                ✨ 5 Steps to increase your chances of earning ₹ 1 Lakh or more within 60 days of
+                launch*
+              </p>
+              <p className="mt-1 text-xs sm:text-sm text-white/80 underline underline-offset-4">
+                Learn how you can grow your business
+              </p>
+            </div>
+
+            <h2 className="mt-12 text-3xl md:text-4xl font-extrabold text-neutral-900 text-center">
+              Get a head-start to selling with us
+            </h2>
+
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
+              {[
+                {
+                  tag: "New Seller Incentives",
+                  title: "Special offer for new sellers",
+                  points: [
+                    "Up to ₹ 26,000 worth promotional ad credits in SellersLogin Ads account + free 2-month ad account management support",
+                    "Up to ₹ 5,000 in potential rewards for adding more listings",
+                    "Up to ₹ 5,000 in potential rewards for adding more listings",
+                  ],
+                },
+                {
+                  tag: "Selling Fee Drop",
+                  title: "Earn more, with lesser selling fee",
+                  points: [
+                    "0% referral fees on products under ₹300",
+                    "₹65 national shipping rates now, from ₹77",
+                    "Up to 90% savings in selling fees on the sale of second unit",
+                  ],
+                },
+                {
+                  tag: "Hassle-Free Payments",
+                  title: "Pricing and 7-day payment cycle",
+                  points: [
+                    "Start with fees from 2% with clear category-based pricing",
+                    "Get automatic secure payments directly to your bank account",
+                    "Receive payments every 7 days, 6x faster than traditional retail",
+                  ],
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)]"
+                >
+                  <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-1 text-xs font-semibold text-purple-700">
+                    {card.tag}
+                  </span>
+                  <h3 className="mt-4 text-2xl font-semibold text-neutral-900">
+                    {card.title}
+                  </h3>
+                  <ul className="mt-4 space-y-3 text-sm text-neutral-600">
+                    {card.points.map((point) => (
+                      <li key={point} className="flex items-start gap-2">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-purple-600" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 flex justify-center">
+              <Button
+                size="lg"
+                onClick={() => router.push("/vendor/registration")}
+                className="rounded-full bg-purple-600 px-8 py-6 text-lg hover:bg-purple-700"
+              >
+                Create your seller account
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative w-full py-24 flex flex-col items-center text-center overflow-hidden bg-gradient-to-b from-[#fdfbff] via-[#f8f3ff] to-[#efe6ff]">
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full bg-purple-300/30 blur-[120px]" />
+          <div className="pointer-events-none absolute -bottom-24 right-10 h-64 w-64 rounded-full bg-purple-200/40 blur-[110px]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.08),transparent_55%)]" />
           {/* <h3 className="text-5xl font-bold mb-8 animate-in fade-in slide-in-from-bottom-6 duration-500">
             Ready to Join the Marketplace?
           </h3> */}
           <h3 className="text-4xl  md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 text-neutral-900 whitespace-nowrap">
-  {/* Part 1 */} 
-  <span className="inline-block animate-in fade-in slide-in-from-left-6 duration-700 fill-mode-both text-neutral-900">
-    Ready to Join the&nbsp;
-  </span> 
- 
-  {/* Part 2 - Purple with Glow */}
-  <span className="inline-block text-[rgb(168,85,247)] animate-in fade-in slide-in-from-left-6 duration-700 delay-300 fill-mode-both drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-     Marketplace?
-  </span>
-</h3>
+            {/* Part 1 */}
+            <span className="inline-block animate-in fade-in slide-in-from-left-6 duration-700 fill-mode-both text-neutral-900">
+              Ready to Join the&nbsp;
+            </span>
+
+            {/* Part 2 - Purple with Glow */}
+            <span className="inline-block text-[rgb(168,85,247)] animate-in fade-in slide-in-from-left-6 duration-700 delay-300 fill-mode-both drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+              Marketplace?
+            </span>
+          </h3>
           <Button
             size="lg"
             className="mt-10 text-lg px-10 py-6 rounded-full bg-neutral-900 text-white hover:bg-neutral-800"
@@ -353,19 +519,34 @@ export default function VendorPage() {
                 journey.
               </p>
 
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleVendorQuerySubmit}>
                 <input
                   type="text"
                   placeholder="Enter Full Name *"
+                  value={queryForm.fullName}
+                  onChange={(event) => handleQueryChange("fullName", event.target.value)}
                   className="w-full rounded-lg border border-purple-200 bg-white px-4 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
                 />
                 <input
-                  type="text"
-                  placeholder="Enter Mobile Number / Email ID *"
+                  type="tel"
+                  placeholder="Enter Mobile Number *"
+                  value={queryForm.phone}
+                  onChange={(event) => handleQueryChange("phone", event.target.value)}
                   className="w-full rounded-lg border border-purple-200 bg-white px-4 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
                 />
-                <select className="w-full rounded-lg border border-purple-200 bg-white px-4 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200">
-                  <option>Select A Topic</option>
+                <input
+                  type="email"
+                  placeholder="Enter Email ID *"
+                  value={queryForm.email}
+                  onChange={(event) => handleQueryChange("email", event.target.value)}
+                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
+                />
+                <select
+                  value={queryForm.topic}
+                  onChange={(event) => handleQueryChange("topic", event.target.value)}
+                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
+                >
+                  <option value="">Select A Topic</option>
                   <option>Account Creation</option>
                   <option>Fee Structure</option>
                   <option>What Can I Sell?</option>
@@ -377,10 +558,16 @@ export default function VendorPage() {
                 <textarea
                   rows={4}
                   placeholder="Type your message *"
+                  value={queryForm.message}
+                  onChange={(event) => handleQueryChange("message", event.target.value)}
                   className="w-full rounded-lg border border-purple-300 bg-white px-4 py-3 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                 />
-                <Button className="rounded-full bg-[rgb(147,51,234)] px-8 py-6 text-lg hover:bg-[rgb(126,34,206)]">
-                  Send Query
+                <Button
+                  type="submit"
+                  disabled={isSubmittingQuery}
+                  className="rounded-full bg-[rgb(147,51,234)] px-8 py-6 text-lg hover:bg-[rgb(126,34,206)]"
+                >
+                  {isSubmittingQuery ? "Submitting..." : "Send Query"}
                 </Button>
               </form>
             </div>
