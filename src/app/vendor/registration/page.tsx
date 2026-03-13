@@ -86,8 +86,8 @@ export default function VendorRegistrationPage() {
 
   const phonePlaceholder =
     selectedCountry.minLength === selectedCountry.maxLength
-      ? `Enter ${selectedCountry.maxLength}-digit mobile number`
-      : "Enter mobile number";
+      ? `Enter ${selectedCountry.maxLength}-digit WhatsApp number`
+      : "Enter WhatsApp number";
 
   const isPhoneValid =
     phone.length >= selectedCountry.minLength &&
@@ -172,7 +172,7 @@ export default function VendorRegistrationPage() {
     if (!isPhoneValid) {
       Swal.fire(
         "Warning",
-        `Please enter a valid mobile number for ${selectedCountry.label}`,
+        `Please enter a valid WhatsApp number for ${selectedCountry.label}`,
         "warning",
       );
       return false;
@@ -183,7 +183,7 @@ export default function VendorRegistrationPage() {
       await dispatch(sendOtp({ phone, countryCode })).unwrap();
       sessionStorage.setItem("vendor_phone", displayPhone);
       sessionStorage.setItem("vendor_country_code", countryCode);
-      Swal.fire("Success", "OTP sent successfully", "success");
+      Swal.fire("Success", "Message Sent on WhatsApp", "success");
       return true;
     } catch (err: any) {
       console.error(err, "error");
@@ -225,7 +225,7 @@ export default function VendorRegistrationPage() {
     const fullPhone = getFullPhone();
 
     if (!isPhoneValid || !otpString) {
-      Swal.fire("Warning", "Please enter both phone number and OTP", "warning");
+      Swal.fire("Warning", "Please enter both WhatsApp number and OTP", "warning");
       return;
     }
 

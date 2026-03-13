@@ -260,17 +260,27 @@ export default function BusinessDetails() {
     street: "", city: "", state: "", pincode: "", country: "India",
     bank_name: "", bank_account: "", ifsc_code: "", branch: "", upi_id: "",
     categories: [] as string[],
-    return_policy: "", operating_hours: "",
-    established_year: "", business_nature: "", annual_turnover: "",
-    dealing_area: "", office_employees: "",
+    return_policy: "", operating_hours: JSON.stringify({
+      Monday: { open: "09:00", close: "18:00", closed: false },
+      Tuesday: { open: "09:00", close: "18:00", closed: false },
+      Wednesday: { open: "09:00", close: "18:00", closed: false },
+      Thursday: { open: "09:00", close: "18:00", closed: false },
+      Friday: { open: "09:00", close: "18:00", closed: false },
+      Saturday: { open: "09:00", close: "18:00", closed: false },
+      Sunday: { open: "09:00", close: "18:00", closed: true },
+    }),
+    established_year: "", business_nature: [] as string[], annual_turnover: "",
+    dealing_area: [] as string[], office_employees: "",
     gst_cert: null as File | null, pan_card: null as File | null,
     avatar: null as File | null,
+    whatsapp_number: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [alternateCountryCode, setAlternateCountryCode] = useState("+91");
+  const [whatsappCountryCode, setWhatsappCountryCode] = useState("+91");
 
   const selectedAlternateCountry =
     PHONE_COUNTRY_CODES.find((country) => country.dialCode === alternateCountryCode) ??
@@ -281,10 +291,31 @@ export default function BusinessDetails() {
       ? `Enter ${selectedAlternateCountry.maxLength}-digit number`
       : "Enter mobile number";
 
+  const selectedWhatsappCountry =
+    PHONE_COUNTRY_CODES.find((country) => country.dialCode === whatsappCountryCode) ??
+    PHONE_COUNTRY_CODES[0];
+
+  const whatsappPhonePlaceholder =
+    selectedWhatsappCountry.minLength === selectedWhatsappCountry.maxLength
+      ? `Enter ${selectedWhatsappCountry.maxLength}-digit number`
+      : "Enter mobile number";
+
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("vendor_email") || "";
     const storedPhone = sessionStorage.getItem("vendor_phone") || "";
-    setForm((prev) => ({ ...prev, email: storedEmail, phone_no: storedPhone }));
+    const storedCountryCode = sessionStorage.getItem("vendor_country_code") || "+91";
+    
+    const actualPhone = storedPhone.startsWith(storedCountryCode) 
+      ? storedPhone.slice(storedCountryCode.length) 
+      : storedPhone;
+
+    setForm((prev) => ({ 
+      ...prev, 
+      email: storedEmail, 
+      phone_no: storedPhone,
+      whatsapp_number: actualPhone
+    }));
+    setWhatsappCountryCode(storedCountryCode);
   }, []);
 
   useEffect(() => {
@@ -350,6 +381,45 @@ export default function BusinessDetails() {
       });
     },
     [selectedAlternateCountry.maxLength],
+  );
+
+  const handleWhatsappCountryCodeChange = useCallback(
+    (e: ChangeEvent<HTMLSelectElement>) => {
+      const newCode = e.target.value;
+      const nextCountry =
+        PHONE_COUNTRY_CODES.find((country) => country.dialCode === newCode) ??
+        PHONE_COUNTRY_CODES[0];
+
+      setWhatsappCountryCode(newCode);
+      setForm((prev) => ({
+        ...prev,
+        whatsapp_number: prev.whatsapp_number
+          .replace(/\D/g, "")
+          .slice(0, nextCountry.maxLength),
+      }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.whatsapp_number;
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleWhatsappPhoneChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+        .replace(/\D/g, "")
+        .slice(0, selectedWhatsappCountry.maxLength);
+
+      setForm((prev) => ({ ...prev, whatsapp_number: value }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.whatsapp_number;
+        return next;
+      });
+    },
+    [selectedWhatsappCountry.maxLength],
   );
 
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -443,6 +513,26 @@ export default function BusinessDetails() {
           }
         } 
         break;
+      case "whatsapp_number":
+        if (value) {
+          const digitsOnly = String(value).replace(/\D/g, "");
+          if (digitsOnly !== value) {
+            error = "Invalid whatsapp number";
+          } else if (
+            selectedWhatsappCountry.dialCode === "+91" &&
+            !validatePhone(digitsOnly)
+          ) {
+            error = "Invalid whatsapp number";
+          } else if (
+            digitsOnly.length < selectedWhatsappCountry.minLength ||
+            digitsOnly.length > selectedWhatsappCountry.maxLength
+          ) {
+            error = "Invalid whatsapp number";
+          }
+        } else {
+          error = "This field is required";
+        }
+        break;
       case "pincode":
         if (value && !validatePincode(value)) error = "Invalid pincode";
         break;
@@ -459,10 +549,14 @@ export default function BusinessDetails() {
         if (value && !/^\S+@\S+\.\S+$/.test(value)) error = "Invalid email";
         break;
       case "categories":
-        if (!form.categories.length) error = "Select at least one category";
+      case "business_nature":
+      case "dealing_area":
+        if (Array.isArray(value) && !value.length) error = "Select at least one option";
         break;
       default:
-        if (!value && name !== "address_line_2") error = "This field is required";
+        if (!value && !["address_line_2", "alternate_contact_phone", "upi_id"].includes(name)) {
+          error = "This field is required";
+        }
     }
 
     setErrors((prev) => {
@@ -483,14 +577,17 @@ export default function BusinessDetails() {
     const newErrors: Record<string, string> = {};
     Object.keys(form).forEach((key) => {
       const value = form[key as keyof typeof form];
-      if (
-        key !== "address_line_2" &&
-        key !== "gst_cert" &&
-        key !== "pan_card" &&
-        key !== "avatar" &&
-        !value
-      ) {
-        newErrors[key] = "This field is required";
+      
+      const isOptional = ["address_line_2", "gst_cert", "pan_card", "avatar", "alternate_contact_phone", "upi_id"].includes(key);
+
+      if (!isOptional) {
+        if (Array.isArray(value)) {
+          if (value.length === 0) {
+            newErrors[key] = "Select at least one option";
+          }
+        } else if (!value) {
+          newErrors[key] = "This field is required";
+        }
       }
     });
 
@@ -515,6 +612,11 @@ export default function BusinessDetails() {
         const dialCodeDigits = alternateCountryCode.replace(/\D/g, "");
         const altPhoneDigits = form.alternate_contact_phone.replace(/\D/g, "");
         data.set("alternate_contact_phone", `${dialCodeDigits}${altPhoneDigits}`);
+      }
+      if (form.whatsapp_number) {
+        const dialCodeDigits = whatsappCountryCode.replace(/\D/g, "");
+        const waPhoneDigits = form.whatsapp_number.replace(/\D/g, "");
+        data.set("whatsapp_number", `${dialCodeDigits}${waPhoneDigits}`);
       }
       const result = await dispatch(updateVendorBusiness({ formData: data }));
 
@@ -663,6 +765,46 @@ export default function BusinessDetails() {
                       </div>
                     )}
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">WhatsApp Number</label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 shrink-0 rounded-md border border-input bg-transparent px-2 flex items-center gap-1">
+                        <img
+                          src={selectedWhatsappCountry.flagUrl}
+                          alt={`${selectedWhatsappCountry.label} flag`}
+                          width={18}
+                          height={14}
+                          className="rounded-[2px] object-cover"
+                        />
+                        <select
+                          value={whatsappCountryCode}
+                          onChange={handleWhatsappCountryCodeChange}
+                          className="h-full w-16 bg-transparent text-sm outline-none"
+                          aria-label="WhatsApp country code"
+                        >
+                          {PHONE_COUNTRY_CODES.map((country) => (
+                            <option key={country.dialCode} value={country.dialCode}>
+                              {country.dialCode}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <Input
+                        name="whatsapp_number"
+                        type="tel"
+                        value={form.whatsapp_number}
+                        placeholder={whatsappPhonePlaceholder}
+                        onChange={handleWhatsappPhoneChange}
+                        onBlur={() => handleBlur("whatsapp_number")}
+                        maxLength={selectedWhatsappCountry.maxLength}
+                      />
+                    </div>
+                    {errors.whatsapp_number && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {errors.whatsapp_number}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -672,12 +814,12 @@ export default function BusinessDetails() {
                 <CardContent className="grid md:grid-cols-2 gap-4">
                   <SelectInput name="established_year" label="Established Year" value={form.established_year}
                     options={ESTABLISHED_YEAR} onChange={handleSelectChange} error={errors.established_year} />
-                  <SelectInput name="business_nature" label="Business Nature" value={form.business_nature}
-                    options={BUSINESS_NATURES} onChange={handleSelectChange} error={errors.business_nature} />
+                  <MultiSelectInput name="business_nature" label="Business Nature" values={form.business_nature}
+                    options={BUSINESS_NATURES} onChange={updateField} error={errors.business_nature} />
                   <SelectInput name="annual_turnover" label="Annual Turnover" value={form.annual_turnover}
                     options={ANNUAL_TURNOVER} onChange={handleSelectChange} error={errors.annual_turnover} />
-                  <SelectInput name="dealing_area" label="Dealing Area" value={form.dealing_area}
-                    options={DEALING_AREA} onChange={handleSelectChange} error={errors.dealing_area} />
+                  <MultiSelectInput name="dealing_area" label="Dealing Area" values={form.dealing_area}
+                    options={DEALING_AREA} onChange={updateField} error={errors.dealing_area} />
                   <SelectInput name="office_employees" label="Number of Office Employees" value={form.office_employees}
                     options={NUMBER_OF_EMPLOYEES} onChange={handleSelectChange} error={errors.office_employees} />
                 </CardContent>
@@ -738,8 +880,58 @@ export default function BusinessDetails() {
 
                   <SelectInput name="return_policy" label="Return Policy" value={form.return_policy}
                     options={RETURN_POLICY} onChange={handleSelectChange} error={errors.return_policy} />
-                  <SelectInput name="operating_hours" label="Operating Hours" value={form.operating_hours}
-                    options={OPERATING_HOURS} onChange={handleSelectChange} error={errors.operating_hours} />
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-3">Operating Hours</label>
+                    <div className="grid gap-3 p-4 border rounded-md bg-white">
+                      {(() => {
+                        const hours = JSON.parse(form.operating_hours) as Record<string, {open: string, close: string, closed: boolean}>;
+                        return Object.entries(hours).map(([day, timings]) => (
+                          <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-2 pb-2 border-b last:border-0">
+                            <div className="w-32 font-medium flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                checked={!timings.closed}
+                                onChange={(e) => {
+                                  const newHours = { ...hours, [day]: { ...timings, closed: !e.target.checked } };
+                                  updateField("operating_hours", JSON.stringify(newHours));
+                                }}
+                                className="w-4 h-4 cursor-pointer"
+                              />
+                              <span className={timings.closed ? "text-gray-400" : ""}>{day}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-1">
+                              {timings.closed ? (
+                                <span className="text-sm text-gray-500 italic">Closed</span>
+                              ) : (
+                                <>
+                                  <Input 
+                                    type="time" 
+                                    value={timings.open} 
+                                    onChange={(e) => {
+                                      const newHours = { ...hours, [day]: { ...timings, open: e.target.value } };
+                                      updateField("operating_hours", JSON.stringify(newHours));
+                                    }}
+                                    className="w-32"
+                                  />
+                                  <span className="text-gray-500">to</span>
+                                  <Input 
+                                    type="time" 
+                                    value={timings.close} 
+                                    onChange={(e) => {
+                                      const newHours = { ...hours, [day]: { ...timings, close: e.target.value } };
+                                      updateField("operating_hours", JSON.stringify(newHours));
+                                    }}
+                                    className="w-32"
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
