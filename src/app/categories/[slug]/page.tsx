@@ -22,6 +22,7 @@ import Pagination from "@/components/ui/Pagination";
 import Head from "next/head";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store";
+import { getRichTextPreview, stripRichTextToPlainText } from "@/lib/rich-text";
 import { toggleWishlistItem } from "@/store/slices/customerWishlistSlice";
 import { createWishlistItem } from "@/lib/wishlist";
 import { toastSuccess } from "@/lib/toast";
@@ -227,7 +228,9 @@ export default function CategoryDetailPage() {
   const filteredAndSortedProducts = React.useMemo(() => {
     let filtered = flattenedProducts.filter((item) => {
       const productName = item.product.productName?.toLowerCase() || "";
-      const productDesc = item.product.shortDescription?.toLowerCase() || "";
+      const productDesc = stripRichTextToPlainText(
+        item.product.shortDescription || ""
+      ).toLowerCase();
       const search = searchTerm.toLowerCase();
       const price = item.displayPrice || 0;
 
@@ -319,7 +322,7 @@ export default function CategoryDetailPage() {
     }
 
     if (highlights.length === 0 && product.shortDescription) {
-      highlights.push(product.shortDescription);
+      highlights.push(getRichTextPreview(product.shortDescription, 140));
     }
 
     return highlights.slice(0, 5);

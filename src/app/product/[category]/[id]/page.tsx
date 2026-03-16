@@ -39,6 +39,7 @@ import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/footer";
 import MightInterested from "@/components/MightInterested";
 import ProductShare from "@/components/ProductShare";
+import RichTextContent from "@/components/RichTextContent";
 import Link from "next/link";
 import { FAQ, Variant } from "../../type/type";
 import { createWishlistItem } from "@/lib/wishlist";
@@ -700,7 +701,7 @@ export default function ProductDetailPage() {
                   Product Details
                 </h2>
                 <div className="prose max-w-none text-muted-foreground leading-relaxed">
-                  <p>{productDescription}</p>
+                  <RichTextContent text={productDescription} />
                 </div>
               </section>
 
