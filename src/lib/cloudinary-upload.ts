@@ -17,6 +17,13 @@ export const uploadImageToCloudinary = async (
   file: File,
   folder = "ophmate/reviews",
 ): Promise<UploadedCloudinaryImage> => {
+  return uploadFileToCloudinary(file, folder);
+};
+
+export const uploadFileToCloudinary = async (
+  file: File,
+  folder = "ophmate/uploads",
+): Promise<UploadedCloudinaryImage> => {
   if (!NEXT_PUBLIC_API_URL) {
     throw new Error("API URL is not configured");
   }
@@ -38,7 +45,7 @@ export const uploadImageToCloudinary = async (
   formData.append("folder", String(signatureData.folder));
 
   const uploadRes = await fetch(
-    `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
     {
       method: "POST",
       body: formData,

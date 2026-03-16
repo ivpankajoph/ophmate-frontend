@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import { headers } from "next/headers";
 // @ts-ignore - CSS global import has no type declarations
 import "./globals.css";
@@ -26,9 +26,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const marketingSans = Manrope({
+  variable: "--font-marketing-sans",
+  subsets: ["latin"],
+});
+
+const marketingDisplay = Space_Grotesk({
+  variable: "--font-marketing-display",
+  subsets: ["latin"],
+});
+
 const DEFAULT_METADATA: Metadata = {
-  title: "Sellerslogin",
-  description: "design and developed by ivpankaj",
+  title: "SellersLogin",
+  description:
+    "SellersLogin gives merchants a cleaner path to launch, verify, and manage their commerce operations.",
+  icons: {
+    icon: [
+      { url: "/sellerslogin-logo.svg", type: "image/svg+xml" },
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/sellerslogin-logo.svg",
+    apple: "/logo.png",
+  },
 };
 const SEO_LOOKUP_TIMEOUT_MS = 450;
 
@@ -66,7 +85,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${marketingSans.variable} ${marketingDisplay.variable} antialiased`}
       >
         <VendorProvider>
           <GoogleAnalytics />

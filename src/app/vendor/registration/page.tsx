@@ -1,506 +1,1142 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store";
-import { resetOtpState, sendOtp, verifyOtp } from "@/store/slices/authSlice";
+import { ChevronDown, Search } from "lucide-react";
+import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
-import PromotionalBanner from "@/components/promotional-banner";
-import Navbar from "@/components/navbar/Navbar";
-import Footer from "@/components/footer";
+import { Input } from "@/components/ui/input";
+import StepTransitionLoader from "@/components/vendor/StepTransitionLoader";
+import type { AppDispatch } from "@/store";
+import {
+  resetOtpState,
+  sendEmailOtp,
+  sendOtp,
+  verifyEmailOtp,
+  verifyOtp,
+} from "@/store/slices/authSlice";
 
-const COUNTRY_CODES = [
-  {
-    label: "India",
-    dialCode: "+91",
-    minLength: 10,
-    maxLength: 10,
-    flagUrl: "https://flagcdn.com/w20/in.png",
-  },
-  {
-    label: "United States",
-    dialCode: "+1",
-    minLength: 10,
-    maxLength: 10,
-    flagUrl: "https://flagcdn.com/w20/us.png",
-  },
-  {
-    label: "United Kingdom",
-    dialCode: "+44",
-    minLength: 10,
-    maxLength: 10,
-    flagUrl: "https://flagcdn.com/w20/gb.png",
-  },
-  {
-    label: "United Arab Emirates",
-    dialCode: "+971",
-    minLength: 8,
-    maxLength: 9,
-    flagUrl: "https://flagcdn.com/w20/ae.png",
-  },
-  {
-    label: "Australia",
-    dialCode: "+61",
-    minLength: 9,
-    maxLength: 9,
-    flagUrl: "https://flagcdn.com/w20/au.png",
-  },
-  {
-    label: "Singapore",
-    dialCode: "+65",
-    minLength: 8,
-    maxLength: 8,
-    flagUrl: "https://flagcdn.com/w20/sg.png",
-  },
-];
+type RegistrationStage = "phone-entry" | "phone-otp" | "email-entry" | "email-otp";
+type StepStatus = "complete" | "current" | "pending";
+
+interface CountryOption {
+  code: string;
+  dialCode: string;
+  flagUrl: string;
+  name: string;
+}
+
+const mainSiteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
+const adminLoginUrl =
+  process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? "http://localhost:5173/sign-in?redirect=%2F";
+const supportEmail = "support@sellerslogin.com";
+const vendorOverviewUrl = "/vendor";
+const newTabProps = {
+  target: "_blank",
+  rel: "noreferrer",
+};
+const emptyPhoneOtp = ["", "", "", "", "", ""];
+const emptyEmailOtp = ["", "", "", "", "", ""];
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VENDOR_REG_META_KEY = "vendor_registration_meta_v1";
+const VENDOR_REG_DRAFT_KEY = "vendor_registration_draft_v1";
+
+const isEmailStep = (stage: RegistrationStage) =>
+  stage === "email-entry" || stage === "email-otp";
+
+const getStepTone = (status: StepStatus) => {
+  if (status === "complete") {
+    return {
+      accent: "border-slate-950",
+      label: "text-slate-500",
+      note: "text-slate-500",
+      title: "text-slate-950",
+    };
+  }
+
+  if (status === "current") {
+    return {
+      accent: "border-violet-700",
+      label: "text-violet-700",
+      note: "text-violet-700",
+      title: "text-slate-950",
+    };
+  }
+
+  return {
+    accent: "border-slate-200",
+    label: "text-slate-400",
+    note: "text-slate-400",
+    title: "text-slate-500",
+  };
+};
 
 export default function VendorRegistrationPage() {
-  const [countryCode, setCountryCode] = useState("+91");
-  const [phone, setPhone] = useState("");
-  const [showOtp, setShowOtp] = useState(false);
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(30);
-  const [canResend, setCanResend] = useState(false);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
-  const { success, error } = useSelector((state: any) => state.auth);
+  const [stage, setStage] = useState<RegistrationStage>("phone-entry");
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [countriesLoading, setCountriesLoading] = useState(true);
+  const [countriesError, setCountriesError] = useState<string | null>(null);
+  const [countryRequestNonce, setCountryRequestNonce] = useState(0);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [isCountryMenuOpen, setIsCountryMenuOpen] = useState(false);
+  const [countryQuery, setCountryQuery] = useState("");
+
+  const [phone, setPhone] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState<string[]>(emptyPhoneOtp);
+  const [phoneTimer, setPhoneTimer] = useState(30);
+  const [canResendPhoneOtp, setCanResendPhoneOtp] = useState(false);
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [emailOtp, setEmailOtp] = useState<string[]>(emptyEmailOtp);
+  const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
+  const [isStepTransitioning, setIsStepTransitioning] = useState(false);
+  const [stepTransitionText, setStepTransitionText] = useState("Loading next step...");
+
+  const countryMenuRef = useRef<HTMLDivElement | null>(null);
+  const countrySearchRef = useRef<HTMLInputElement | null>(null);
+  const phoneOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const emailOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    if (showOtp && timer > 0) {
-      const countdown = setInterval(() => setTimer((t) => t - 1), 1000);
-      return () => clearInterval(countdown);
-    } else if (timer === 0) {
-      setCanResend(true);
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCountries = async () => {
+      setCountriesLoading(true);
+      setCountriesError(null);
+
+      try {
+        const response = await fetch("/api/countries", {
+          signal: controller.signal,
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.message ?? "Unable to load countries right now.");
+        }
+
+        if (!isMounted) return;
+
+        const nextCountries = Array.isArray(payload) ? (payload as CountryOption[]) : [];
+        const metaRaw =
+          typeof window !== "undefined" ? localStorage.getItem(VENDOR_REG_META_KEY) : null;
+        const meta = metaRaw
+          ? (JSON.parse(metaRaw) as { countryCode?: string; phone?: string; email?: string })
+          : null;
+        const draftRaw =
+          typeof window !== "undefined" ? localStorage.getItem(VENDOR_REG_DRAFT_KEY) : null;
+        const draft = draftRaw
+          ? (JSON.parse(draftRaw) as {
+              stage?: RegistrationStage;
+              countryCode?: string;
+              phone?: string;
+              email?: string;
+              phoneOtp?: string[];
+              emailOtp?: string[];
+              phoneTimer?: number;
+              canResendPhoneOtp?: boolean;
+            })
+          : null;
+
+        const storedCountryCode =
+          draft?.countryCode ??
+          meta?.countryCode ??
+          localStorage.getItem("vendor_country_code") ??
+          sessionStorage.getItem("vendor_country_code") ??
+          "";
+        const storedPhone =
+          draft?.phone ??
+          meta?.phone ??
+          localStorage.getItem("vendor_phone") ??
+          sessionStorage.getItem("vendor_phone") ??
+          "";
+        const storedEmail =
+          draft?.email ??
+          meta?.email ??
+          localStorage.getItem("vendor_email") ??
+          sessionStorage.getItem("vendor_email") ??
+          "";
+        const storedStep =
+          draft?.stage ??
+          (localStorage.getItem("vendor_registration_step") as RegistrationStage | null) ??
+          (sessionStorage.getItem("vendor_registration_step") as RegistrationStage | null);
+
+        const initialCountry =
+          nextCountries.find((country) => country.dialCode === storedCountryCode) ??
+          nextCountries.find((country) => country.code === "IN") ??
+          nextCountries[0] ??
+          null;
+
+        setCountries(nextCountries);
+        setSelectedCountry(initialCountry);
+        setEmail(storedEmail);
+        if (draft?.phoneOtp?.length === 6) setPhoneOtp(draft.phoneOtp);
+        if (draft?.emailOtp?.length === 6) setEmailOtp(draft.emailOtp);
+        if (typeof draft?.phoneTimer === "number") setPhoneTimer(draft.phoneTimer);
+        if (typeof draft?.canResendPhoneOtp === "boolean") {
+          setCanResendPhoneOtp(draft.canResendPhoneOtp);
+        }
+
+        if (storedPhone) {
+          const activeDialCode = storedCountryCode || initialCountry?.dialCode || "";
+          const localPhone =
+            activeDialCode && storedPhone.startsWith(activeDialCode)
+              ? storedPhone.slice(activeDialCode.length)
+              : storedPhone;
+          setPhone(localPhone.replace(/\D/g, "").slice(0, 15));
+        }
+
+        if (
+          (storedStep === "email-entry" || storedStep === "email-otp") &&
+          storedPhone &&
+          storedEmail
+        ) {
+          setStage(storedStep);
+        } else if (storedStep === "email-entry" && storedPhone) {
+          setStage("email-entry");
+        }
+      } catch (error) {
+        if (!isMounted || controller.signal.aborted) return;
+        setCountries([]);
+        setCountriesError(
+          error instanceof Error ? error.message : "Unable to load countries right now.",
+        );
+      } finally {
+        if (isMounted && !controller.signal.aborted) {
+          setCountriesLoading(false);
+        }
+      }
+    };
+
+    void loadCountries();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [countryRequestNonce]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const dialCode = selectedCountry?.dialCode ?? "";
+    const fullPhone = dialCode ? `${dialCode}${phone}` : phone;
+
+    const metaPayload = {
+      countryCode: dialCode,
+      phone: fullPhone,
+      email: email.trim(),
+    };
+    const draftPayload = {
+      stage,
+      countryCode: dialCode,
+      phone: fullPhone,
+      email: email.trim(),
+      phoneOtp,
+      emailOtp,
+      phoneTimer,
+      canResendPhoneOtp,
+    };
+
+    localStorage.setItem(VENDOR_REG_META_KEY, JSON.stringify(metaPayload));
+    localStorage.setItem(VENDOR_REG_DRAFT_KEY, JSON.stringify(draftPayload));
+
+    if (dialCode) {
+      localStorage.setItem("vendor_country_code", dialCode);
+      sessionStorage.setItem("vendor_country_code", dialCode);
     }
-  }, [showOtp, timer]);
+    if (fullPhone.trim()) {
+      localStorage.setItem("vendor_phone", fullPhone);
+      sessionStorage.setItem("vendor_phone", fullPhone);
+    }
+    if (email.trim()) {
+      localStorage.setItem("vendor_email", email.trim());
+      sessionStorage.setItem("vendor_email", email.trim());
+    }
+    localStorage.setItem("vendor_registration_step", stage);
 
-  const selectedCountry =
-    COUNTRY_CODES.find((country) => country.dialCode === countryCode) ?? COUNTRY_CODES[0];
+    sessionStorage.setItem("vendor_registration_step", stage);
+  }, [selectedCountry, phone, email, stage, phoneOtp, emailOtp, phoneTimer, canResendPhoneOtp]);
 
-  const phonePlaceholder =
-    selectedCountry.minLength === selectedCountry.maxLength
-      ? `Enter ${selectedCountry.maxLength}-digit mobile number`
-      : "Enter mobile number";
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!countryMenuRef.current?.contains(event.target as Node)) {
+        setIsCountryMenuOpen(false);
+      }
+    };
 
-  const isPhoneValid =
-    phone.length >= selectedCountry.minLength &&
-    phone.length <= selectedCountry.maxLength;
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
-  const getFullPhone = () => {
-    const dialCodeDigits = countryCode.replace(/\D/g, "");
-    return `${dialCodeDigits}${phone}`;
-  };
+  useEffect(() => {
+    if (isCountryMenuOpen) {
+      countrySearchRef.current?.focus();
+    }
+  }, [isCountryMenuOpen]);
 
-  const focusOtpInput = (index: number) => {
-    const input = otpRefs.current[index];
+  useEffect(() => {
+    if (stage === "phone-otp" && phoneTimer > 0) {
+      const countdown = setInterval(() => setPhoneTimer((value) => value - 1), 1000);
+      return () => clearInterval(countdown);
+    }
+
+    if (stage === "phone-otp" && phoneTimer === 0) {
+      setCanResendPhoneOtp(true);
+    }
+  }, [stage, phoneTimer]);
+
+  const filteredCountries = useMemo(() => {
+    const query = countryQuery.trim().toLowerCase();
+
+    if (!query) return countries;
+
+    return countries.filter((country) =>
+      `${country.name} ${country.dialCode} ${country.code}`.toLowerCase().includes(query),
+    );
+  }, [countries, countryQuery]);
+
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneOtpValue = phoneOtp.join("");
+  const emailOtpValue = emailOtp.join("");
+  const phoneDialCode = selectedCountry?.dialCode ?? "";
+  const isPhoneValid = Boolean(selectedCountry) && phoneDigits.length >= 6 && phoneDigits.length <= 15;
+  const isEmailValid = emailPattern.test(email.trim());
+  const currentEmailStep = isEmailStep(stage);
+
+  const heroTitle = currentEmailStep
+    ? "Verify your email address."
+    : "Verify your WhatsApp number.";
+
+  const heroDescription = currentEmailStep
+    ? "Your WhatsApp number is verified. Stay on this same page and complete email verification before the business details step."
+    : "Start with WhatsApp verification. International numbers are supported, then continue to email verification and business details.";
+
+  const panelStepLabel = currentEmailStep ? "Step 2 of 3" : "Step 1 of 3";
+  const panelTitle = currentEmailStep
+    ? stage === "email-otp"
+      ? "Enter email OTP"
+      : "Email verification"
+    : stage === "phone-otp"
+      ? "Enter WhatsApp OTP"
+      : "WhatsApp verification";
+
+  const panelDescription = currentEmailStep
+    ? "Use the inbox that should receive onboarding approvals, compliance follow-up, and account recovery messages."
+    : "Use the number that should receive onboarding updates, login recovery, and registration support messages.";
+
+  const stepItems = [
+    {
+      label: "Step 1",
+      note: currentEmailStep ? "Completed" : "Current step",
+      status: (currentEmailStep ? "complete" : "current") as StepStatus,
+      title: currentEmailStep ? "WhatsApp number verified" : "Verify WhatsApp number with OTP",
+    },
+    {
+      label: "Step 2",
+      note: currentEmailStep ? "Current step" : "Next",
+      status: (currentEmailStep ? "current" : "pending") as StepStatus,
+      title:
+        currentEmailStep && stage === "email-otp"
+          ? "Confirm email OTP"
+          : "Verify email address",
+    },
+    {
+      label: "Step 3",
+      note: "Next",
+      status: "pending" as StepStatus,
+      title: "Submit business and banking details",
+    },
+  ];
+
+  const focusPhoneOtpInput = (index: number) => {
+    const input = phoneOtpRefs.current[index];
     if (input) input.focus();
   };
 
-  const handleCountryCodeChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const newCode = e.target.value;
-    const nextCountry =
-      COUNTRY_CODES.find((country) => country.dialCode === newCode) ??
-      COUNTRY_CODES[0];
-    setCountryCode(newCode);
-    setPhone((prev) => prev.slice(0, nextCountry.maxLength));
+  const resetPhoneOtpState = () => {
+    setPhoneOtp([...emptyPhoneOtp]);
+    setPhoneTimer(30);
+    setCanResendPhoneOtp(false);
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "");
-    if (value.length <= selectedCountry.maxLength) setPhone(value);
+  const resetEmailOtpState = () => {
+    setEmailOtp([...emptyEmailOtp]);
   };
 
-  const handleContinue = async () => {
-    if (!isPhoneValid) return;
-
-    const sent = await handleSubmit();
-    if (!sent) return;
-
-    setShowOtp(true);
-    setTimer(30);
-    setCanResend(false);
+  const getFullPhoneDigits = () => {
+    const dialCodeDigits = phoneDialCode.replace(/\D/g, "");
+    return `${dialCodeDigits}${phoneDigits}`;
   };
 
-  const handleEditNumber = () => {
-    setShowOtp(false);
-    setOtp(["", "", "", "", "", ""]);
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.replace(/\D/g, "");
+    setPhone(value.slice(0, 15));
   };
 
-  const handleOtpChange = (value: string, index: number) => {
+  const handlePhoneOtpChange = (value: string, index: number) => {
     if (!/^[0-9]?$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-    if (value && index < otp.length - 1) focusOtpInput(index + 1);
+
+    const nextOtp = [...phoneOtp];
+    nextOtp[index] = value;
+    setPhoneOtp(nextOtp);
+
+    if (value && index < phoneOtp.length - 1) {
+      focusPhoneOtpInput(index + 1);
+    }
   };
 
-  const handleOtpKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
+  const handlePhoneOtpKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
     index: number,
   ) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      focusOtpInput(index - 1);
+    if (event.key === "Backspace" && !phoneOtp[index] && index > 0) {
+      focusPhoneOtpInput(index - 1);
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").slice(0, 6);
-    if (/^\d+$/.test(pasteData)) {
-      const newOtp = ["", "", "", "", "", ""];
-      pasteData.split("").forEach((digit, index) => {
-        newOtp[index] = digit;
-      });
-      setOtp(newOtp);
-      focusOtpInput(Math.min(pasteData.length, 6) - 1);
+  const handlePhoneOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pastedOtp = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+
+    if (!pastedOtp) return;
+
+    const nextOtp = [...emptyPhoneOtp];
+    pastedOtp.split("").forEach((digit, index) => {
+      nextOtp[index] = digit;
+    });
+    setPhoneOtp(nextOtp);
+    focusPhoneOtpInput(Math.min(pastedOtp.length, 6) - 1);
+  };
+
+  const focusEmailOtpInput = (index: number) => {
+    const input = emailOtpRefs.current[index];
+    if (input) input.focus();
+  };
+
+  const handleEmailOtpChange = (value: string, index: number) => {
+    if (!/^[0-9]?$/.test(value)) return;
+
+    const nextOtp = [...emailOtp];
+    nextOtp[index] = value;
+    setEmailOtp(nextOtp);
+
+    if (value && index < emailOtp.length - 1) {
+      focusEmailOtpInput(index + 1);
     }
   };
-  const router = useRouter();
 
-  const dispatch = useDispatch<AppDispatch>();
+  const handleEmailOtpKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (event.key === "Backspace" && !emailOtp[index] && index > 0) {
+      focusEmailOtpInput(index - 1);
+    }
+  };
 
-  const handleSubmit = async () => {
-    if (!isPhoneValid) {
-      Swal.fire(
-        "Warning",
-        `Please enter a valid mobile number for ${selectedCountry.label}`,
-        "warning",
-      );
+  const handleEmailOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pastedOtp = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+
+    if (!pastedOtp) return;
+
+    const nextOtp = [...emptyEmailOtp];
+    pastedOtp.split("").forEach((digit, index) => {
+      nextOtp[index] = digit;
+    });
+    setEmailOtp(nextOtp);
+    focusEmailOtpInput(Math.min(pastedOtp.length, 6) - 1);
+  };
+
+  const runStepTransition = async (
+    nextText: string,
+    action: () => void | Promise<void>,
+    options?: { persistLoaderAfterAction?: boolean },
+  ) => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+    setStepTransitionText(nextText);
+    setIsStepTransitioning(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      await action();
+    } finally {
+      if (!options?.persistLoaderAfterAction) {
+        setIsStepTransitioning(false);
+      }
+    }
+  };
+
+  const sendPhoneOtpRequest = async () => {
+    if (!selectedCountry || !isPhoneValid) {
+      Swal.fire("Warning", "Please enter a valid WhatsApp number.", "warning");
       return false;
     }
 
+    setIsSendingPhoneOtp(true);
+
     try {
-      const displayPhone = `${countryCode}${phone}`;
-      await dispatch(sendOtp({ phone, countryCode })).unwrap();
+      const displayPhone = `${selectedCountry.dialCode}${phoneDigits}`;
+      await dispatch(sendOtp({ phone: phoneDigits, countryCode: selectedCountry.dialCode })).unwrap();
+
+      localStorage.setItem("vendor_phone", displayPhone);
       sessionStorage.setItem("vendor_phone", displayPhone);
-      sessionStorage.setItem("vendor_country_code", countryCode);
-      Swal.fire("Success", "OTP sent successfully", "success");
+      localStorage.setItem("vendor_country_code", selectedCountry.dialCode);
+      sessionStorage.setItem("vendor_country_code", selectedCountry.dialCode);
+      localStorage.setItem("vendor_registration_step", "phone-otp");
+      sessionStorage.setItem("vendor_registration_step", "phone-otp");
+
+      Swal.fire("Success", "OTP sent successfully to your whatsapp Number", "success");
       return true;
-    } catch (err: any) {
-      console.error(err, "error");
-      const message =
-        typeof err === "string"
-          ? err
-          : err?.message ?? "Failed to send OTP. Please try again.";
-      Swal.fire("Error", message, "error");
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    if (success) {
-      dispatch(resetOtpState());
-    }
-
-    if (error) {
-      dispatch(resetOtpState());
-    }
-  }, [success, error, dispatch]);
-  const handleResend = async () => {
-    setOtp(["", "", "", "", "", ""]);
-    const sent = await handleSubmit();
-
-    if (sent) {
-      setTimer(30);
-      setCanResend(false);
-    } else {
-      setCanResend(true);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    // If OTP is an array, join it properly; otherwise safely convert to string
-    const otpString: string = Array.isArray(otp)
-      ? otp.join("")
-      : String(otp).trim();
-    const fullPhone = getFullPhone();
-
-    if (!isPhoneValid || !otpString) {
-      Swal.fire("Warning", "Please enter both phone number and OTP", "warning");
-      return;
-    }
-
-    try {
-      await dispatch(verifyOtp({ phone: fullPhone, otp: otpString })).unwrap();
-      Swal.fire("Success", "OTP verified successfully", "success");
-
-      router.push("/vendor/registration/personal-details");
-    } catch (error:any) {
-      console.error("Error verifying OTP:", error);
+    } catch (error) {
       const message =
         typeof error === "string"
           ? error
-          : error?.message ??
-            "Something went wrong while verifying OTP. Please try again.";
+          : (error as { message?: string })?.message ?? "Failed to send OTP. Please try again.";
       Swal.fire("Error", message, "error");
+      return false;
+    } finally {
+      setIsSendingPhoneOtp(false);
+      dispatch(resetOtpState());
     }
   };
 
-  const isOtpComplete = otp.join("").length === 6;
+  const handleContinueToPhoneOtp = async () => {
+    const sent = await sendPhoneOtpRequest();
+
+    if (!sent) return;
+
+    resetPhoneOtpState();
+    await runStepTransition("Opening OTP step...", async () => {
+      setStage("phone-otp");
+    });
+  };
+
+  const handleResendPhoneOtp = async () => {
+    resetPhoneOtpState();
+    const sent = await sendPhoneOtpRequest();
+    if (!sent) {
+      setCanResendPhoneOtp(true);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!selectedCountry || !isPhoneValid || phoneOtpValue.length !== 6) {
+      Swal.fire("Warning", "Please enter the full 6-digit WhatsApp OTP.", "warning");
+      return;
+    }
+
+    setIsVerifyingPhoneOtp(true);
+
+    try {
+      await dispatch(
+        verifyOtp({
+          phone: getFullPhoneDigits(),
+          otp: phoneOtpValue,
+        }),
+      ).unwrap();
+
+      await runStepTransition("Opening email step...", async () => {
+        localStorage.setItem("vendor_registration_step", "email-entry");
+        sessionStorage.setItem("vendor_registration_step", "email-entry");
+        setStage("email-entry");
+        resetPhoneOtpState();
+      });
+
+      Swal.fire("Success", "WhatsApp number verified successfully.", "success");
+    } catch (error) {
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message ??
+            "Something went wrong while verifying OTP. Please try again.";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+      dispatch(resetOtpState());
+    }
+  };
+
+  const sendEmailOtpRequest = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!emailPattern.test(normalizedEmail)) {
+      Swal.fire("Warning", "Please enter a valid email address.", "warning");
+      return false;
+    }
+
+    setIsSendingEmailOtp(true);
+
+    try {
+      await dispatch(sendEmailOtp({ email: normalizedEmail })).unwrap();
+      setEmail(normalizedEmail);
+      localStorage.setItem("vendor_email", normalizedEmail);
+      sessionStorage.setItem("vendor_email", normalizedEmail);
+      localStorage.setItem("vendor_registration_step", "email-otp");
+      sessionStorage.setItem("vendor_registration_step", "email-otp");
+      await runStepTransition("Opening email OTP step...", async () => {
+        setStage("email-otp");
+        resetEmailOtpState();
+      });
+
+      Swal.fire("Success", "OTP sent to your email.", "success");
+      return true;
+    } catch (error) {
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message ??
+            "Something went wrong while sending email OTP.";
+      Swal.fire("Error", message, "error");
+      return false;
+    } finally {
+      setIsSendingEmailOtp(false);
+      dispatch(resetOtpState());
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedOtp = emailOtpValue.trim();
+
+    if (!emailPattern.test(normalizedEmail)) {
+      Swal.fire("Warning", "Please enter a valid email address.", "warning");
+      return;
+    }
+
+    if (!normalizedOtp) {
+      Swal.fire("Warning", "Please enter the email OTP.", "warning");
+      return;
+    }
+
+    setIsVerifyingEmailOtp(true);
+
+    try {
+      await dispatch(
+        verifyEmailOtp({
+          email: normalizedEmail,
+          otp: normalizedOtp,
+        }),
+      ).unwrap();
+
+      localStorage.setItem("vendor_email", normalizedEmail);
+      sessionStorage.setItem("vendor_email", normalizedEmail);
+      localStorage.removeItem("vendor_registration_step");
+      sessionStorage.removeItem("vendor_registration_step");
+      localStorage.removeItem(VENDOR_REG_DRAFT_KEY);
+
+      Swal.fire("Success", "Email verified successfully.", "success");
+      await runStepTransition(
+        "Preparing business details form...",
+        async () => {
+          router.push("/vendor/registration/business-details");
+        },
+        { persistLoaderAfterAction: true },
+      );
+    } catch (error) {
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message ??
+            "Something went wrong while verifying email OTP.";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setIsVerifyingEmailOtp(false);
+      dispatch(resetOtpState());
+    }
+  };
+
   return (
-    <>
-      <PromotionalBanner />
-      <Navbar />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background px-6 py-20 text-foreground">
-        {/* Header Quote */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 max-w-2xl"
-        >
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
-            Join India’s Fastest-Growing Marketplace 🚀
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground">
-            “Empowering small businesses with big technology.”
+    <div className="min-h-screen bg-white text-slate-950">
+      <StepTransitionLoader visible={isStepTransitioning} text={stepTransitionText} />
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
+          <Link href={mainSiteUrl} className="flex min-w-0 items-center gap-3" {...newTabProps}>
+            <Image
+              src="/sellerslogin-logo.svg"
+              alt="SellersLogin logo"
+              width={48}
+              height={48}
+              priority
+              className="h-12 w-12 shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                Build for your all e-commerce needs
+              </p>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href={vendorOverviewUrl}
+              className="inline-flex min-h-12 items-center justify-center border border-slate-300 px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-950 hover:text-white"
+              {...newTabProps}
+            >
+              All Features
+            </Link>
+            <a
+              href={adminLoginUrl}
+              className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-5 text-sm font-semibold text-white transition hover:bg-violet-800"
+              {...newTabProps}
+            >
+              Login
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+        <section className="border border-slate-200 bg-white p-8 sm:p-10">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-violet-700">
+            {panelStepLabel}
           </p>
-        </motion.div>
+          <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-950">
+            {panelTitle}
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+            {panelDescription}
+          </p>
 
-        {/* Main Registration Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
-        >
-          <Card className="shadow-xl border border-border bg-background/80 backdrop-blur-lg">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-4xl md:text-5xl font-bold">
-                Vendor Registration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="mt-8 space-y-8">
-              {!showOtp ? (
-                <>
-                  {/* Phone Input */}
-                  <div className="flex items-center gap-3 border rounded-lg px-3 py-2">
-                    <div className="h-10 shrink-0 rounded-md border border-input bg-background px-2 flex items-center gap-1">
-                      <img
-                        src={selectedCountry.flagUrl}
-                        alt={`${selectedCountry.label} flag`}
-                        width={18}
-                        height={14}
-                        className="rounded-[2px] object-cover"
-                      />
-                      <select
-                        value={countryCode}
-                        onChange={handleCountryCodeChange}
-                        className="h-full w-16 bg-transparent text-sm outline-none"
-                        aria-label="Country code"
-                      >
-                        {COUNTRY_CODES.map((country) => (
-                          <option key={country.dialCode} value={country.dialCode}>
-                            {country.dialCode}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <Input
-                      type="tel"
-                      placeholder={phonePlaceholder}
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      maxLength={selectedCountry.maxLength}
-                      className="flex-1 border-none focus-visible:ring-0 text-lg"
-                    />
-                  </div>
+          <div className="my-8 border-t border-slate-200" />
 
-                  <div className="text-center">
-                    <Button
-                      size="lg"
-                      className="w-full text-lg mt-4"
-                      onClick={handleContinue}
-                      disabled={!isPhoneValid}
-                    >
-                      Continue
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* OTP Section */}
-                  <div className="text-center space-y-3">
-                    <p className="text-lg text-muted-foreground">
-                      OTP sent to{" "}
-                      <span className="font-semibold">
-                        {countryCode} {phone}
-                      </span>
+          {!currentEmailStep ? (
+            stage === "phone-otp" ? (
+              <div className="space-y-6">
+                <div className="border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    OTP sent
+                  </p>
+                  <div className="mt-3 flex items-center gap-2 text-base font-semibold text-slate-950">
+                    <Image src="/whatsapp-icon.svg" alt="WhatsApp" width={18} height={18} />
+                    <p>
+                      {phoneDialCode} {phoneDigits}
                     </p>
-                    <Button
-                      variant="link"
-                      className="text-sm text-primary"
-                      onClick={handleEditNumber}
-                    >
-                      Edit number
-                    </Button>
                   </div>
+                  <button
+                    type="button"
+                    className="mt-4 text-sm font-semibold text-violet-700 hover:text-violet-800"
+                    onClick={() => {
+                      setStage("phone-entry");
+                      resetPhoneOtpState();
+                      sessionStorage.setItem("vendor_registration_step", "phone-entry");
+                    }}
+                  >
+                    Change number
+                  </button>
+                </div>
 
-                  {/* OTP Boxes */}
-                  <div className="flex justify-center gap-3">
-                    {otp.map((digit, index) => (
+                <div>
+                  <label className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Enter OTP
+                  </label>
+
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    {phoneOtp.map((digit, index) => (
                       <Input
                         key={index}
-                        ref={(el) => {
-                          otpRefs.current[index] = el;
+                        ref={(element) => {
+                          phoneOtpRefs.current[index] = element;
                         }}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
                         value={digit}
-                        onChange={(e) => handleOtpChange(e.target.value, index)}
-                        onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                        onPaste={handlePaste}
-                        className="w-12 h-12 text-center text-2xl font-semibold border border-border rounded-lg focus-visible:ring-2 focus-visible:ring-primary"
+                        onChange={(event) => handlePhoneOtpChange(event.target.value, index)}
+                        onKeyDown={(event) => handlePhoneOtpKeyDown(event, index)}
+                        onPaste={handlePhoneOtpPaste}
+                        className="h-14 w-12 rounded-none border-slate-300 px-0 text-center text-xl font-semibold shadow-none"
                       />
                     ))}
                   </div>
+                </div>
 
-                  {/* Resend Timer */}
-                  <div className="text-center mt-6 text-sm text-muted-foreground">
-                    {canResend ? (
-                      <Button
-                        variant="link"
-                        className="text-primary text-base"
-                        onClick={handleResend}
+                <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-slate-500">
+                    {canResendPhoneOtp ? (
+                      <button
+                        type="button"
+                        className="font-semibold text-violet-700 hover:text-violet-800"
+                        onClick={handleResendPhoneOtp}
+                        disabled={isSendingPhoneOtp}
                       >
-                        Resend OTP 🔁
-                      </Button>
+                        {isSendingPhoneOtp ? "Sending OTP..." : "Resend OTP"}
+                      </button>
                     ) : (
-                      <p>Resend OTP in {timer}s</p>
+                      <p>Resend OTP in {phoneTimer}s</p>
                     )}
                   </div>
 
-                  <div className="text-center mt-8">
-                    <Button
-                      size="lg"
-                      className="w-full text-lg"
-                      disabled={!isOtpComplete}
-                      onClick={() => handleVerifyOtp()}
+                  <button
+                    type="button"
+                    className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-6 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                    disabled={phoneOtpValue.length !== 6 || isVerifyingPhoneOtp}
+                    onClick={handleVerifyPhoneOtp}
+                  >
+                    {isVerifyingPhoneOtp ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {countriesError ? (
+                  <div className="border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+                    <p>{countriesError}</p>
+                    <button
+                      type="button"
+                      className="mt-3 font-semibold text-red-700 underline-offset-4 hover:underline"
+                      onClick={() => setCountryRequestNonce((value) => value + 1)}
                     >
-                      Verify OTP
-                    </Button>
+                      Retry loading countries
+                    </button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                ) : null}
 
-        {/* Divider */}
-        <Separator className="my-16 w-3/4 max-w-xl" />
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    <Image src="/whatsapp-icon.svg" alt="WhatsApp" width={16} height={16} />
+                    WhatsApp number
+                  </label>
 
-        {/* Extra Info Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-center max-w-3xl space-y-6"
-        >
-          <h3 className="text-3xl font-bold">Why Join Us?</h3>
-          <p className="text-muted-foreground text-lg">
-            We help vendors reach customers across India with zero setup hassle.
-            Our platform offers advanced analytics, easy payment settlements,
-            and a powerful dashboard to track growth.
-          </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[260px_minmax(0,1fr)]">
+                    <div className="relative" ref={countryMenuRef}>
+                      <button
+                        type="button"
+                        className="flex h-12 w-full items-center justify-between border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                        onClick={() => setIsCountryMenuOpen((open) => !open)}
+                        disabled={countriesLoading || !countries.length}
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          {selectedCountry?.flagUrl ? (
+                            <img
+                              src={selectedCountry.flagUrl}
+                              alt=""
+                              className="h-4 w-6 border border-slate-200 object-cover"
+                            />
+                          ) : (
+                            <span className="h-4 w-6 border border-slate-200 bg-slate-100" />
+                          )}
 
-          <div className="grid md:grid-cols-3 gap-6 mt-10">
-            {[
-              {
-                title: "0% Listing Fee",
-                desc: "Start your online store instantly without hidden charges.",
-              },
-              {
-                title: "24/7 Support",
-                desc: "Our vendor success team is always available to assist you.",
-              },
-              {
-                title: "Sell Anywhere",
-                desc: "Expand beyond borders and reach new markets with one click.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.05 }}
-                className="bg-card border border-border rounded-2xl shadow-md p-6"
-              >
-                <h4 className="text-xl font-semibold text-primary mb-2">
-                  {item.title}
-                </h4>
-                <p className="text-muted-foreground">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
+                          <span className="min-w-0 truncate">
+                            {countriesLoading
+                              ? "Loading countries..."
+                              : selectedCountry
+                                ? selectedCountry.name
+                                : "Select country"}
+                          </span>
+                        </span>
 
-          <p className="mt-12 text-lg italic text-muted-foreground">
-            “Your journey to success begins with a single registration.”
-          </p>
-        </motion.div>
+                        <span className="ml-3 flex shrink-0 items-center gap-2 text-slate-500">
+                          {selectedCountry?.dialCode ?? ""}
+                          <ChevronDown className="h-4 w-4" />
+                        </span>
+                      </button>
 
-        {/* Start Selling CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="mt-16 w-full max-w-5xl mx-auto"
-        >
-          <div className="grid overflow-hidden rounded-3xl bg-card border border-border shadow-lg md:grid-cols-[1.1fr_1fr]">
-            <div className="p-10 flex flex-col items-center text-center justify-center gap-4">
-              <h3 className="text-3xl md:text-4xl font-extrabold">
-                Start selling today!
-              </h3>
-              <p className="text-muted-foreground text-lg">
-                Put your products in front of millions of customers who search
-                for SellersLogin every day.
-              </p>
+                      {isCountryMenuOpen ? (
+                        <div className="absolute left-0 top-full z-20 mt-1 w-full border border-slate-300 bg-white shadow-lg">
+                          <div className="border-b border-slate-200 p-3">
+                            <div className="relative">
+                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                              <Input
+                                ref={countrySearchRef}
+                                value={countryQuery}
+                                onChange={(event) => setCountryQuery(event.target.value)}
+                                placeholder="Search country or code"
+                                className="h-11 rounded-none border-slate-300 pl-10 shadow-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto">
+                            {filteredCountries.length ? (
+                              filteredCountries.map((country) => (
+                                <button
+                                  key={`${country.code}-${country.dialCode}`}
+                                  type="button"
+                                  className="flex w-full items-center justify-between border-b border-slate-200 px-3 py-3 text-left text-sm hover:bg-slate-50"
+                                  onClick={() => {
+                                    setSelectedCountry(country);
+                                    setCountryQuery("");
+                                    setIsCountryMenuOpen(false);
+                                  }}
+                                >
+                                  <span className="flex min-w-0 items-center gap-3">
+                                    {country.flagUrl ? (
+                                      <img
+                                        src={country.flagUrl}
+                                        alt=""
+                                        className="h-4 w-6 border border-slate-200 object-cover"
+                                      />
+                                    ) : (
+                                      <span className="h-4 w-6 border border-slate-200 bg-slate-100" />
+                                    )}
+                                    <span className="truncate text-slate-950">{country.name}</span>
+                                  </span>
+
+                                  <span className="ml-4 shrink-0 font-semibold text-slate-500">
+                                    {country.dialCode}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-4 text-sm text-slate-500">
+                                No countries found for this search.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Input
+                      type="tel"
+                      placeholder="Enter WhatsApp number"
+                      value={phoneDigits}
+                      onChange={handlePhoneChange}
+                      maxLength={15}
+                      className="h-12 rounded-none border-slate-300 px-4 text-base shadow-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-md text-sm leading-6 text-slate-500">
+                  OTP is sent using the selected country code, so international WhatsApp
+                  numbers continue through the same flow.
+                </p>
+
+                  <button
+                    type="button"
+                    className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-6 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                    onClick={handleContinueToPhoneOtp}
+                    disabled={!isPhoneValid || countriesLoading || isSendingPhoneOtp}
+                  >
+                    {isSendingPhoneOtp ? "Sending OTP..." : "Continue"}
+                  </button>
+                </div>
+              </div>
+            )
+          ) : stage === "email-otp" ? (
+            <div className="space-y-6">
+              <div className="border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Email OTP sent
+                </p>
+                <p className="mt-3 text-base font-semibold text-slate-950">{email}</p>
+                <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
+                  <button
+                    type="button"
+                    className="text-violet-700 hover:text-violet-800"
+                    onClick={() => {
+                      setStage("email-entry");
+                      sessionStorage.setItem("vendor_registration_step", "email-entry");
+                      resetEmailOtpState();
+                    }}
+                  >
+                    Change email
+                  </button>
+                  <button
+                    type="button"
+                    className="text-violet-700 hover:text-violet-800"
+                    onClick={sendEmailOtpRequest}
+                    disabled={isSendingEmailOtp}
+                  >
+                    {isSendingEmailOtp ? "Sending OTP..." : "Resend OTP"}
+                  </button>
+                </div>
+              </div>
+
               <div>
-                <Button size="lg" className="px-8" asChild>
-                  <Link href="/vendor/registration">Start selling</Link>
-                </Button>
+                <label className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Enter email OTP
+                </label>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {emailOtp.map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(element) => {
+                        emailOtpRefs.current[index] = element;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(event) => handleEmailOtpChange(event.target.value, index)}
+                      onKeyDown={(event) => handleEmailOtpKeyDown(event, index)}
+                      onPaste={handleEmailOtpPaste}
+                      className="h-14 w-12 rounded-none border-slate-300 px-0 text-center text-xl font-semibold shadow-none"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-md text-sm leading-6 text-slate-500">
+                  Once this OTP is verified, the business details form will open next.
+                </p>
+
+                <button
+                  type="button"
+                  className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-6 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                  onClick={handleVerifyEmailOtp}
+                  disabled={emailOtpValue.length !== 6 || isVerifyingEmailOtp}
+                >
+                  {isVerifyingEmailOtp ? "Verifying..." : "Verify OTP"}
+                </button>
               </div>
             </div>
-            <div className="relative min-h-[260px] bg-muted">
-              <img
-                src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
-                alt="Vendor packing products"
-                className="h-full w-full object-cover"
-              />
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Email address
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="Enter your email address"
+                  className="mt-3 h-12 rounded-none border-slate-300 px-4 text-base shadow-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-md text-sm leading-6 text-slate-500">
+                  This inbox will receive registration updates, approval notifications,
+                  and account recovery messages.
+                </p>
+
+                <button
+                  type="button"
+                  className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-6 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                  onClick={sendEmailOtpRequest}
+                  disabled={!isEmailValid || isSendingEmailOtp}
+                >
+                  {isSendingEmailOtp ? "Sending OTP..." : "Send OTP"}
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-violet-700">
+            Registration
+          </p>
+          <h1 className="mt-4 max-w-4xl text-5xl font-bold tracking-[-0.05em] text-slate-950 sm:text-6xl lg:text-7xl lg:leading-[0.92]">
+            {heroTitle}
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            {heroDescription}
+          </p>
+
+          <div className="mt-10 border border-slate-200 bg-slate-50 p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Registration Steps
+            </p>
+
+            <div className="mt-6 space-y-6">
+              {stepItems.map((item, index) => {
+                const tone = getStepTone(item.status);
+
+                return (
+                  <div
+                    key={item.label}
+                    className={`${index < stepItems.length - 1 ? "border-b border-slate-200 pb-6" : ""}`}
+                  >
+                    <div className={`border-l-2 ${tone.accent} pl-4`}>
+                      <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${tone.label}`}>
+                        {item.label}
+                      </p>
+                      <p className={`mt-2 text-base font-semibold ${tone.title}`}>{item.title}</p>
+                      <p className={`mt-2 text-sm ${tone.note}`}>{item.note}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </motion.div>
+        </section>
+      </main>
 
-        {/* SellersLogin Footer Bar */}
-        <div className="mt-20 w-full bg-neutral-900 text-white/90 rounded-t-2xl">
-          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm">
-            <div className="font-semibold text-base">SellersLogin</div>
-            <div className="flex flex-wrap gap-6">
-              <Link href="/privacy" className="hover:text-white transition">
-                Confidentiality Policy
-              </Link>
-              <Link href="/terms" className="hover:text-white transition">
-                Terms of Use
-              </Link>
-              <Link href="/cookies" className="hover:text-white transition">
-                Cookies
-              </Link>
+      <footer className="border-t border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <div className="grid gap-10 border border-slate-200 bg-white p-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+            <div>
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/sellerslogin-logo.svg"
+                  alt="SellersLogin logo"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 shrink-0"
+                />
+                <div>
+                  <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Build for your all e-commerce needs
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-6 max-w-md text-sm leading-7 text-slate-600">
+                Seller registration now keeps WhatsApp verification and email verification
+                inside one page before opening business details.
+              </p>
             </div>
-            <div className="text-white/70">
-              (c) 2026 SellersLogin. All rights reserved.
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Quick Links
+              </p>
+              <div className="mt-5 space-y-3 text-sm font-semibold text-slate-700">
+                <Link href={vendorOverviewUrl} className="block hover:text-violet-700" {...newTabProps}>
+                  Vendor Access
+                </Link>
+                <Link href={mainSiteUrl} className="block hover:text-violet-700" {...newTabProps}>
+                  Main Site
+                </Link>
+                <a href={adminLoginUrl} className="block hover:text-violet-700" {...newTabProps}>
+                  Login to dashboard
+                </a>
+              </div>
             </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Contact
+              </p>
+              <div className="mt-5 space-y-3 text-sm text-slate-600">
+                <a
+                  href={`mailto:${supportEmail}`}
+                  className="block font-semibold text-slate-950 hover:text-violet-700"
+                  {...newTabProps}
+                >
+                  {supportEmail}
+                </a>
+                <p>Office No 834, Gaur City Mall, Greater Noida</p>
+                <p>Uttar Pradesh 201312, India</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-x border-b border-slate-200 bg-white px-8 py-4 text-sm text-slate-500">
+            Copyright {new Date().getFullYear()} SellersLogin. All rights reserved.
           </div>
         </div>
-      </div>
-      <Footer />
-    </>
+      </footer>
+    </div>
   );
 }
-

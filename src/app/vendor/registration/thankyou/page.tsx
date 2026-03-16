@@ -1,32 +1,40 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import VendorMarketingLayout from "@/components/vendor/VendorMarketingLayout";
 
 export default function ThankYouPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-background px-6 text-center">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-2xl bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-12"
-      >
-        <CheckCircle className="mx-auto text-green-500 w-20 h-20 mb-6" />
-        <h1 className="text-5xl font-extrabold mb-4 text-primary">Thank You!</h1>
-        <p className="text-lg text-muted-foreground mb-6">
-          Your vendor registration is complete. You will receive all verification and account details via your registered email shortly.
-        </p>
-        <p className="text-md text-muted-foreground mb-8">
-          Meanwhile, you can explore our <Link href="/vendor" className="text-primary font-semibold underline">Vendor Dashboard</Link> or go back to the <Link href="/" className="text-primary font-semibold underline">Homepage</Link>.
-        </p>
-        <Link href="/vendor">
-          <button className="bg-primary text-white px-6 py-3 rounded-lg shadow-lg hover:bg-primary/90 transition">
-           You are welcome 
-          </button>
-        </Link>
-      </motion.div>
-    </div>
+    <VendorMarketingLayout>
+      <main className="vendor-section">
+        <div className="vendor-shell">
+          <div className="vendor-surface-card mx-auto max-w-3xl p-8 text-center sm:p-12">
+            <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200">
+              <CheckCircle2 className="h-10 w-10" />
+            </span>
+            <p className="vendor-step-pill mt-8">Registration complete</p>
+            <h1 className="vendor-display mt-6 text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl">
+              Your seller registration has been submitted.
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+              Verification and account updates will be sent to your registered email.
+              You can return to the vendor overview now or continue exploring the main
+              SellersLogin site.
+            </p>
+
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/vendor" className="vendor-primary-button">
+                Back to vendor overview
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/" className="vendor-secondary-button">
+                Visit main site
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    </VendorMarketingLayout>
   );
 }
