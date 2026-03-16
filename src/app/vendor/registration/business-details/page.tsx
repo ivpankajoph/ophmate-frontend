@@ -170,7 +170,7 @@ const encodeBase64 = (value: string) => {
 };
 
 const resolveAdminLoginUrl = () => {
-  const fallback = "http://localhost:5173/sign-in?redirect=%2F";
+  const fallback = `${process.env.NEXT_PUBLIC_ADMIN_APP_URL}/sign-in?redirect=%2F`;
   const raw = (process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? fallback).trim();
 
   try {
