@@ -1126,8 +1126,8 @@ export default function VendorRegistrationPage() {
                 >
                   {supportEmail}
                 </a>
-                <p>Office No 834, Gaur City Mall, Greater Noida</p>
-                <p>Uttar Pradesh 201312, India</p>
+                {/* <p>Office No 834, Gaur City Mall, Greater Noida</p>
+                <p>Uttar Pradesh 201312, India</p> */}
               </div>
             </div>
           </div>

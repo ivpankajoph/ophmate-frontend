@@ -399,8 +399,9 @@ export default function VendorPage() {
                 >
                   {supportEmail}
                 </a>
-                <p>Office No 834, Gaur City Mall, Greater Noida</p>
-                <p>Uttar Pradesh 201312, India</p>
+                {/* <p>Office No 834, Gaur City Mall, Greater Noida</p>
+                <p>Uttar Pradesh 201312, India</p> */}
+                <p>Blogs</p>
               </div>
             </div>
           </div>

@@ -800,6 +800,7 @@ function SearchableMultiSelectField({
   placeholder,
   maxSelections,
   onLimitReached,
+  note,
 }: {
   label: string;
   values: string[];
@@ -810,6 +811,7 @@ function SearchableMultiSelectField({
   placeholder?: string;
   maxSelections?: number;
   onLimitReached?: () => void;
+  note?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -856,7 +858,7 @@ function SearchableMultiSelectField({
 
   return (
     <div className="relative" ref={containerRef}>
-      <FieldLabel label={label} required={required} />
+      <FieldLabel label={label} required={required} note={note} />
       <button
         type="button"
         className="mt-3 flex h-12 w-full items-center justify-between border border-slate-300 bg-white px-4 text-left text-sm font-semibold text-slate-950"
@@ -1474,7 +1476,7 @@ export default function VendorBusinessDetailsPage() {
     other: {
       title: "Other information and documents",
       description:
-        "Finish banking, operating hours, dealing area, and compliance documents in the last step.",
+        "Finish banking, operating hours, dealing country, and compliance documents in the last step.",
     },
   }[currentStep];
 
@@ -1597,7 +1599,7 @@ export default function VendorBusinessDetailsPage() {
     if (!customDealingArea) {
       setErrors((previous) => ({
         ...previous,
-        dealing_area: "Enter dealing area name for Other.",
+        dealing_area: "Enter country name for Other.",
       }));
       return;
     }
@@ -1851,16 +1853,28 @@ export default function VendorBusinessDetailsPage() {
       return;
     }
 
+    const nextOpen = bulkOpenTime;
+    const nextClose = bulkCloseTime;
+
     setForm((previous) => ({
       ...previous,
       operating_hours: previous.operating_hours.map((row) => ({
         ...row,
         closed: false,
-        open: bulkOpenTime,
-        close: bulkCloseTime,
+        open: nextOpen,
+        close: nextClose,
       })),
     }));
     clearErrors(["operating_hours"]);
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: "Operating hours applied to all days",
+      showConfirmButton: false,
+      timer: 2000,
+    });
   };
 
   const setAllDaysTwentyFourHours = () => {
@@ -1975,9 +1989,9 @@ export default function VendorBusinessDetailsPage() {
         nextErrors.return_policy = "Return policy is required.";
       }
       if (!form.dealing_area.length) {
-        nextErrors.dealing_area = "Select at least one dealing area.";
+        nextErrors.dealing_area = "Select at least one dealing country.";
       } else if (form.dealing_area.includes("Other")) {
-        nextErrors.dealing_area = "Select Other ke liye custom dealing area add karein.";
+        nextErrors.dealing_area = "Select Other for custom dealing country.";
       }
 
       const invalidOperatingDay = form.operating_hours.find((row) => {
@@ -2957,19 +2971,20 @@ export default function VendorBusinessDetailsPage() {
 
                 <div className="md:col-span-2">
                   <SearchableMultiSelectField
-                    label="Dealing area"
+                    label="Dealing Country"
                     required
                     values={form.dealing_area}
                     onChange={(values) => updateArrayField("dealing_area", values)}
                     options={dealingAreaSelectableOptions}
                     error={errors.dealing_area}
                     placeholder="Select countries where you deal"
+                    note="(If you deal with multiple countries, you can select more than one.)"
                   />
                 </div>
 
                 {form.dealing_area.includes("Other") ? (
                   <div className="md:col-span-2">
-                    <FieldLabel label="Other dealing area" required />
+                    <FieldLabel label="Other dealing country" required />
                     <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                       <Input
                         value={dealingAreaOtherInput}
@@ -2980,7 +2995,7 @@ export default function VendorBusinessDetailsPage() {
                             addCustomDealingArea();
                           }
                         }}
-                        placeholder="Enter dealing area name"
+                        placeholder="Enter country name"
                         className="h-12 rounded-none border-slate-300 px-4 text-base shadow-none"
                       />
                       <button
@@ -2993,7 +3008,7 @@ export default function VendorBusinessDetailsPage() {
                       </button>
                     </div>
                     <p className="mt-2 text-sm text-slate-500">
-                      Type your custom dealing area and click Add.
+                      Type your custom dealing country and click Add.
                     </p>
                   </div>
                 ) : null}
