@@ -32,7 +32,6 @@
 //             </div>
 //           </Link>
 
-
 //         </div>
 //       </header>
 
@@ -195,14 +194,55 @@
 //   );
 // }
 
-
 import Image from "next/image";
 import Link from "next/link";
+import {
+  ClipboardList,
+  PackagePlus,
+  ReceiptIndianRupee,
+  Truck,
+  UserRoundPlus,
+} from "lucide-react";
+import VendorBannerVideo from "@/components/vendor/VendorBannerVideo";
+
+const sellerFeatureItems = [
+  {
+    title: "Create",
+    description:
+      "Register in minutes with your GST details, business address, and payout account from one guided onboarding flow.",
+    Icon: UserRoundPlus,
+  },
+  {
+    title: "List",
+    description:
+      "Add products, pricing, and category data through a clean catalog workspace built for real teams and large assortments.",
+    Icon: PackagePlus,
+  },
+  {
+    title: "Orders",
+    description:
+      "Receive storefront orders in one operational view, with queue visibility for packing, approvals, and dispatch.",
+    Icon: ClipboardList,
+  },
+  {
+    title: "Shipment",
+    description:
+      "Move shipments forward with tracking checkpoints, delivery coordination, and courier visibility that stays readable.",
+    Icon: Truck,
+  },
+  {
+    title: "Payments",
+    description:
+      "Monitor settlements, payout status, and reconciliation without bouncing between payment dashboards and reports.",
+    Icon: ReceiptIndianRupee,
+  },
+] as const;
 
 const mainSiteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
 const supportEmail = "support@sellerslogin.com";
 const adminLoginUrl =
-  process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? "http://localhost:5173/sign-in?redirect=%2F";
+  process.env.NEXT_PUBLIC_ADMIN_APP_URL ??
+  "http://localhost:5173/sign-in?redirect=%2F";
 
 const newTabProps = {
   target: "_blank",
@@ -214,7 +254,11 @@ export default function VendorPage() {
     <div className="min-h-screen bg-white text-slate-950">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
-          <Link href={mainSiteUrl} className="flex min-w-0 items-center gap-3" {...newTabProps}>
+          <Link
+            href={mainSiteUrl}
+            className="flex min-w-0 items-center gap-3"
+            {...newTabProps}
+          >
             <Image
               src="/sellerslogin-logo.svg"
               alt="SellersLogin logo"
@@ -224,7 +268,9 @@ export default function VendorPage() {
               className="h-12 w-12 shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
+              <p className="text-2xl font-bold tracking-tight text-slate-950">
+                SellersLogin
+              </p>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
                 Build for your all e-commerce needs
               </p>
@@ -232,6 +278,8 @@ export default function VendorPage() {
           </Link>
         </div>
       </header>
+
+      <VendorBannerVideo />
 
       <main className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:min-h-[calc(100vh-89px)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <section>
@@ -242,8 +290,8 @@ export default function VendorPage() {
             Start selling for free forever .
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            This page is now only for account access. Create a new seller account for
-            free, or log in if you already have one.
+            This page is now only for account access. Create a new seller
+            account for free, or log in if you already have one.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -264,7 +312,8 @@ export default function VendorPage() {
           </div>
 
           <p className="mt-4 text-sm text-slate-500">
-            Login opens the admin app and then continues to the dashboard after sign-in.
+            Login opens the admin app and then continues to the dashboard after
+            sign-in.
           </p>
         </section>
 
@@ -294,8 +343,8 @@ export default function VendorPage() {
                 Login to dashboard
               </h2>
               <p className="mt-3 text-base leading-7 text-slate-600">
-                Existing users can go directly into the admin system and manage their
-                store from the dashboard.
+                Existing users can go directly into the admin system and manage
+                their store from the dashboard.
               </p>
             </div>
 
@@ -321,8 +370,6 @@ export default function VendorPage() {
       {/* --- NEW VIDEO SECTION --- */}
       <section className="bg-slate-50 border-t border-slate-200">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          
-          
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <video
               className="w-full h-full object-cover"
@@ -332,13 +379,42 @@ export default function VendorPage() {
               playsInline
               controls={false}
             >
-              <source src="/ff0f7f96-c725-431b-aaa5-4923307a8b8b.mp4" type="video/mp4" />
+              <source
+                src="/ff0f7f96-c725-431b-aaa5-4923307a8b8b.mp4"
+                type="video/mp4"
+              />
               Your browser does not support the video tag.
             </video>
           </div>
         </div>
       </section>
-      {/* ------------------------- */}
+
+      <section className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <h1 className="text-3xl font-bold mb-4 underline">
+            Our Main Feautes
+          </h1>
+          <div className="grid gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-5">
+            {sellerFeatureItems.map(({ title, description, Icon }) => (
+              <article key={title}>
+                <div className="  p-2">
+                  <div className="flex min-h-[220px] items-center justify-center border border-slate-200 bg-white/70">
+                    <div className="flex h-20 w-20 items-center justify-center border border-violet-200 bg-violet-50 text-violet-700">
+                      <Icon className="h-10 w-10" strokeWidth={1.6} />
+                    </div>
+                  </div>
+                </div>
+                <h2 className="mt-8 text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                  {title}
+                </h2>
+                <p className="mt-5 text-[15px] leading-9 text-slate-600">
+                  {description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-6 py-12">
@@ -353,7 +429,9 @@ export default function VendorPage() {
                   className="h-12 w-12 shrink-0"
                 />
                 <div>
-                  <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
+                  <p className="text-2xl font-bold tracking-tight text-slate-950">
+                    SellersLogin
+                  </p>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
                     Build for your all e-commerce needs
                   </p>
@@ -361,8 +439,8 @@ export default function VendorPage() {
               </div>
 
               <p className="mt-6 max-w-md text-sm leading-7 text-slate-600">
-                Simple vendor access for sellers who want a clean signup path and a
-                direct route into the admin dashboard.
+                Simple vendor access for sellers who want a clean signup path
+                and a direct route into the admin dashboard.
               </p>
             </div>
 
@@ -371,7 +449,11 @@ export default function VendorPage() {
                 Quick Links
               </p>
               <div className="mt-5 space-y-3 text-sm font-semibold text-slate-700">
-                <Link href={mainSiteUrl} className="block hover:text-violet-700" {...newTabProps}>
+                <Link
+                  href={mainSiteUrl}
+                  className="block hover:text-violet-700"
+                  {...newTabProps}
+                >
                   Main Site
                 </Link>
                 <Link
@@ -381,7 +463,11 @@ export default function VendorPage() {
                 >
                   Sign up for free
                 </Link>
-                <a href={adminLoginUrl} className="block hover:text-violet-700" {...newTabProps}>
+                <a
+                  href={adminLoginUrl}
+                  className="block hover:text-violet-700"
+                  {...newTabProps}
+                >
                   Login to dashboard
                 </a>
               </div>
@@ -407,7 +493,8 @@ export default function VendorPage() {
           </div>
 
           <div className="border-x border-b border-slate-200 bg-white px-8 py-4 text-sm text-slate-500">
-            Copyright {new Date().getFullYear()} SellersLogin. All rights reserved.
+            Copyright {new Date().getFullYear()} SellersLogin. All rights
+            reserved.
           </div>
         </div>
       </footer>
