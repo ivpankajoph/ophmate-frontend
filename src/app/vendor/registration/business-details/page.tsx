@@ -14,16 +14,13 @@ import { updateVendorBusiness } from "@/store/slices/vendorSlice";
 import { uploadFileToCloudinary } from "@/lib/cloudinary-upload";
 import {
   ANNUAL_TURNOVER,
-  BANK_NAMES,
   BUSINESS_NATURES,
   BUSINESS_TYPES,
   CATEGORIES,
   INDIAN_STATES,
   NUMBER_OF_EMPLOYEES,
   RETURN_POLICY,
-  validateAccount,
   validateGST,
-  validateIFSC,
   validatePAN,
   validatePincode,
   validateUPI,
@@ -37,11 +34,6 @@ interface CountryOption {
   dialCode: string;
   flagUrl: string;
   name: string;
-}
-
-interface BankOption {
-  name: string;
-  logoUrl: string;
 }
 
 interface OperatingHourRow {
@@ -70,10 +62,6 @@ interface BusinessForm {
   annual_turnover: string;
   office_employees: string;
   categories: string[];
-  bank_name: string;
-  bank_account: string;
-  ifsc_code: string;
-  branch: string;
   return_policy: string;
   dealing_area: string[];
   alternate_contact_name: string;
@@ -153,8 +141,6 @@ const FALLBACK_COUNTRY: CountryOption = {
 };
 const VENDOR_REG_META_KEY = "vendor_registration_meta_v1";
 const VENDOR_BUSINESS_DRAFT_KEY = "vendor_business_details_draft_v1";
-const DEFAULT_BANK_ICON = "/bank-icon.svg";
-
 const encodeBase64 = (value: string) => {
   if (typeof window === "undefined") return "";
   try {
@@ -239,77 +225,6 @@ const buildAdminAutoLoginUrl = ({
   } catch {
     return adminLoginUrl;
   }
-};
-
-const getBankLogo = (bankName: string) => {
-  const normalized = bankName.toLowerCase();
-
-  if (normalized.includes("state bank")) return "https://logo.clearbit.com/sbi.co.in";
-  if (normalized.includes("hdfc")) return "https://logo.clearbit.com/hdfcbank.com";
-  if (normalized.includes("icici")) return "https://logo.clearbit.com/icicibank.com";
-  if (normalized.includes("axis")) return "https://logo.clearbit.com/axisbank.com";
-  if (normalized.includes("kotak")) return "https://logo.clearbit.com/kotak.com";
-  if (normalized.includes("yes bank")) return "https://logo.clearbit.com/yesbank.in";
-  if (normalized.includes("idfc")) return "https://logo.clearbit.com/idfcfirstbank.com";
-  if (normalized.includes("indusind")) return "https://logo.clearbit.com/indusind.com";
-  if (normalized.includes("bank of baroda")) return "https://logo.clearbit.com/bobibanking.com";
-  if (normalized.includes("punjab national")) return "https://logo.clearbit.com/pnbindia.in";
-  if (normalized.includes("canara")) return "https://logo.clearbit.com/canarabank.com";
-  if (normalized.includes("union bank")) return "https://logo.clearbit.com/unionbankofindia.co.in";
-  if (normalized.includes("bank of india")) return "https://logo.clearbit.com/bankofindia.co.in";
-  if (normalized.includes("chase")) return "https://logo.clearbit.com/chase.com";
-  if (normalized.includes("bank of america")) return "https://logo.clearbit.com/bankofamerica.com";
-  if (normalized.includes("wells fargo")) return "https://logo.clearbit.com/wellsfargo.com";
-  if (normalized.includes("citibank")) return "https://logo.clearbit.com/citi.com";
-  if (normalized.includes("us bank")) return "https://logo.clearbit.com/usbank.com";
-  if (normalized.includes("hsbc")) return "https://logo.clearbit.com/hsbc.co.uk";
-  if (normalized.includes("barclays")) return "https://logo.clearbit.com/barclays.co.uk";
-  if (normalized.includes("lloyds")) return "https://logo.clearbit.com/lloydsbank.com";
-  if (normalized.includes("natwest")) return "https://logo.clearbit.com/natwest.com";
-  if (normalized.includes("santander")) return "https://logo.clearbit.com/santander.co.uk";
-  if (normalized.includes("emirates nbd")) return "https://logo.clearbit.com/emiratesnbd.com";
-  if (normalized.includes("adcb")) return "https://logo.clearbit.com/adcb.com";
-  if (normalized.includes("fab")) return "https://logo.clearbit.com/bankfab.com";
-  if (normalized.includes("mashreq")) return "https://logo.clearbit.com/mashreq.com";
-  if (normalized.includes("dib")) return "https://logo.clearbit.com/dib.ae";
-  if (normalized.includes("commonwealth")) return "https://logo.clearbit.com/commbank.com.au";
-  if (normalized.includes("westpac")) return "https://logo.clearbit.com/westpac.com.au";
-  if (normalized.includes("anz")) return "https://logo.clearbit.com/anz.com";
-  if (normalized.includes("nab")) return "https://logo.clearbit.com/nab.com.au";
-  if (normalized.includes("macquarie")) return "https://logo.clearbit.com/macquarie.com";
-  if (normalized.includes("dbs")) return "https://logo.clearbit.com/dbs.com";
-  if (normalized.includes("ocbc")) return "https://logo.clearbit.com/ocbc.com";
-  if (normalized.includes("uob")) return "https://logo.clearbit.com/uobgroup.com";
-  if (normalized.includes("standard chartered")) return "https://logo.clearbit.com/sc.com";
-
-  return DEFAULT_BANK_ICON;
-};
-
-const BANKS_BY_COUNTRY: Record<string, string[]> = {
-  India: BANK_NAMES,
-  "United States": [
-    "JPMorgan Chase",
-    "Bank of America",
-    "Wells Fargo",
-    "Citibank",
-    "U.S. Bank",
-  ],
-  "United Kingdom": ["HSBC", "Barclays", "Lloyds Bank", "NatWest", "Santander UK"],
-  "United Arab Emirates": [
-    "Emirates NBD",
-    "ADCB",
-    "First Abu Dhabi Bank (FAB)",
-    "Mashreq Bank",
-    "Dubai Islamic Bank (DIB)",
-  ],
-  Australia: [
-    "Commonwealth Bank",
-    "Westpac",
-    "ANZ",
-    "National Australia Bank (NAB)",
-    "Macquarie Bank",
-  ],
-  Singapore: ["DBS Bank", "OCBC Bank", "UOB", "Standard Chartered", "Citibank Singapore"],
 };
 
 const getStepTone = (status: StepStatus) => {
@@ -650,146 +565,6 @@ function CountrySelectField({
   );
 }
 
-function BankSelectField({
-  label,
-  value,
-  onChange,
-  options,
-  error,
-  placeholder,
-  required = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: BankOption[];
-  error?: string;
-  placeholder?: string;
-  required?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-    }
-  }, [open]);
-
-  const filteredOptions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) return options;
-    return options.filter((option) => option.name.toLowerCase().includes(normalizedQuery));
-  }, [options, query]);
-
-  const selectedBank = options.find((option) => option.name === value) ?? null;
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <FieldLabel label={label} required={required} />
-      <button
-        type="button"
-        className="mt-3 flex h-12 w-full items-center justify-between border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-950"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span className="flex min-w-0 items-center gap-3">
-          <img
-            src={selectedBank?.logoUrl ?? DEFAULT_BANK_ICON}
-            alt=""
-            className="h-6 w-6 border border-slate-200 bg-white object-contain p-0.5"
-            onError={(event) => {
-              event.currentTarget.src = DEFAULT_BANK_ICON;
-            }}
-          />
-          <span className="truncate">{selectedBank?.name ?? placeholder ?? "Select bank name"}</span>
-        </span>
-        <ChevronDown className="h-4 w-4 text-slate-500" />
-      </button>
-
-      {open ? (
-        <div className="absolute left-0 top-full z-20 mt-1 w-full border border-slate-300 bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Select bank
-            </p>
-            <button
-              type="button"
-              className="text-xs font-semibold text-slate-500 hover:text-slate-900"
-              onClick={() => setOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-          <div className="border-b border-slate-200 p-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search bank name"
-                className="h-11 rounded-none border-slate-300 pl-10 shadow-none"
-              />
-            </div>
-          </div>
-
-          <div className="max-h-72 overflow-y-auto">
-            {filteredOptions.length ? (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.name}
-                  type="button"
-                  className="flex w-full items-center justify-between border-b border-slate-200 px-3 py-3 text-left text-sm hover:bg-slate-50"
-                  onClick={() => {
-                    onChange(option.name);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <img
-                      src={option.logoUrl}
-                      alt=""
-                      className="h-6 w-6 border border-slate-200 bg-white object-contain p-0.5"
-                      onError={(event) => {
-                        event.currentTarget.src = DEFAULT_BANK_ICON;
-                      }}
-                    />
-                    <span className="truncate text-slate-950">{option.name}</span>
-                  </span>
-                  <span
-                    className={`text-xs font-semibold uppercase tracking-[0.16em] ${
-                      option.name === value ? "text-violet-700" : "text-slate-400"
-                    }`}
-                  >
-                    {option.name === value ? "Selected" : "Select"}
-                  </span>
-                </button>
-              ))
-            ) : (
-              <div className="px-3 py-4 text-sm text-slate-500">No banks found.</div>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-    </div>
-  );
-}
-
 function SearchableMultiSelectField({
   label,
   values,
@@ -971,7 +746,6 @@ export default function VendorBusinessDetailsPage() {
   const [businessNatureOtherInput, setBusinessNatureOtherInput] = useState("");
   const [designationOtherInput, setDesignationOtherInput] = useState("");
   const [dealingAreaOtherInput, setDealingAreaOtherInput] = useState("");
-  const [bankOtherInput, setBankOtherInput] = useState("");
   const [applyAllDays, setApplyAllDays] = useState(false);
   const [bulkOpenTime, setBulkOpenTime] = useState("");
   const [bulkCloseTime, setBulkCloseTime] = useState("");
@@ -1036,10 +810,6 @@ export default function VendorBusinessDetailsPage() {
     annual_turnover: "",
     office_employees: "",
     categories: [],
-    bank_name: "",
-    bank_account: "",
-    ifsc_code: "",
-    branch: "",
     return_policy: "",
     dealing_area: [],
     alternate_contact_name: "",
@@ -1093,7 +863,6 @@ export default function VendorBusinessDetailsPage() {
           businessNatureOtherInput?: string;
           designationOtherInput?: string;
           dealingAreaOtherInput?: string;
-          bankOtherInput?: string;
           applyAllDays?: boolean;
           bulkOpenTime?: string;
           bulkCloseTime?: string;
@@ -1106,7 +875,6 @@ export default function VendorBusinessDetailsPage() {
     setBusinessNatureOtherInput(draft?.businessNatureOtherInput ?? "");
     setDesignationOtherInput(draft?.designationOtherInput ?? "");
     setDealingAreaOtherInput(draft?.dealingAreaOtherInput ?? "");
-    setBankOtherInput(draft?.bankOtherInput ?? "");
     setApplyAllDays(Boolean(draft?.applyAllDays));
     setBulkOpenTime(draft?.bulkOpenTime ?? "");
     setBulkCloseTime(draft?.bulkCloseTime ?? "");
@@ -1403,28 +1171,12 @@ export default function VendorBusinessDetailsPage() {
     () => Array.from(new Set([...dealingAreaOptions, "Other"])),
     [dealingAreaOptions],
   );
-  const bankOptions = useMemo(() => {
-    const allBanks = Array.from(new Set(Object.values(BANKS_BY_COUNTRY).flat()));
-    const withOther = Array.from(new Set([...allBanks, "Other"]));
-
-    if (form.bank_name && !withOther.includes(form.bank_name)) {
-      withOther.unshift(form.bank_name);
-    }
-
-    return withOther.map((name) => ({
-      name,
-      logoUrl: name === "Other" ? DEFAULT_BANK_ICON : getBankLogo(name),
-    }));
-  }, [form.bank_name]);
-
   const currentStepIndex = STEP_ORDER.indexOf(currentStep);
   const currentStepLabel = `Step ${currentStepIndex + 1} of 3`;
   const canGoBack = currentStepIndex > 0;
   const isIndianBusiness = form.country === "India";
   const postalCodeLabel = isIndianBusiness ? "Pincode" : "Postal code";
   const stateLabel = isIndianBusiness ? "State" : "State / Province / Region";
-  const bankCodeLabel = isIndianBusiness ? "IFSC code" : "Bank code / Routing code";
-  const bankAccountLabel = isIndianBusiness ? "Account number" : "Account / IBAN number";
   const isAnyAssetUploading = useMemo(
     () => Object.values(uploadingAssets).some(Boolean),
     [uploadingAssets],
@@ -1617,21 +1369,6 @@ export default function VendorBusinessDetailsPage() {
     setDealingAreaOtherInput("");
   };
 
-  const addCustomBank = () => {
-    const customBank = bankOtherInput.trim();
-
-    if (!customBank) {
-      setErrors((previous) => ({
-        ...previous,
-        bank_name: "Enter bank name for Other.",
-      }));
-      return;
-    }
-
-    updateTextField("bank_name", customBank);
-    setBankOtherInput("");
-  };
-
   useEffect(() => {
     if (!form.business_nature.includes("Other")) {
       setBusinessNatureOtherInput("");
@@ -1649,12 +1386,6 @@ export default function VendorBusinessDetailsPage() {
       setDealingAreaOtherInput("");
     }
   }, [form.dealing_area]);
-
-  useEffect(() => {
-    if (form.bank_name !== "Other") {
-      setBankOtherInput("");
-    }
-  }, [form.bank_name]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1679,10 +1410,6 @@ export default function VendorBusinessDetailsPage() {
       annual_turnover: form.annual_turnover,
       office_employees: form.office_employees,
       categories: form.categories,
-      bank_name: form.bank_name,
-      bank_account: form.bank_account,
-      ifsc_code: form.ifsc_code,
-      branch: form.branch,
       return_policy: form.return_policy,
       dealing_area: form.dealing_area,
       alternate_contact_name: form.alternate_contact_name,
@@ -1696,7 +1423,6 @@ export default function VendorBusinessDetailsPage() {
       businessNatureOtherInput,
       designationOtherInput,
       dealingAreaOtherInput,
-      bankOtherInput,
       applyAllDays,
       bulkOpenTime,
       bulkCloseTime,
@@ -1709,7 +1435,6 @@ export default function VendorBusinessDetailsPage() {
     businessNatureOtherInput,
     designationOtherInput,
     dealingAreaOtherInput,
-    bankOtherInput,
     applyAllDays,
     bulkOpenTime,
     bulkCloseTime,
@@ -1955,36 +1680,6 @@ export default function VendorBusinessDetailsPage() {
     }
 
     if (step === "other") {
-      if (!form.bank_name) {
-        nextErrors.bank_name = "Bank name is required.";
-      } else if (form.bank_name === "Other") {
-        nextErrors.bank_name = "Select Other ke liye custom bank add karein.";
-      }
-      if (!form.bank_account.trim()) {
-        nextErrors.bank_account = `${bankAccountLabel} is required.`;
-      } else if (
-        isIndianBusiness
-          ? !validateAccount(normalizeDigits(form.bank_account))
-          : !/^[A-Za-z0-9 -]{8,34}$/.test(form.bank_account.trim())
-      ) {
-        nextErrors.bank_account = isIndianBusiness
-          ? "Enter a valid account number."
-          : "Enter a valid account or IBAN number.";
-      }
-      if (!form.ifsc_code.trim()) {
-        nextErrors.ifsc_code = `${bankCodeLabel} is required.`;
-      } else if (
-        isIndianBusiness
-          ? !validateIFSC(form.ifsc_code.trim().toUpperCase())
-          : !/^[A-Za-z0-9-]{4,20}$/.test(form.ifsc_code.trim())
-      ) {
-        nextErrors.ifsc_code = isIndianBusiness
-          ? "Enter a valid IFSC code."
-          : "Enter a valid bank or routing code.";
-      }
-      if (!form.branch.trim()) {
-        nextErrors.branch = "Branch name is required.";
-      }
       if (!form.return_policy) {
         nextErrors.return_policy = "Return policy is required.";
       }
@@ -2063,10 +1758,6 @@ export default function VendorBusinessDetailsPage() {
         "categories",
       ],
       other: [
-        "bank_name",
-        "bank_account",
-        "ifsc_code",
-        "branch",
         "return_policy",
         "dealing_area",
         "alternate_contact_country_code",
@@ -2191,10 +1882,6 @@ export default function VendorBusinessDetailsPage() {
       formData.append("annual_turnover", form.annual_turnover);
       formData.append("office_employees", form.office_employees);
       formData.append("categories", JSON.stringify(form.categories));
-      formData.append("bank_name", form.bank_name);
-      formData.append("bank_account", form.bank_account.trim());
-      formData.append("ifsc_code", form.ifsc_code.trim().toUpperCase());
-      formData.append("branch", form.branch.trim());
       formData.append("return_policy", form.return_policy);
       formData.append("dealing_area", JSON.stringify(form.dealing_area));
       formData.append("operating_hours", serializeOperatingHours(form.operating_hours));
@@ -2843,76 +2530,6 @@ export default function VendorBusinessDetailsPage() {
           {currentStep === "other" ? (
             <div className="space-y-10">
               <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <BankSelectField
-                    label="Bank name"
-                    required
-                    value={form.bank_name}
-                    onChange={(value) => updateTextField("bank_name", value)}
-                    options={bankOptions}
-                    error={errors.bank_name}
-                    placeholder="Select bank name"
-                  />
-                </div>
-
-                {form.bank_name === "Other" ? (
-                  <div>
-                    <FieldLabel label="Other bank name" required />
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                      <Input
-                        value={bankOtherInput}
-                        onChange={(event) => setBankOtherInput(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            addCustomBank();
-                          }
-                        }}
-                        placeholder="Enter bank name"
-                        className="h-12 rounded-none border-slate-300 px-4 text-base shadow-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={addCustomBank}
-                        className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-5 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-                        disabled={!bankOtherInput.trim()}
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Type your custom bank name and click Add.
-                    </p>
-                </div>
-                ) : null}
-
-                <TextField
-                  label={bankAccountLabel}
-                  required
-                  value={form.bank_account}
-                  onChange={(value) => updateTextField("bank_account", value)}
-                  error={errors.bank_account}
-                  placeholder={isIndianBusiness ? "9 to 18 digits" : "Account or IBAN number"}
-                />
-
-                <TextField
-                  label={bankCodeLabel}
-                  required
-                  value={form.ifsc_code}
-                  onChange={(value) => updateTextField("ifsc_code", value.toUpperCase())}
-                  error={errors.ifsc_code}
-                  placeholder={isIndianBusiness ? "Example: SBIN0002499" : "Routing or SWIFT code"}
-                />
-
-                <TextField
-                  label="Branch name"
-                  required
-                  value={form.branch}
-                  onChange={(value) => updateTextField("branch", value)}
-                  error={errors.branch}
-                  placeholder="Branch or bank location"
-                />
-
                 <TextField
                   label="Alternate contact name"
                   value={form.alternate_contact_name}

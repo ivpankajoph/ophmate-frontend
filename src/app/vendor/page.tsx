@@ -214,7 +214,7 @@ export default function VendorPage() {
     <div className="min-h-screen bg-white text-slate-950">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
-          <Link href={mainSiteUrl} className="flex min-w-0 items-center gap-3" {...newTabProps}>
+          {/* <Link href={mainSiteUrl} className="flex min-w-0 items-center gap-3" {...newTabProps}>
             <Image
               src="/sellerslogin-logo.svg"
               alt="SellersLogin logo"
@@ -229,7 +229,23 @@ export default function VendorPage() {
                 Build for your all e-commerce needs
               </p>
             </div>
-          </Link>
+          </Link> */}
+          <div className="flex min-w-0 items-center gap-3">
+            <Image
+              src="/sellerslogin-logo .svg"
+              alt="SellersLogin logo"
+              width={48}
+              height={48}
+              priority
+              className="h-12 w-12 shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                Build for your all e-commerce needs
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -321,8 +337,8 @@ export default function VendorPage() {
       {/* --- NEW VIDEO SECTION --- */}
       <section className="bg-slate-50 border-t border-slate-200">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          
-          
+
+
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <video
               className="w-full h-full object-cover"
@@ -371,9 +387,9 @@ export default function VendorPage() {
                 Quick Links
               </p>
               <div className="mt-5 space-y-3 text-sm font-semibold text-slate-700">
-                <Link href={mainSiteUrl} className="block hover:text-violet-700" {...newTabProps}>
+                {/* <Link href={mainSiteUrl} className="block hover:text-violet-700" {...newTabProps}>
                   Main Site
-                </Link>
+                </Link> */}
                 <Link
                   href="/vendor/registration"
                   className="block hover:text-violet-700"
