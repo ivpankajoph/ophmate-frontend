@@ -316,10 +316,10 @@ export default function Footer() {
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <MapPin className="h-4 w-4 mt-1" />
-              <span>
+              {/* <span>
                 Office No 834 Gaur City Mall, Greater Noida, Gautam Budhdha Nagar
                 201310, India
-              </span>
+              </span> */}
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
