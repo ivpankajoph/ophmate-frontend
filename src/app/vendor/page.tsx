@@ -57,24 +57,17 @@ const sellerFlowItems = [
   },
 ] as const;
 
-const mainSiteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
 const supportEmail = "support@sellerslogin.com";
 const adminLoginUrl =
   process.env.NEXT_PUBLIC_ADMIN_APP_URL ??
   "http://localhost:5173/sign-in?redirect=%2F";
-const shouldOpenMainSiteInNewTab = /^https?:\/\//.test(mainSiteUrl);
 
 export default function VendorPage() {
   return (
     <div className="min-h-screen bg-white text-slate-950">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
-          <Link
-            href={mainSiteUrl}
-            className="flex min-w-0 items-center gap-3"
-            target={shouldOpenMainSiteInNewTab ? "_blank" : undefined}
-            rel={shouldOpenMainSiteInNewTab ? "noreferrer" : undefined}
-          >
+          <div className="flex min-w-0 items-center gap-3">
             <Image
               src="/sellerslogin-logo.svg"
               alt="SellersLogin logo"
@@ -91,17 +84,9 @@ export default function VendorPage() {
                 Build for your all e-commerce needs
               </p>
             </div>
-          </Link>
+          </div>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Link
-              href={mainSiteUrl}
-              className="inline-flex h-11 items-center justify-center border border-slate-300 px-5 text-sm font-semibold text-slate-900 transition hover:border-violet-200 hover:text-violet-700"
-              target={shouldOpenMainSiteInNewTab ? "_blank" : undefined}
-              rel={shouldOpenMainSiteInNewTab ? "noreferrer" : undefined}
-            >
-              Main Site
-            </Link>
             <a
               href={adminLoginUrl}
               className="inline-flex h-11 items-center justify-center border border-slate-300 px-5 text-sm font-semibold text-slate-900 transition hover:border-violet-200 hover:text-violet-700"
@@ -297,14 +282,6 @@ export default function VendorPage() {
                 Quick links
               </p>
               <div className="mt-5 space-y-3 text-sm font-semibold text-slate-700">
-                <Link
-                  href={mainSiteUrl}
-                  className="block hover:text-violet-700"
-                  target={shouldOpenMainSiteInNewTab ? "_blank" : undefined}
-                  rel={shouldOpenMainSiteInNewTab ? "noreferrer" : undefined}
-                >
-                  Main Site
-                </Link>
                 <Link
                   href="/vendor/registration"
                   className="block hover:text-violet-700"
