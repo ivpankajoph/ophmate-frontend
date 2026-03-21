@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const applyPageResponseHeaders = (response: NextResponse) => {
+  response.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, max-age=0, must-revalidate"
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+};
+
 export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-current-path", request.nextUrl.pathname || "/");
@@ -21,11 +31,13 @@ export function middleware(request: NextRequest) {
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/template/${vendorId}${rest ? `/${rest}` : ""}`;
 
-    return NextResponse.rewrite(rewriteUrl, {
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    return applyPageResponseHeaders(
+      NextResponse.rewrite(rewriteUrl, {
+        request: {
+          headers: requestHeaders,
+        },
+      })
+    );
   }
 
   // While browsing in preview mode, keep slug context if links point to non-preview paths.
@@ -49,7 +61,7 @@ export function middleware(request: NextRequest) {
           redirectUrl.pathname = `/template/${vendorId}/preview/${templateKey}${
             rest ? `/${rest}` : ""
           }`;
-          return NextResponse.redirect(redirectUrl);
+          return applyPageResponseHeaders(NextResponse.redirect(redirectUrl));
         }
       } catch {
         // ignore invalid referer
@@ -57,11 +69,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return applyPageResponseHeaders(
+    NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  );
 }
 
 export const config = {
@@ -69,4 +83,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap-0.xml|.*\\..*).*)",
   ],
 };
-
