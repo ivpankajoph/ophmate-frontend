@@ -81,7 +81,7 @@ export default function VendorPage() {
                 SellersLogin
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                Build for your all e-commerce needs
+                Build your Dreams
               </p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function VendorPage() {
               href="/vendor/registration"
               className="inline-flex h-11 items-center justify-center bg-violet-700 px-5 text-sm font-semibold text-white transition hover:bg-violet-800"
             >
-              Start for free
+              Create Store For Free
             </Link>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function VendorPage() {
                       href={`mailto:${supportEmail}`}
                       className="font-semibold text-slate-950 underline-offset-4 hover:underline"
                     >
-                      {supportEmail}
+                      {supportEmail} 
                     </a>
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export default function VendorPage() {
                     SellersLogin
                   </p>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Build for your all e-commerce needs
+                    Build your Dreams
                   </p>
                 </div>
               </div>
