@@ -33,6 +33,8 @@ const adminLoginUrl =
   process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? "http://localhost:5173/sign-in?redirect=%2F";
 const supportEmail = "support@sellerslogin.com";
 const vendorOverviewUrl = "/vendor";
+const privacyPolicyUrl = "/privacy";
+const termsAndConditionsUrl = "/terms";
 const newTabProps = {
   target: "_blank",
   rel: "noreferrer",
@@ -135,15 +137,15 @@ export default function VendorRegistrationPage() {
           typeof window !== "undefined" ? localStorage.getItem(VENDOR_REG_DRAFT_KEY) : null;
         const draft = draftRaw
           ? (JSON.parse(draftRaw) as {
-              stage?: RegistrationStage;
-              countryCode?: string;
-              phone?: string;
-              email?: string;
-              phoneOtp?: string[];
-              emailOtp?: string[];
-              phoneTimer?: number;
-              canResendPhoneOtp?: boolean;
-            })
+            stage?: RegistrationStage;
+            countryCode?: string;
+            phone?: string;
+            email?: string;
+            phoneOtp?: string[];
+            emailOtp?: string[];
+            phoneTimer?: number;
+            canResendPhoneOtp?: boolean;
+          })
           : null;
 
         const storedCountryCode =
@@ -560,7 +562,7 @@ export default function VendorRegistrationPage() {
         typeof error === "string"
           ? error
           : (error as { message?: string })?.message ??
-            "Something went wrong while verifying OTP. Please try again.";
+          "Something went wrong while verifying OTP. Please try again.";
       Swal.fire("Error", message, "error");
     } finally {
       setIsVerifyingPhoneOtp(false);
@@ -597,7 +599,7 @@ export default function VendorRegistrationPage() {
         typeof error === "string"
           ? error
           : (error as { message?: string })?.message ??
-            "Something went wrong while sending email OTP.";
+          "Something went wrong while sending email OTP.";
       Swal.fire("Error", message, "error");
       return false;
     } finally {
@@ -649,7 +651,7 @@ export default function VendorRegistrationPage() {
         typeof error === "string"
           ? error
           : (error as { message?: string })?.message ??
-            "Something went wrong while verifying email OTP.";
+          "Something went wrong while verifying email OTP.";
       Swal.fire("Error", message, "error");
     } finally {
       setIsVerifyingEmailOtp(false);
@@ -674,7 +676,7 @@ export default function VendorRegistrationPage() {
             <div className="min-w-0">
               <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                Build for your all e-commerce needs
+                Build your Dreams
               </p>
             </div>
           </Link>
@@ -912,10 +914,10 @@ export default function VendorRegistrationPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <p className="max-w-md text-sm leading-6 text-slate-500">
-                  OTP is sent using the selected country code, so international WhatsApp
-                  numbers continue through the same flow.
-                </p>
+                  <p className="max-w-md text-sm leading-6 text-slate-500">
+                    OTP is sent using the selected country code, so international WhatsApp
+                    numbers continue through the same flow.
+                  </p>
 
                   <button
                     type="button"
@@ -1086,7 +1088,7 @@ export default function VendorRegistrationPage() {
                 <div>
                   <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Build for your all e-commerce needs
+                    Build your Dreams
                   </p>
                 </div>
               </div>
@@ -1132,8 +1134,26 @@ export default function VendorRegistrationPage() {
             </div>
           </div>
 
-          <div className="border-x border-b border-slate-200 bg-white px-8 py-4 text-sm text-slate-500">
-            Copyright {new Date().getFullYear()} SellersLogin. All rights reserved.
+          <div className="border-x border-b border-slate-200 bg-white px-8 py-4 text-sm text-slate-500 justify-center lg:flex lg:items-center lg:justify-between-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <Link
+                href={privacyPolicyUrl}
+                className="font-semibold text-slate-700 transition hover:text-violet-700"
+                {...newTabProps}
+              >
+                Privacy Policy
+              </Link>
+              <span className="hidden text-slate-300 sm:inline">|</span>
+              <Link
+                href={termsAndConditionsUrl}
+                className="font-semibold text-slate-700 transition hover:text-violet-700"
+                {...newTabProps}
+              >
+                Terms &amp; Conditions
+              </Link>
+              <span className="hidden text-slate-300 sm:inline">|</span>
+              <span>Copyright {new Date().getFullYear()} SellersLogin. All rights reserved.</span>
+            </div>
           </div>
         </div>
       </footer>

@@ -51,7 +51,7 @@ export default function VendorMarketingLayout({
                   SellersLogin
                 </p>
                 <p className="hidden max-w-[18rem] text-xs font-semibold uppercase leading-[1.2] tracking-[0.24em] text-slate-400 sm:block">
-                  Build for your all e-commerce needs
+                  Build your Dreams
                 </p>
               </div>
             </Link>

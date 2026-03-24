@@ -2082,7 +2082,7 @@ export default function VendorBusinessDetailsPage() {
             <div className="min-w-0">
               <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                Build for your all e-commerce needs
+                Build your Dreams
               </p>
             </div>
           </Link>
@@ -3008,7 +3008,7 @@ export default function VendorBusinessDetailsPage() {
                 <div>
                   <p className="text-2xl font-bold tracking-tight text-slate-950">SellersLogin</p>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Build for your all e-commerce needs
+                    Build your Dreams
                   </p>
                 </div>
               </div>
