@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { isSupportedCountry, parsePhoneNumberFromString } from "libphonenumber-js/min";
+import type { CountryCode } from "libphonenumber-js/min";
 import { ChevronDown, Search } from "lucide-react";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
@@ -75,6 +77,70 @@ const getStepTone = (status: StepStatus) => {
   };
 };
 
+const validateWhatsAppNumber = (digits: string, country: CountryOption | null) => {
+  if (!country) {
+    return {
+      isValid: false,
+      message: "Select a country code to continue.",
+    };
+  }
+
+  if (!digits) {
+    return {
+      isValid: false,
+      message: "Enter your WhatsApp number to continue.",
+    };
+  }
+
+  const normalizedDigits = digits.replace(/\D/g, "");
+  const normalizedCountryCode = country.code.toUpperCase() as CountryCode;
+
+  if (normalizedCountryCode === "IN") {
+    if (!/^[6-9]\d{9}$/.test(normalizedDigits)) {
+      return {
+        isValid: false,
+        message: "Enter a valid Indian WhatsApp mobile number.",
+      };
+    }
+
+    return {
+      isValid: true,
+      message: "",
+    };
+  }
+
+  if (isSupportedCountry(normalizedCountryCode)) {
+    const parsedNumber = parsePhoneNumberFromString(
+      normalizedDigits,
+      normalizedCountryCode,
+    );
+
+    if (parsedNumber?.isValid()) {
+      return {
+        isValid: true,
+        message: "",
+      };
+    }
+
+    return {
+      isValid: false,
+      message: `Enter a valid WhatsApp number for ${country.name}.`,
+    };
+  }
+
+  if (normalizedDigits.length < 6 || normalizedDigits.length > 15) {
+    return {
+      isValid: false,
+      message: `Enter a valid WhatsApp number for ${country.name}.`,
+    };
+  }
+
+  return {
+    isValid: true,
+    message: "",
+  };
+};
+
 export default function VendorRegistrationPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -89,6 +155,7 @@ export default function VendorRegistrationPage() {
   const [countryQuery, setCountryQuery] = useState("");
 
   const [phone, setPhone] = useState("");
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [phoneOtp, setPhoneOtp] = useState<string[]>(emptyPhoneOtp);
   const [phoneTimer, setPhoneTimer] = useState(30);
   const [canResendPhoneOtp, setCanResendPhoneOtp] = useState(false);
@@ -310,7 +377,11 @@ export default function VendorRegistrationPage() {
   const phoneOtpValue = phoneOtp.join("");
   const emailOtpValue = emailOtp.join("");
   const phoneDialCode = selectedCountry?.dialCode ?? "";
-  const isPhoneValid = Boolean(selectedCountry) && phoneDigits.length >= 6 && phoneDigits.length <= 15;
+  const phoneValidation = useMemo(
+    () => validateWhatsAppNumber(phoneDigits, selectedCountry),
+    [phoneDigits, selectedCountry],
+  );
+  const isPhoneValid = phoneValidation.isValid;
   const isEmailValid = emailPattern.test(email.trim());
   const currentEmailStep = isEmailStep(stage);
 
@@ -482,7 +553,11 @@ export default function VendorRegistrationPage() {
 
   const sendPhoneOtpRequest = async () => {
     if (!selectedCountry || !isPhoneValid) {
-      Swal.fire("Warning", "Please enter a valid WhatsApp number.", "warning");
+      Swal.fire(
+        "Warning",
+        phoneValidation.message || "Please enter a valid WhatsApp number.",
+        "warning",
+      );
       return false;
     }
 
@@ -515,6 +590,15 @@ export default function VendorRegistrationPage() {
   };
 
   const handleContinueToPhoneOtp = async () => {
+    if (!hasAcceptedTerms) {
+      Swal.fire(
+        "Terms & Conditions required",
+        "Please agree to the Terms & Conditions before continuing.",
+        "warning",
+      );
+      return;
+    }
+
     const sent = await sendPhoneOtpRequest();
 
     if (!sent) return;
@@ -535,7 +619,13 @@ export default function VendorRegistrationPage() {
 
   const handleVerifyPhoneOtp = async () => {
     if (!selectedCountry || !isPhoneValid || phoneOtpValue.length !== 6) {
-      Swal.fire("Warning", "Please enter the full 6-digit WhatsApp OTP.", "warning");
+      Swal.fire(
+        "Warning",
+        !isPhoneValid
+          ? phoneValidation.message || "Please enter a valid WhatsApp number."
+          : "Please enter the full 6-digit WhatsApp OTP.",
+        "warning",
+      );
       return;
     }
 
@@ -911,25 +1001,54 @@ export default function VendorRegistrationPage() {
                       className="h-12 rounded-none border-slate-300 px-4 text-base shadow-none"
                     />
                   </div>
+                  {phoneDigits && !isPhoneValid ? (
+                    <p className="mt-2 text-sm text-red-600">{phoneValidation.message}</p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="max-w-md text-sm leading-6 text-slate-500">
-                    OTP is sent using the selected country code, so international WhatsApp
-                    numbers continue through the same flow.
-                  </p>
+                  <div className="max-w-md space-y-3">
+                    <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={hasAcceptedTerms}
+                        onChange={(event) => setHasAcceptedTerms(event.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-600"
+                      />
+                      <span>
+                        I agree with the{" "}
+                        <Link
+                          href={termsAndConditionsUrl}
+                          className="font-semibold text-violet-700 underline underline-offset-4 hover:text-violet-800"
+                          {...newTabProps}
+                        >
+                          Terms &amp; Conditions and Privacy Policy 
+                        </Link>
+                        
+                      </span>
+                    </label>
+                    <p className="text-sm leading-6 text-slate-500">
+                      OTP is sent using the selected country code, so international WhatsApp
+                      numbers continue through the same flow.
+                    </p>
+                  </div>
 
                   <button
                     type="button"
                     className="inline-flex min-h-12 items-center justify-center border border-violet-700 bg-violet-700 px-6 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
                     onClick={handleContinueToPhoneOtp}
-                    disabled={!isPhoneValid || countriesLoading || isSendingPhoneOtp}
+                    disabled={
+                      !isPhoneValid ||
+                      countriesLoading ||
+                      isSendingPhoneOtp ||
+                      !hasAcceptedTerms
+                    }
                   >
                     {isSendingPhoneOtp ? "Sending OTP..." : "Continue"}
                   </button>
                 </div>
               </div>
-            )
+            ) 
           ) : stage === "email-otp" ? (
             <div className="space-y-6">
               <div className="border border-slate-200 bg-slate-50 p-5">
