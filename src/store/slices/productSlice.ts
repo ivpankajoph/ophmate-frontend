@@ -14,9 +14,8 @@ export const fetchAllProducts = createAsyncThunk(
       const token = state.auth?.token; // adjust if token is stored elsewhere
 
       const response = await axios.get(`${BASE_URL}/products/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        params: { _ts: Date.now() },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
       return response.data;
@@ -32,7 +31,9 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/products/${id}`);
+      const response = await axios.get(`${BASE_URL}/products/${id}`, {
+        params: { _ts: Date.now() },
+      });
       return response.data.product; // Return only product data
     } catch (error: any) {
       return rejectWithValue(
@@ -40,7 +41,7 @@ export const fetchProductById = createAsyncThunk(
       );
     }
   }
-)
+);
 
 // Slice
 interface ProductState {

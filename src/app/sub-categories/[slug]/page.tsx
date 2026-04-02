@@ -128,8 +128,11 @@ export default function SubCategoryDetailPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/subcategories/slug/${categorySlug}`,
           {
             method: "GET",
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
           }
         );
@@ -150,11 +153,14 @@ export default function SubCategoryDetailPage() {
         setSubCategory(subCategoryData.data);
 
         const productsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${subCategoryData.data._id}?page=${page}&limit=${limit}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/products/sub-categories/${subCategoryData.data._id}?page=${page}&limit=${limit}&_ts=${Date.now()}`,
           {
             method: "GET",
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
           }
         );

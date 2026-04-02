@@ -125,8 +125,11 @@ export default function CategoryDetailPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/categories/slug/${categorySlug}`,
           {
             method: "GET",
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
           }
         );
@@ -146,11 +149,14 @@ export default function CategoryDetailPage() {
         setCategory(categoryData.data);
 
         const productsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryData.data._id}?page=${page}&limit=${limit}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryData.data._id}?page=${page}&limit=${limit}&_ts=${Date.now()}`,
           {
             method: "GET",
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
           }
         );

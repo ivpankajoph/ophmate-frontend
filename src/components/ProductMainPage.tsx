@@ -14,9 +14,21 @@ import { createWishlistItem } from "@/lib/wishlist";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { trackAddToCart } from "@/lib/analytics-events";
 import { buildProductPath } from "@/lib/product-route";
+import { NEXT_PUBLIC_API_URL } from "@/config/variables";
 
 const formatPrice = (value: number) =>
   `Rs. ${Number(value || 0).toLocaleString()}`;
+
+const resolveApiBase = () => {
+  const configuredBase = String(NEXT_PUBLIC_API_URL || "").trim();
+  if (configuredBase) return configuredBase.replace(/\/+$/, "");
+
+  if (typeof window !== "undefined") {
+    return "http://localhost:8081/api/v1";
+  }
+
+  return "";
+};
 
 const getProductImage = (product: any) => {
   const firstVariant = product?.variants?.[0];
@@ -51,10 +63,10 @@ const ProductCard = ({ product }: { product: any }) => {
   const rating = Number(product?.averageRating || product?.rating || 0);
   const reviewCount = Number(
     product?.totalReviews ||
-      product?.reviewCount ||
-      product?.ratingsCount ||
-      product?.reviews?.length ||
-      0,
+    product?.reviewCount ||
+    product?.ratingsCount ||
+    product?.reviews?.length ||
+    0,
   );
   const imageUrl = getProductImage(product);
   const isOutOfStock = stockQuantity <= 0;
@@ -153,11 +165,10 @@ const ProductCard = ({ product }: { product: any }) => {
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
-              className={`h-4 w-4 ${
-                isWishlisted
+              className={`h-4 w-4 ${isWishlisted
                   ? "fill-red-500 text-red-500"
                   : "text-slate-700 hover:fill-red-500 hover:text-red-500"
-              }`}
+                }`}
             />
           </button>
         </div>
@@ -201,9 +212,8 @@ const ProductCard = ({ product }: { product: any }) => {
       </Link>
       <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-3 py-2.5">
         <span
-          className={`text-[11px] font-semibold ${
-            stockQuantity > 5 ? "text-emerald-600" : "text-orange-600"
-          }`}
+          className={`text-[11px] font-semibold ${stockQuantity > 5 ? "text-emerald-600" : "text-orange-600"
+            }`}
         >
           {stockQuantity > 0 ? `${stockQuantity} in stock` : "Out of stock"}
         </span>
@@ -249,14 +259,21 @@ const ProductsMainPage = () => {
     const fetchHomeData = async () => {
       try {
         setLoading(true);
+        const apiBase = resolveApiBase();
+        if (!apiBase) {
+          console.error("ProductsMainPage: API base URL is missing");
+          setProducts([]);
+          return;
+        }
+
         const token =
           typeof window !== "undefined"
             ? localStorage.getItem("authToken") || ""
             : "";
         const productsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/all`,
+          `${apiBase}/products/all`,
           {
-            params: { page: 1, limit: 48 },
+            params: { page: 1, limit: 48, _ts: Date.now() },
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           },
         );
