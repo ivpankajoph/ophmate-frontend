@@ -256,7 +256,7 @@ const ProductsMainPage = () => {
         const productsRes = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/products/all`,
           {
-            params: { page: 1, limit: 48 },
+            params: { page: 1, limit: 48, _ts: Date.now() },
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           },
         );

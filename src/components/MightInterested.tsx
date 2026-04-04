@@ -62,7 +62,14 @@ const MightInterested = ({
         setLoading(true);
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/products/category/${categoryId}?_ts=${Date.now()}`,
+          {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-store, no-cache, max-age=0",
+              Pragma: "no-cache",
+            },
+          }
         );
 
         const data = await res.json();
