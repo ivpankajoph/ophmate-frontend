@@ -51,7 +51,7 @@ const getSourceFromPath = (path: string) =>
   path.startsWith("/template/") ? "template" : "ophmart";
 
 type AnalyticsPayload = {
-  eventType: "add_to_cart" | "checkout" | "purchase";
+  eventType: "add_to_cart" | "checkout" | "purchase" | "product_view" | "search";
   vendorId?: string;
   userId?: string;
   productId?: string;
@@ -104,3 +104,10 @@ export const trackCheckout = (payload: Omit<AnalyticsPayload, "eventType">) =>
 
 export const trackPurchase = (payload: Omit<AnalyticsPayload, "eventType">) =>
   sendAnalyticsEvent({ ...payload, eventType: "purchase" });
+
+export const trackProductView = (payload: Omit<AnalyticsPayload, "eventType">) =>
+  sendAnalyticsEvent({ ...payload, eventType: "product_view" });
+
+export const trackSearch = (
+  payload: Omit<AnalyticsPayload, "eventType"> & { metadata: Record<string, unknown> }
+) => sendAnalyticsEvent({ ...payload, eventType: "search" });

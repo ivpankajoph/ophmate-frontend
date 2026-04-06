@@ -94,7 +94,11 @@ const newTabProps = {
   rel: "noreferrer",
 };
 
-const STEP_ORDER: BusinessStep[] = ["address", "profile", "other"];
+const STEP_ORDER: BusinessStep[] = [
+  "address",
+  "profile",
+  // "other",
+];
 const OPERATING_DAYS = [
   "Monday",
   "Tuesday",
@@ -869,7 +873,11 @@ export default function VendorBusinessDetailsPage() {
         })
       : null;
 
-    setCurrentStep(draft?.currentStep ?? "address");
+    setCurrentStep(
+      draft?.currentStep && STEP_ORDER.includes(draft.currentStep)
+        ? draft.currentStep
+        : "address",
+    );
     setLockedEmail(storedEmail);
     setLockedPhone(storedPhone);
     setBusinessNatureOtherInput(draft?.businessNatureOtherInput ?? "");
@@ -1172,7 +1180,7 @@ export default function VendorBusinessDetailsPage() {
     [dealingAreaOptions],
   );
   const currentStepIndex = STEP_ORDER.indexOf(currentStep);
-  const currentStepLabel = `Step ${currentStepIndex + 1} of 3`;
+  const currentStepLabel = `Step ${currentStepIndex + 1} of ${STEP_ORDER.length}`;
   const canGoBack = currentStepIndex > 0;
   const isIndianBusiness = form.country === "India";
   const postalCodeLabel = isIndianBusiness ? "Pincode" : "Postal code";
@@ -1193,11 +1201,11 @@ export default function VendorBusinessDetailsPage() {
       label: "Step 2",
       title: "Information and profile",
     },
-    {
-      id: "other" as BusinessStep,
-      label: "Step 3",
-      title: "Other information and documents",
-    },
+    // {
+    //   id: "other" as BusinessStep,
+    //   label: "Step 3",
+    //   title: "Other information and documents",
+    // },
   ].map((item, index) => {
     const status: StepStatus =
       index < currentStepIndex ? "complete" : index === currentStepIndex ? "current" : "pending";
@@ -1225,11 +1233,11 @@ export default function VendorBusinessDetailsPage() {
       description:
         "Add business identity, designation, establishment year, profile selections, and categories.",
     },
-    other: {
-      title: "Other information and documents",
-      description:
-        "Finish banking, operating hours, dealing country, and compliance documents in the last step.",
-    },
+    // other: {
+    //   title: "Other information and documents",
+    //   description:
+    //     "Finish banking, operating hours, dealing country, and compliance documents in the last step.",
+    // },
   }[currentStep];
 
   const clearErrors = (fieldNames: string[]) => {
@@ -1829,11 +1837,10 @@ export default function VendorBusinessDetailsPage() {
   const handleSubmit = async () => {
     const addressErrors = getStepErrors("address");
     const profileErrors = getStepErrors("profile");
-    const otherErrors = getStepErrors("other");
     const mergedErrors = {
       ...addressErrors,
       ...profileErrors,
-      ...otherErrors,
+      // ...otherErrors,
     };
 
     setErrors(mergedErrors);
@@ -1843,8 +1850,6 @@ export default function VendorBusinessDetailsPage() {
         void moveToStep("address", "Opening address step...");
       } else if (Object.keys(profileErrors).length) {
         void moveToStep("profile", "Opening profile step...");
-      } else {
-        void moveToStep("other", "Opening document step...");
       }
       return;
     }
@@ -2527,7 +2532,7 @@ export default function VendorBusinessDetailsPage() {
             </div>
           ) : null}
 
-          {currentStep === "other" ? (
+          {/* {currentStep === "other" ? (
             <div className="space-y-10">
               <div className="grid gap-6 md:grid-cols-2">
                 <TextField
@@ -2821,14 +2826,14 @@ export default function VendorBusinessDetailsPage() {
                 )}
               </div>
             </div>
-          ) : null}
+          ) : null} */}
 
           <div className="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-slate-500">
-              {currentStep === "other"
+              {currentStep === "profile"
                 ? "Review all required fields before submitting the final business registration."
                 : "The right side stays fixed while the left form changes from step to step."}
-              {currentStep === "other" && isAnyAssetUploading ? (
+              {currentStep === "profile" && isAnyAssetUploading ? (
                 <p className="mt-2 text-amber-700">
                   File upload in progress. Please wait before final submit.
                 </p>
@@ -2846,7 +2851,7 @@ export default function VendorBusinessDetailsPage() {
                 </button>
               ) : null}
 
-              {currentStep === "other" ? (
+              {currentStep === "profile" ? (
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -2880,7 +2885,7 @@ export default function VendorBusinessDetailsPage() {
             Complete your business registration.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            Stay on this page and move through address, profile, and final documents.
+            Stay on this page and move through address and profile details.
             The right side remains fixed and keeps the full registration map visible.
           </p>
 
