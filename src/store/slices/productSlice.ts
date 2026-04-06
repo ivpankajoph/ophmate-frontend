@@ -12,10 +12,15 @@ export const fetchAllProducts = createAsyncThunk(
     try {
       const state: any = getState();
       const token = state.auth?.token; // adjust if token is stored elsewhere
+      const requestTs = Date.now();
 
       const response = await axios.get(`${BASE_URL}/products/all`, {
-        params: { _ts: Date.now() },
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        params: { _ts: requestTs },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-store, no-cache, max-age=0",
+          Pragma: "no-cache",
+        },
       });
 
       return response.data;
@@ -31,8 +36,12 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/products/${id}`, {
+      const response = await axios.get(`${BASE_URL}/products/${encodeURIComponent(id)}`, {
         params: { _ts: Date.now() },
+        headers: {
+          "Cache-Control": "no-store, no-cache, max-age=0",
+          Pragma: "no-cache",
+        },
       });
       return response.data.product; // Return only product data
     } catch (error: any) {

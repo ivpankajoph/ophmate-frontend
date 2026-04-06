@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
@@ -20,6 +19,47 @@ export const getImageUrl = (path?: string) => {
   if (!path) return "/placeholder.jpg";
   if (path.startsWith("http")) return path;
   return `${BASE_URL}/${path.replace(/^\//, "")}`;
+};
+
+const getProductImage = (product: any) => {
+  const defaultImage =
+    product?.defaultImages?.find((image: any) =>
+      typeof image === "string" ? image.trim() : image?.url?.trim()
+    ) || null;
+
+  if (typeof defaultImage === "string") {
+    return getImageUrl(defaultImage);
+  }
+  if (defaultImage?.url) {
+    return getImageUrl(defaultImage.url);
+  }
+
+  const variantImage = product?.variants
+    ?.flatMap((variant: any) => variant?.variantsImageUrls || [])
+    ?.find((image: any) =>
+      typeof image === "string" ? image.trim() : image?.url?.trim()
+    );
+
+  if (typeof variantImage === "string") {
+    return getImageUrl(variantImage);
+  }
+  if (variantImage?.url) {
+    return getImageUrl(variantImage.url);
+  }
+
+  const legacyImage = product?.images?.[0];
+  return typeof legacyImage === "string" ? getImageUrl(legacyImage) : "/placeholder.jpg";
+};
+
+const getProductPrice = (product: any) => {
+  const firstVariant = product?.variants?.[0];
+  return Number(
+    firstVariant?.finalPrice ??
+      firstVariant?.final_price ??
+      firstVariant?.actualPrice ??
+      firstVariant?.actual_price ??
+      0
+  );
 };
 
 export default function EcommerceHeroPage() {
@@ -222,28 +262,18 @@ export default function EcommerceHeroPage() {
                       >
                         <CardContent className="p-3">
                           <div className="relative mb-2 h-32 w-full overflow-hidden rounded-lg bg-neutral-100">
-                            {p.images?.[0] ? (
-                              <Image
-                                src={getImageUrl(p.images[0])}
-                                alt={p.productName || "Product"}
-                                fill
-                                className="object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "/placeholder.jpg";
-                                }}
-                              />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-neutral-400">
-                                No Image
-                              </div>
-                            )}
+                            <Image
+                              src={getProductImage(p)}
+                              alt={p.productName || "Product"}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                           <p className="mb-1 truncate text-sm font-medium">
                             {p.productName || "Unnamed Product"}
                           </p>
                           <p className="text-sm font-bold text-indigo-600">
-                            ₹{p.variants?.[0]?.final_price || 0}
+                            ₹{getProductPrice(p)}
                           </p>
                         </CardContent>
                       </Card>
@@ -302,28 +332,18 @@ export default function EcommerceHeroPage() {
                 >
                   <CardContent className="p-4">
                     <div className="relative mb-3 h-48 w-full overflow-hidden rounded-lg bg-neutral-100">
-                      {p.images?.[0] ? (
-                        <Image
-                          src={getImageUrl(p.images[0])}
-                          alt={p.productName || "Product"}
-                          fill
-                          className="object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "/placeholder.jpg";
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-neutral-400">
-                          No Image
-                        </div>
-                      )}
+                      <Image
+                        src={getProductImage(p)}
+                        alt={p.productName || "Product"}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                     <p className="mb-2 truncate font-semibold text-neutral-900">
                       {p.productName || "Unnamed Product"}
                     </p>
                     <p className="mb-2 text-lg font-bold text-indigo-600">
-                      ₹{p.variants?.[0]?.final_price || 0}
+                      ₹{getProductPrice(p)}
                     </p>
                     <div className="flex items-center gap-1 text-sm text-neutral-600">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -366,29 +386,19 @@ export default function EcommerceHeroPage() {
                   className="group relative w-full cursor-pointer overflow-hidden rounded-xl shadow transition-transform hover:scale-[1.02]"
                 >
                   <div className="relative h-56 w-full bg-neutral-100">
-                    {p.images?.[0] ? (
-                      <Image
-                        src={getImageUrl(p.images[0])}
-                        alt={p.productName || "Product"}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-110"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.jpg";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-400">
-                        No Image
-                      </div>
-                    )}
+                    <Image
+                      src={getProductImage(p)}
+                      alt={p.productName || "Product"}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-110"
+                    />
                   </div>
                   <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 text-white">
                     <p className="mb-1 truncate text-lg font-bold">
                       {p.productName || "Unnamed Product"}
                     </p>
                     <p className="mb-2 text-sm">
-                      ₹{p.variants?.[0]?.final_price || 0}
+                      ₹{getProductPrice(p)}
                     </p>
                     <Badge className="w-fit bg-white/20 backdrop-blur-sm">
                       {p.brand || "Unknown Brand"}

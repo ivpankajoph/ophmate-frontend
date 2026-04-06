@@ -122,13 +122,13 @@ export default function CategoryDetailPage() {
         setError(null);
 
         const categoryResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/categories/slug/${categorySlug}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/categories/slug/${categorySlug}?_ts=${Date.now()}`,
           {
             method: "GET",
             cache: "no-store",
             headers: {
               "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
+              "Cache-Control": "no-store, no-cache, max-age=0",
               Pragma: "no-cache",
             },
           }
@@ -155,7 +155,7 @@ export default function CategoryDetailPage() {
             cache: "no-store",
             headers: {
               "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
+              "Cache-Control": "no-store, no-cache, max-age=0",
               Pragma: "no-cache",
             },
           }

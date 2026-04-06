@@ -66,7 +66,7 @@ const MightInterested = ({
           {
             cache: "no-store",
             headers: {
-              "Cache-Control": "no-cache",
+              "Cache-Control": "no-store, no-cache, max-age=0",
               Pragma: "no-cache",
             },
           }
