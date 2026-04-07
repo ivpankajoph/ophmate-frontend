@@ -1233,11 +1233,11 @@ export default function VendorBusinessDetailsPage() {
       description:
         "Add business identity, designation, establishment year, profile selections, and categories.",
     },
-    // other: {
-    //   title: "Other information and documents",
-    //   description:
-    //     "Finish banking, operating hours, dealing country, and compliance documents in the last step.",
-    // },
+    other: {
+      title: "Other information",
+      description:
+        "Add additional business details, documents, and operating hours.",
+    },
   }[currentStep];
 
   const clearErrors = (fieldNames: string[]) => {
