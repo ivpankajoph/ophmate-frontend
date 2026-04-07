@@ -357,11 +357,12 @@ export default function ProductDetailPage() {
   ).filter(Boolean);
 
   const productDescription =
+    product.description ||
     selectedVariant?.variantMetaDescription ||
     product.variants[0]?.variantMetaDescription ||
-    product.description ||
     product.shortDescription ||
     "No description available.";
+  const productShortDescription = String(product.shortDescription || "").trim();
 
   const specs: Record<string, string> = {
     Brand: product.brand || "N/A",
@@ -759,6 +760,15 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
+
+            {productShortDescription ? (
+              <div className="rounded-xl border bg-slate-50 p-4">
+                <p className="mb-2 text-sm font-semibold text-slate-900">
+                  Short Description
+                </p>
+                <RichTextContent text={productShortDescription} />
+              </div>
+            ) : null}
 
             <Separator />
 
