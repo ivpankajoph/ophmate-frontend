@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { isSupportedCountry, parsePhoneNumberFromString } from "libphonenumber-js/min";
 import type { CountryCode } from "libphonenumber-js/min";
 import { ChevronDown, Search } from "lucide-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import { Input } from "@/components/ui/input";
 import StepTransitionLoader from "@/components/vendor/StepTransitionLoader";
@@ -46,6 +45,94 @@ const emptyEmailOtp = ["", "", "", "", "", ""];
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VENDOR_REG_META_KEY = "vendor_registration_meta_v1";
 const VENDOR_REG_DRAFT_KEY = "vendor_registration_draft_v1";
+const encodeBase64 = (value: string) => {
+  if (typeof window === "undefined") return "";
+  try {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return window.btoa(binary);
+  } catch {
+    return "";
+  }
+};
+
+const resolveAdminLoginUrl = () => {
+  const fallback = `${process.env.NEXT_PUBLIC_ADMIN_APP_URL}/sign-in?redirect=%2F`;
+  const raw = (process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? fallback).trim();
+
+  try {
+    return new URL(raw);
+  } catch {
+    const sanitized = raw.replace(/^\/+/, "");
+    const looksLikeHostPath =
+      sanitized.includes("localhost:") || /^[a-z0-9.-]+\.[a-z]{2,}/i.test(sanitized);
+
+    if (looksLikeHostPath) {
+      try {
+        return new URL(`http://${sanitized}`);
+      } catch {
+        // Ignore and continue.
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        return new URL(raw, window.location.origin);
+      } catch {
+        // Ignore and use fallback.
+      }
+    }
+
+    try {
+      return new URL(fallback);
+    } catch {
+      return null;
+    }
+  }
+};
+
+const buildAdminAutoLoginUrl = ({
+  token,
+  vendor,
+  redirectPath = "/profile",
+}: {
+  token: string;
+  vendor: Record<string, unknown> | null;
+  redirectPath?: string;
+}) => {
+  const url = resolveAdminLoginUrl();
+  if (!url) return adminLoginUrl;
+
+  try {
+    if (url.pathname === "/") {
+      url.pathname = "/sign-in";
+    }
+
+    const safeVendor = vendor && typeof vendor === "object" ? vendor : {};
+    const normalizedRole = String((safeVendor as { role?: string }).role || "vendor")
+      .trim()
+      .toLowerCase();
+    const userPayload = {
+      ...safeVendor,
+      role: normalizedRole || "vendor",
+    };
+    const encodedUser = encodeBase64(JSON.stringify(userPayload));
+
+    url.searchParams.set("redirect", redirectPath || "/profile");
+    url.searchParams.set("autologin", "1");
+    url.searchParams.set("authtoken", token);
+    if (encodedUser) {
+      url.searchParams.set("authuser", encodedUser);
+    }
+
+    return url.toString();
+  } catch {
+    return adminLoginUrl;
+  }
+};
 
 const isEmailStep = (stage: RegistrationStage) =>
   stage === "email-entry" || stage === "email-otp";
@@ -143,7 +230,9 @@ const validateWhatsAppNumber = (digits: string, country: CountryOption | null) =
 
 export default function VendorRegistrationPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const authToken = useSelector((state: { auth?: { token?: string | null } }) =>
+    state.auth?.token ?? "",
+  );
 
   const [stage, setStage] = useState<RegistrationStage>("phone-entry");
   const [countries, setCountries] = useState<CountryOption[]>([]);
@@ -390,10 +479,10 @@ export default function VendorRegistrationPage() {
     : "Verify your WhatsApp number.";
 
   const heroDescription = currentEmailStep
-    ? "Your WhatsApp number is verified. Stay on this same page and complete email verification before the business details step."
-    : "Start with WhatsApp verification. International numbers are supported, then continue to email verification and business details.";
+    ? "Your WhatsApp number is verified. Complete email verification and then continue inside your seller dashboard profile."
+    : "Start with WhatsApp verification. International numbers are supported, then continue to email verification before entering the dashboard.";
 
-  const panelStepLabel = currentEmailStep ? "Step 2 of 3" : "Step 1 of 3";
+  const panelStepLabel = currentEmailStep ? "Step 2 of 2" : "Step 1 of 2";
   const panelTitle = currentEmailStep
     ? stage === "email-otp"
       ? "Enter email OTP"
@@ -423,10 +512,10 @@ export default function VendorRegistrationPage() {
           : "Verify email address",
     },
     {
-      label: "Step 3",
-      note: "Next",
+      label: "Next",
+      note: "Dashboard",
       status: "pending" as StepStatus,
-      title: "Submit business and banking details",
+      title: "Complete business profile from your sellers dashboard",
     },
   ];
 
@@ -715,12 +804,26 @@ export default function VendorRegistrationPage() {
     setIsVerifyingEmailOtp(true);
 
     try {
-      await dispatch(
+      const result = await dispatch(
         verifyEmailOtp({
           email: normalizedEmail,
           otp: normalizedOtp,
         }),
       ).unwrap();
+
+      const verifiedUser =
+        (result as { user?: Record<string, unknown> })?.user || {
+          role: "vendor",
+          email: normalizedEmail,
+          phone: getFullPhoneDigits(),
+        };
+      const adminRedirectUrl = authToken
+        ? buildAdminAutoLoginUrl({
+          token: authToken,
+          vendor: verifiedUser,
+          redirectPath: "/profile",
+        })
+        : adminLoginUrl;
 
       localStorage.setItem("vendor_email", normalizedEmail);
       sessionStorage.setItem("vendor_email", normalizedEmail);
@@ -730,9 +833,11 @@ export default function VendorRegistrationPage() {
 
       Swal.fire("Success", "Email verified successfully.", "success");
       await runStepTransition(
-        "Preparing business details form...",
+        "Redirecting to your sellers dashboard...",
         async () => {
-          router.push("/vendor/registration/business-details");
+          if (typeof window !== "undefined") {
+            window.location.replace(adminRedirectUrl);
+          }
         },
         { persistLoaderAfterAction: true },
       );
