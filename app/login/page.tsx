@@ -100,7 +100,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => handleQuickLogin('admin')}
-            className="border border-[#121212] bg-[#121212] text-white px-3 py-1.5 text-[11px] uppercase tracking-luxury hover:bg-[#333] transition-colors flex items-center gap-1"
+            className="border border-purple-600 bg-purple-600 text-white px-3 py-1.5 text-[11px] uppercase tracking-luxury hover:bg-purple-700 transition-colors flex items-center gap-1"
           >
             <Shield className="w-3 h-3 text-[#c5a880]" /> Admin Portal
           </button>
@@ -182,7 +182,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#121212] text-white text-xs uppercase tracking-luxury py-3.5 hover:bg-[#333] transition-colors mt-2"
+          className="w-full bg-purple-600 text-white text-xs uppercase tracking-luxury py-3.5 hover:bg-purple-700 transition-colors mt-2"
         >
           {loading
             ? 'Authenticating...'

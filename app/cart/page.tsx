@@ -224,7 +224,7 @@ export default function CartPage() {
               />
               <button
                 type="submit"
-                className="bg-[#121212] text-white px-4 text-[11px] uppercase tracking-luxury hover:bg-[#333] transition-colors"
+                className="bg-purple-600 text-white px-4 text-[11px] uppercase tracking-luxury hover:bg-purple-700 transition-colors"
               >
                 Apply
               </button>
@@ -244,7 +244,7 @@ export default function CartPage() {
           <div className="pt-4 border-t border-[#e5e5e5] space-y-3">
             <button
               onClick={() => router.push('/checkout')}
-              className="w-full bg-[#121212] text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-[#333] transition-colors"
+              className="w-full bg-purple-600 text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors"
             >
               Proceed to Checkout <ArrowRight className="w-3.5 h-3.5" />
             </button>

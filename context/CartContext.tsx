@@ -51,7 +51,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setGiftWrap(!!res.data.cart?.giftWrap);
       }
     } catch (err) {
-      console.error('Failed to load cart:', err);
+      console.warn('Failed to load cart:', err);
     } finally {
       setIsLoading(false);
     }

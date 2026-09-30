@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api/ophmart';
 
 export const getGuestId = (): string => {
   if (typeof window === 'undefined') return 'guest_ssr';
@@ -40,10 +40,26 @@ export async function fetchApi<T = any>(
       headers
     });
 
+    if (!res.ok) {
+      let errorMsg = `HTTP ${res.status}: ${res.statusText}`;
+      try {
+        const errorJson = await res.json();
+        if (errorJson?.message) errorMsg = errorJson.message;
+      } catch {
+        // Response was not JSON
+      }
+      return {
+        success: false,
+        message: errorMsg
+      };
+    }
+
     const result = await res.json();
     return result;
   } catch (error) {
-    console.error(`[API Error] ${endpoint}:`, error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[API] ${endpoint} request failed:`, (error as Error).message || error);
+    }
     return {
       success: false,
       message: (error as Error).message || 'Network request failed'

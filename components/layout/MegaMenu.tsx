@@ -97,22 +97,51 @@ const MENU_DATA: Record<string, MegaMenuCategory> = {
     promoImage: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=800',
     promoTitle: 'SCULPTURAL SPACES',
     promoSubtitle: 'Objects designed to elevate modern architectural dwellings.'
+  },
+  Sale: {
+    title: 'Private Sale',
+    slug: 'sale',
+    subcategories: [
+      { name: 'Outerwear & Tailoring (-40%)', href: '/products?collection=sale' },
+      { name: 'Florentine Leather Goods (-30%)', href: '/products?collection=sale' },
+      { name: 'Footwear & Margom Soles (-35%)', href: '/products?collection=sale' },
+      { name: 'Silk Dresses & Blouses (-50%)', href: '/products?collection=sale' }
+    ],
+    promoImage: 'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=800',
+    promoTitle: 'ARCHIVAL SELECTIONS',
+    promoSubtitle: 'Exceptional investment pieces with private privilege pricing.'
   }
+};
+
+const resolveCategoryData = (cat: string): MegaMenuCategory | undefined => {
+  if (!cat) return undefined;
+  const key = cat.toLowerCase().trim();
+  if (key === 'women' || key === 'beauty' || key === 'fragrance') return MENU_DATA.Women;
+  if (key === 'men') return MENU_DATA.Men;
+  if (key === 'shoes') return MENU_DATA.Shoes;
+  if (key === 'bags') return MENU_DATA.Bags;
+  if (key === 'jewellery' || key === 'horology') return MENU_DATA.Jewellery;
+  if (key === 'home' || key === 'living' || key === 'electronics') return MENU_DATA.Living;
+  if (key === 'sale') return MENU_DATA.Sale;
+  return MENU_DATA[cat] || MENU_DATA[cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()];
 };
 
 interface MegaMenuProps {
   category: string;
   onClose: () => void;
+  className?: string;
+  onMouseEnter?: () => void;
 }
 
-export const MegaMenu: React.FC<MegaMenuProps> = ({ category, onClose }) => {
-  const data = MENU_DATA[category];
+export const MegaMenu: React.FC<MegaMenuProps> = ({ category, onClose, className = '', onMouseEnter }) => {
+  const data = resolveCategoryData(category);
   if (!data) return null;
 
   return (
     <div
       onMouseLeave={onClose}
-      className="absolute top-full left-0 w-full bg-white border-b border-[#e5e5e5] shadow-xl z-50 py-10 px-8 transition-all duration-300"
+      onMouseEnter={onMouseEnter}
+      className={`absolute top-full left-0 w-full bg-white border-b border-[#e5e5e5] shadow-xl z-50 py-10 px-8 transition-all duration-300 ${className}`}
     >
       <div className="max-w-7xl mx-auto grid grid-cols-12 gap-8 items-start">
         {/* Subcategories list */}

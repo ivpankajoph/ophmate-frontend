@@ -146,7 +146,7 @@ export const CartDrawer: React.FC = () => {
                 <Link
                   href="/checkout"
                   onClick={closeCart}
-                  className="w-full bg-[#121212] text-white text-xs uppercase tracking-luxury py-3 text-center flex items-center justify-center gap-1.5 hover:bg-[#333] transition-colors"
+                  className="w-full bg-purple-600 text-white text-xs uppercase tracking-luxury py-3 text-center flex items-center justify-center gap-1.5 hover:bg-purple-700 transition-colors"
                 >
                   Checkout <ArrowRight className="w-3.5 h-3.5" />
                 </Link>

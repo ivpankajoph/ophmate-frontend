@@ -35,7 +35,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
             setWishlistIds(res.data.map(p => p._id));
           }
         } catch (err) {
-          console.error('Error fetching server wishlist:', err);
+          console.warn('Error fetching server wishlist:', err);
         }
       } else {
         // Guest user local storage

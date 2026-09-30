@@ -314,7 +314,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding || product.inventory <= 0}
-                  className="flex-1 bg-[#121212] text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-[#333] transition-colors disabled:bg-[#ccc]"
+                  className="flex-1 bg-purple-600 text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors disabled:bg-[#ccc]"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   {product.inventory <= 0 ? 'Out of Stock' : isAdding ? 'Adding to Bag...' : 'Add to Bag'}

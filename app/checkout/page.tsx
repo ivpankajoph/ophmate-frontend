@@ -371,7 +371,7 @@ export default function CheckoutPage() {
           <button
             onClick={handlePlaceOrder}
             disabled={submitting}
-            className="w-full bg-[#121212] text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-[#333] transition-colors"
+            className="w-full bg-purple-600 text-white text-xs uppercase tracking-luxury py-4 flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors cursor-pointer"
           >
             {submitting ? 'Confirming Client Order...' : 'Complete & Authorize Purchase'}
             <ArrowRight className="w-3.5 h-3.5" />

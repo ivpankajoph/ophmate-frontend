@@ -9,7 +9,7 @@ import { CartDrawer } from '../components/ui/CartDrawer';
 import { MobileNav } from '../components/layout/MobileNav';
 
 export const metadata: Metadata = {
-  title: 'OPHMNART | Haute Édition & Contemporary Luxury',
+  title: 'OPHMNART | Haute Édition',
   description:
     'Editorial luxury e-commerce house defining modern silhouettes, virgin wool tailoring, fine horology, and minimalist living.',
   keywords: ['luxury fashion', 'editorial menswear', 'haute couture', 'ophmart', 'designer apparel'],
@@ -35,7 +35,7 @@ export default function RootLayout({
             <CartProvider>
               <Header />
               <CartDrawer />
-              <main className="flex-1 pt-20 pb-16 lg:pb-0">{children}</main>
+              <main className="flex-1 pt-16 sm:pt-18 pb-16 lg:pb-0">{children}</main>
               <Footer />
               <MobileNav />
             </CartProvider>
