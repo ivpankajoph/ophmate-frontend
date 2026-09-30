@@ -1,51 +1,50 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, Check, ArrowRight, ChevronDown, X, Building2 } from 'lucide-react';
 
-type PartnerRoleKey = 'buyers' | 'sellers' | 'sourcing';
-
-interface PartnerRole {
-  key: PartnerRoleKey;
-  label: string;
-  singular: string;
+interface PartnerRoleOption {
+  id: string;
+  name: string;
+  description: string;
   highlights: string[];
 }
 
-const ROLES: Record<PartnerRoleKey, PartnerRole> = {
-  buyers: {
-    key: 'buyers',
-    label: '1. Buyers',
-    singular: 'Buyer',
+const PARTNER_ROLES: PartnerRoleOption[] = [
+  {
+    id: 'buyers',
+    name: 'Buyers',
+    description: 'Procure luxury goods, runway drops & direct import consignments',
     highlights: [
       'Private salon access & personal luxury stylist concierge',
       'Early reservation on limited runway drop collections',
-      'Insured global door-to-door delivery with verified authenticity'
+      'Duty-free import clearance advisory & verified door-to-door logistics'
     ]
   },
-  sellers: {
-    key: 'sellers',
-    label: '2. Sellers',
-    singular: 'Seller',
+  {
+    id: 'sourcing-agent',
+    name: 'Sourcing Agent',
+    description: 'Independent procurement directors & liaison procurement agents',
     highlights: [
-      'Digital flagship storefront with verified provenance',
-      'Direct access to affluent international collectors',
-      'Automated multi-currency payouts & escrow protection'
+      'Tiered institutional commission structure on verified trade transactions',
+      'Direct liaison access to pre-vetted European & Asian luxury ateliers',
+      'Priority escrow clearance & specialized trade dispute representation'
     ]
   },
-  sourcing: {
-    key: 'sourcing',
-    label: '3. Sourcing Agent',
-    singular: 'Sourcing Agent',
+  {
+    id: 'service-provider',
+    name: 'Service Provider',
+    description: 'Authentication labs, quality inspection, logistics & specialized business services',
     highlights: [
-      'Institutional commission structure on trade orders',
-      'Direct pipeline access to pre-vetted European & Asian ateliers',
-      'Priority escrow clearance & logistics liaison support'
+      'Preferred service listing across Ophmart global merchant network',
+      'Integrated dispatch for verification, quality audits & appraisal contracts',
+      'Automated service billing, insured custody & guaranteed prompt payouts'
     ]
   }
-};
+];
 
 // Cat made exclusively from a purple border (stroke only, fill none)
 const PurpleBorderCat: React.FC = () => {
@@ -103,7 +102,7 @@ const PurpleBorderCat: React.FC = () => {
         strokeLinejoin="round"
       />
 
-      {/* Cute Eyes (Happy curved pink lines) */}
+      {/* Cute Eyes (Happy curved lines) */}
       <path
         d="M 74 80 Q 82 72 90 80"
         stroke="currentColor"
@@ -226,7 +225,6 @@ const PurpleBorderCat: React.FC = () => {
         strokeLinejoin="round"
       />
 
-      {/* Subtle Chest Collar Accent */}
       <path
         d="M 94 126 Q 100 132 106 126"
         stroke="currentColor"
@@ -237,188 +235,342 @@ const PurpleBorderCat: React.FC = () => {
   );
 };
 
+// Purple Border Thought Cloud with elegant padding
+const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = ''
+}) => {
+  return (
+    <div
+      className={`relative w-full max-w-[350px] sm:max-w-[330px] flex items-center justify-center p-3 sm:p-3.5 min-h-[80px] sm:min-h-[90px] ${className}`}
+    >
+      {/* SVG Cloud Border with Safe Padding & Overflow Visible */}
+      <svg
+        viewBox="-15 -15 410 230"
+        className="absolute inset-0 w-full h-full text-purple-600 pointer-events-none drop-shadow-xs overflow-visible"
+        fill="white"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M 80,45 
+             A 35,35 0 0,1 140,25 
+             A 45,45 0 0,1 210,22 
+             A 40,40 0 0,1 270,30 
+             A 35,35 0 0,1 325,50 
+             A 35,35 0 0,1 355,95 
+             A 38,38 0 0,1 350,145 
+             A 32,32 0 0,1 315,175 
+             A 38,38 0 0,1 255,188 
+             A 42,42 0 0,1 185,190 
+             A 38,38 0 0,1 125,185 
+             A 32,32 0 0,1 70,170 
+             A 35,35 0 0,1 30,135 
+             A 38,38 0 0,1 30,80 
+             A 36,36 0 0,1 80,45 Z"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+
+      {/* Cloud inner content with comfortable padding */}
+      <div className="relative z-10 text-center px-4 sm:px-6 py-1.5 max-w-[84%] flex items-center justify-center">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 export default function PartnerPage() {
-  const [selectedRole, setSelectedRole] = useState<PartnerRoleKey>('buyers');
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
+  // Single selected role (null by default)
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const activeRole = ROLES[selectedRole];
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
-  const handleContinue = () => {
-    setSubmitted(true);
+  const handleSelectRole = (roleName: string) => {
+    setSelectedRole(roleName);
+    setIsDropdownOpen(false);
   };
 
+  const handleClearRole = () => {
+    setSelectedRole(null);
+  };
+
+  // Continue button navigation with CLEAN URLs
+  const handleContinue = () => {
+    if (!selectedRole) return;
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ophmart_partner_role', selectedRole);
+    }
+
+    if (selectedRole === 'Buyers') {
+      router.push('/buyers');
+    } else if (selectedRole === 'Sourcing Agent') {
+      router.push('/sourcing-agent');
+    } else if (selectedRole === 'Service Provider') {
+      router.push('/service-provider');
+    }
+  };
+
+  const getCatSpeech = () => {
+    if (!selectedRole) {
+      return 'Tell us, what do you want to be?';
+    }
+    return `Okay, so you want to be our ${selectedRole}!`;
+  };
+
+  // Highlights for currently selected single role
+  const activeRole = PARTNER_ROLES.find((r) => r.name === selectedRole);
+  const activeHighlights = activeRole ? activeRole.highlights : [];
+
   return (
-    <div className="min-h-screen bg-white text-[#121212] pt-4 sm:pt-8 pb-14 px-4 sm:px-6 md:px-12">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-white text-[#121212] pt-1 sm:pt-2 pb-16 px-4 sm:px-6 md:px-10 lg:px-12">
+      <div className="max-w-[1480px] mx-auto w-full">
         {/* Navigation Breadcrumb */}
-        <div className="mb-6">
+        <div className="mb-2 sm:mb-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-luxury font-medium text-[#8c8c8c] hover:text-purple-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-luxury font-medium text-[#737373] hover:text-purple-600 transition-colors"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-4 h-4" />
             Return to Store
           </Link>
         </div>
 
         {/* Minimalist Editorial Page Title */}
-        <div className="text-center max-w-xl mx-auto mb-8 sm:mb-12">
-          <span className="text-[10px] uppercase tracking-[0.3em] text-[#c5a880] block mb-2 font-medium">
-            OPHMNART HAUTE ÉDITION
-          </span>
-          <h1 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-[#121212] font-normal tracking-wide">
+        <div className="text-center max-w-xl mx-auto mb-4 sm:mb-5">
+          <h1 className="font-serif-luxury text-2xl sm:text-3xl md:text-4xl text-[#121212] font-normal tracking-wide">
             Become our Partner
           </h1>
-          <div className="w-12 h-[1px] bg-[#121212] mx-auto mt-4" />
+          <div className="w-12 h-[2px] bg-purple-600 mx-auto mt-2" />
         </div>
 
-        {/* 2-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+        {/* 2-Column Layout: Exact 50:50 Width Ratio */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
           {/* ========================================================== */}
-          {/* LEFT COLUMN: WHAT DO YOU WANT TO BE? + TABS + CONTINUE     */}
+          {/* LEFT COLUMN: WHAT DO YOU WANT TO BE? + SINGLE DROPDOWN (50%) */}
           {/* ========================================================== */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="order-2 lg:order-1 space-y-6">
             <div>
               <h2 className="font-serif-luxury text-2xl sm:text-3xl text-[#121212] font-normal">
                 What do you want to be?
               </h2>
+              <p className="text-xs text-[#737373] mt-1 font-light">
+                Select the corporate role that defines your business relationship with Ophmart.
+              </p>
             </div>
 
-            {/* Sharp Segmented Tabs with Sliding Purple Background */}
-            <div className="relative flex border border-[#121212] rounded-none p-1 bg-white">
-              {(['buyers', 'sellers', 'sourcing'] as PartnerRoleKey[]).map((key) => {
-                const role = ROLES[key];
-                const isSelected = selectedRole === key;
+            {/* SINGLE-SELECT DROPDOWN CONTAINER */}
+            <div ref={dropdownRef} className="relative">
+              {/* Dropdown Label */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs uppercase tracking-luxury text-[#575757] font-semibold flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                  Select Company Role
+                </span>
+                {selectedRole && (
+                  <span className="text-[10px] uppercase tracking-luxury text-purple-700 font-bold bg-purple-50 px-2 py-0.5 border border-purple-200">
+                    Selected: {selectedRole}
+                  </span>
+                )}
+              </div>
 
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole(key);
-                      setSubmitted(false);
-                    }}
-                    className={`relative z-10 flex-1 py-3 px-2 sm:px-4 text-[11px] sm:text-xs uppercase tracking-luxury font-medium text-center transition-colors cursor-pointer rounded-none select-none ${
-                      isSelected ? 'text-white' : 'text-[#121212] hover:text-[#575757]'
-                    }`}
-                  >
-                    {/* Sliding Background Element (Animated Shuffle) */}
-                    {isSelected && (
-                      <motion.div
-                        layoutId="partnerActiveRole"
-                        className="absolute inset-0 bg-purple-600 rounded-none"
-                        transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-                      />
-                    )}
-                    <span className="relative z-10">{role.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Dynamic Content for the selected role */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedRole}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
+              {/* Large Dropdown Trigger Button */}
+              <div
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                className={`w-full min-h-[58px] p-3.5 sm:p-4 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-3 ${isDropdownOpen
+                  ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
+                  : selectedRole
+                    ? 'border-purple-600'
+                    : 'border-[#121212] hover:border-purple-600'
+                  }`}
               >
-                {/* Privileges List */}
-                <div className="border border-[#e5e5e5] rounded-none p-5 sm:p-6 bg-[#faf9f6]">
-                  <ul className="space-y-2.5">
-                    {activeRole.highlights.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <Check className="w-3.5 h-3.5 text-[#c5a880] flex-shrink-0 mt-1 stroke-[2]" />
-                        <span className="text-xs text-[#575757] font-light leading-relaxed">
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Action Area: ONLY THE CONTINUE BUTTON (No inputs) */}
-                <div className="border border-[#e5e5e5] rounded-none p-6 sm:p-8 bg-white">
-                  {submitted ? (
-                    <div className="py-4 text-center space-y-3">
-                      <div className="w-10 h-10 border border-purple-600 rounded-none flex items-center justify-center mx-auto text-purple-600">
-                        <Check className="w-5 h-5 stroke-[2]" />
-                      </div>
-                      <h4 className="font-serif-luxury text-xl text-[#121212]">
-                        Welcome to Ophmart
-                      </h4>
-                      <p className="text-xs text-[#575757] font-light max-w-sm mx-auto leading-relaxed">
-                        Thank you for choosing to be our {activeRole.singular}. Your preference has been registered.
-                      </p>
-                      <div className="pt-2 flex justify-center gap-4">
-                        <Link
-                          href="/products"
-                          className="px-6 py-2.5 bg-purple-600 text-white text-xs uppercase tracking-luxury font-medium rounded-none hover:bg-purple-700 transition-colors inline-block"
-                        >
-                          Explore Store
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setSubmitted(false)}
-                          className="text-[10px] uppercase tracking-luxury text-[#121212] underline hover:text-[#8c8c8c] cursor-pointer"
-                        >
-                          Change Choice
-                        </button>
-                      </div>
-                    </div>
+                {/* Selected Role Display or Placeholder */}
+                <div className="flex-1 flex items-center min-w-0">
+                  {!selectedRole ? (
+                    <span className="text-sm text-[#8c8c8c] font-light">
+                      Click to choose your role (Buyers, Sourcing Agent, Service Provider)...
+                    </span>
                   ) : (
-                    <div>
-                      {/* ONLY A BUTTON: Continue */}
-                      <button
-                        type="button"
-                        onClick={handleContinue}
-                        className="w-full py-4 px-6 rounded-none bg-purple-600 text-white hover:bg-purple-700 text-xs uppercase tracking-luxury font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                      >
-                        <span>Continue</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <span className="inline-flex items-center gap-2 py-1.5 px-3 bg-purple-50 border border-purple-600 text-purple-900 text-xs sm:text-sm uppercase tracking-wider font-bold rounded-none">
+                      <Check className="w-3.5 h-3.5 text-purple-600 stroke-[3]" />
+                      <span>{selectedRole}</span>
+                    </span>
                   )}
                 </div>
-              </motion.div>
-            </AnimatePresence>
+
+                {/* Right Actions: Clear & Chevron */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {selectedRole && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClearRole();
+                      }}
+                      className="text-xs uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 transition-colors pr-2 border-r border-[#e5e5e5] cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <ChevronDown
+                    className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-purple-600' : 'text-[#121212]'
+                      }`}
+                  />
+                </div>
+              </div>
+
+              {/* DROPDOWN MENU PANEL */}
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.16 }}
+                    className="absolute top-full left-0 right-0 mt-2 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden"
+                  >
+                    {/* Header */}
+                    <div className="p-3 bg-[#faf9f6] border-b border-[#e5e5e5] flex items-center justify-between text-xs">
+                      <span className="text-[11px] uppercase tracking-luxury text-[#575757] font-medium">
+                        Choose 1 corporate role:
+                      </span>
+                      {selectedRole && (
+                        <button
+                          type="button"
+                          onClick={handleClearRole}
+                          className="text-[10px] uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 font-semibold cursor-pointer"
+                        >
+                          Clear Selection
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Roles Options List */}
+                    <div className="divide-y divide-[#f0f0f0]">
+                      {PARTNER_ROLES.map((role) => {
+                        const isSelected = selectedRole === role.name;
+                        return (
+                          <div
+                            key={role.id}
+                            onClick={() => handleSelectRole(role.name)}
+                            className={`p-4 flex items-start gap-3.5 cursor-pointer transition-colors select-none ${isSelected
+                              ? 'bg-purple-50/80 hover:bg-purple-50'
+                              : 'bg-white hover:bg-[#faf9f6]'
+                              }`}
+                          >
+                            {/* Luxury Purple Radio Dot */}
+                            <div
+                              className={`w-5 h-5 mt-0.5 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${isSelected
+                                ? 'border-purple-600 bg-white'
+                                : 'border-[#a3a3a3] bg-white'
+                                }`}
+                            >
+                              {isSelected && (
+                                <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />
+                              )}
+                            </div>
+
+                            {/* Role Name & Description */}
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className={`text-sm uppercase tracking-luxury font-medium ${isSelected
+                                    ? 'text-purple-900 font-bold'
+                                    : 'text-[#121212]'
+                                    }`}
+                                >
+                                  {role.name}
+                                </span>
+                                {isSelected && (
+                                  <span className="text-[9px] uppercase tracking-widest text-purple-700 font-bold bg-purple-100 px-2 py-0.5">
+                                    Selected
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-[#737373] font-light mt-1 leading-relaxed">
+                                {role.description}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Action Area: CONTINUE BUTTON (PURPLE BORDER & WHITE BACKGROUND) */}
+            <div className="border border-[#e5e5e5] rounded-none p-5 sm:p-6 bg-white">
+              <button
+                type="button"
+                onClick={handleContinue}
+                disabled={!selectedRole}
+                className={`w-full py-4 px-6 rounded-none border-2 border-purple-600 bg-white text-xs sm:text-sm uppercase tracking-luxury font-bold transition-all flex items-center justify-center gap-2 shadow-xs ${!selectedRole
+                  ? 'opacity-40 text-purple-300 cursor-not-allowed'
+                  : 'text-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer'
+                  }`}
+              >
+                <span>Continue</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* ========================================================== */}
-          {/* RIGHT COLUMN: PURPLE BORDER CAT + THOUGHT CLOUD BUBBLE     */}
+          {/* RIGHT COLUMN: PURPLE BORDER CAT + THOUGHT CLOUD BUBBLE (50%)*/}
+          {/* STICKY BELOW FIXED HEADER (84px) SO ENTIRE PET IS VISIBLE  */}
           {/* ========================================================== */}
-          <div className="lg:col-span-5 flex flex-col items-center">
-            {/* THOUGHT CLOUD */}
-            <div className="w-full max-w-sm mb-2">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedRole}
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  transition={{ duration: 0.22 }}
-                  className="relative bg-white border border-[#121212] rounded-none p-5 sm:p-6 text-center shadow-xs"
-                >
-                  <h3 className="font-serif-luxury text-2xl sm:text-3xl text-[#121212] font-normal leading-snug">
-                    Thank you for being our {activeRole.singular}.
-                  </h3>
-                </motion.div>
-              </AnimatePresence>
+          <div className="order-1 lg:order-2 relative">
+            <div className="lg:sticky lg:top-[84px] flex flex-col items-center">
+              {/* THOUGHT CLOUD */}
+              <div className="w-full max-w-[300px] sm:max-w-[330px] flex flex-col items-center">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={selectedRole || 'empty'}
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="w-full flex justify-center"
+                  >
+                    <PurpleBorderCloud>
+                      <h3 className="font-serif-luxury text-sm sm:text-base text-[#121212] font-medium leading-snug text-center">
+                        {getCatSpeech()}
+                      </h3>
+                    </PurpleBorderCloud>
+                  </motion.div>
+                </AnimatePresence>
 
-              {/* Thought trail dots leading down to the cat */}
-              <div className="flex flex-col items-center gap-1.5 mt-2">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-600 bg-white ml-2" />
-                <div className="w-2.5 h-2.5 rounded-full border-2 border-purple-600 bg-white ml-5" />
-                <div className="w-1.5 h-1.5 rounded-full border-2 border-purple-600 bg-white ml-7" />
+                {/* Thought trail dots leading down to the cat */}
+                <div className="flex flex-col items-center gap-0.5 my-0.5">
+                  <div className="w-2.5 h-2.5 rounded-full border-[1.8px] border-purple-600 bg-white ml-2" />
+                  <div className="w-1.5 h-1.5 rounded-full border-[1.8px] border-purple-600 bg-white ml-4" />
+                </div>
               </div>
-            </div>
 
-            {/* CAT MADE FROM PURPLE BORDER (NO SQUARE OUTER BORDER, MOVED UP) */}
-            <div className="relative w-60 sm:w-68 aspect-square bg-transparent p-2 flex items-center justify-center -mt-3 sm:-mt-5">
-              <PurpleBorderCat />
+              {/* CAT MADE FROM PURPLE BORDER - Prominent Large Mascot */}
+              <div className="relative w-56 sm:w-64 md:w-72 lg:w-80 max-h-[260px] sm:max-h-[285px] aspect-square bg-transparent flex items-center justify-center -mt-1 sm:-mt-2">
+                <PurpleBorderCat />
+              </div>
             </div>
           </div>
         </div>
