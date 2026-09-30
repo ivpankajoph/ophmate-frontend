@@ -240,21 +240,21 @@ export const HomeSearchBar: React.FC = () => {
           </button>
         </div>
 
-        {/* MAIN LARGE SEARCH BAR CONTAINER - SHARP LUXURY RECTANGLE */}
+        {/* MAIN LARGE SEARCH BAR CONTAINER - SHARP LUXURY RECTANGLE (INCREASED HEIGHT) */}
         <form
           onSubmit={handleSearchSubmit}
-          className={`relative bg-white rounded-none border transition-all duration-200 p-3 sm:p-4 shadow-sm ${
+          className={`relative bg-white rounded-none border-2 transition-all duration-200 p-5 sm:p-7 md:p-8 min-h-[150px] sm:min-h-[175px] flex flex-col justify-between shadow-md ${
             isOpen && query.trim()
-              ? 'border-[#121212] ring-1 ring-[#121212]'
-              : 'border-[#121212] hover:border-black'
+              ? 'border-purple-600 ring-2 ring-purple-600/20'
+              : 'border-[#121212] hover:border-purple-600'
           }`}
         >
-          {/* Upper Row: Input Field with Clear & Indicator */}
-          <div className="flex items-center gap-3 px-1 sm:px-2">
+          {/* Upper Row: Input Field with Clear & Indicator (Taller & Roomier) */}
+          <div className="flex items-center gap-3.5 sm:gap-4 px-1 sm:px-2 min-h-[50px] sm:min-h-[62px]">
             {activeTab === 'ai' ? (
-              <Sparkles className="w-5 h-5 text-[#c5a880] flex-shrink-0" />
+              <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-[#c5a880] flex-shrink-0 animate-pulse" />
             ) : (
-              <Search className="w-5 h-5 text-[#121212] flex-shrink-0 stroke-[1.5]" />
+              <Search className="w-6 h-6 sm:w-7 sm:h-7 text-[#121212] flex-shrink-0 stroke-[1.6]" />
             )}
 
             <input
@@ -276,11 +276,11 @@ export const HomeSearchBar: React.FC = () => {
                   ? 'Ask AI Stylist: "Recommend a silk evening dress with fine jewellery..."'
                   : 'Search products, categories, tailoring, silk, horology...'
               }
-              className="w-full text-sm sm:text-base text-[#121212] placeholder:text-[#8c8c8c] font-light outline-none bg-transparent"
+              className="w-full text-base sm:text-lg md:text-xl text-[#121212] placeholder:text-[#8c8c8c] font-light outline-none bg-transparent py-2"
             />
 
             {isLoading && (
-              <Loader2 className="w-4 h-4 text-[#121212] animate-spin flex-shrink-0" />
+              <Loader2 className="w-5 h-5 text-[#121212] animate-spin flex-shrink-0" />
             )}
 
             {query && (
@@ -293,35 +293,35 @@ export const HomeSearchBar: React.FC = () => {
                   setIsOpen(false);
                   inputRef.current?.focus();
                 }}
-                className="w-6 h-6 rounded-none hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-none hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition-colors cursor-pointer"
                 aria-label="Clear search"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
 
           {/* Visual Search Badge preview if user uploaded an image */}
           {imageSearchActive && imagePreview && (
-            <div className="flex items-center gap-2 mt-2.5 mx-2 bg-[#faf9f6] border border-[#e5e5e5] px-3 py-1.5 rounded-none w-fit">
-              <div className="relative w-7 h-7 rounded-none overflow-hidden flex-shrink-0 border border-[#121212]">
+            <div className="flex items-center gap-2 my-2 mx-2 bg-[#faf9f6] border border-[#e5e5e5] px-3.5 py-2 rounded-none w-fit">
+              <div className="relative w-8 h-8 rounded-none overflow-hidden flex-shrink-0 border border-[#121212]">
                 <Image src={imagePreview} alt="Image search preview" fill className="object-cover" />
               </div>
-              <span className="text-xs text-[#121212] font-medium">Image Search: Searching matches</span>
+              <span className="text-xs sm:text-sm text-[#121212] font-medium">Image Search: Searching matches</span>
               <button
                 type="button"
                 onClick={clearImageSearch}
                 className="text-[#8c8c8c] hover:text-black ml-1 text-xs cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Lower Actions Row: Tools on Left & Black Search Button on Right */}
-          <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#f0ede6] sm:pt-3">
+          {/* Lower Actions Row: Tools on Left & Large Purple Search Button on Right */}
+          <div className="flex items-center justify-between pt-4 sm:pt-5 mt-4 sm:mt-5 border-t border-[#e5e5e5]">
             {/* Left Actions */}
-            <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-[13px] text-[#575757]">
+            <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm text-[#575757]">
               {/* Image Search Trigger */}
               <input
                 ref={fileInputRef}
@@ -333,10 +333,10 @@ export const HomeSearchBar: React.FC = () => {
               />
               <label
                 htmlFor="home-image-search-input"
-                className="flex items-center gap-1.5 text-[#575757] hover:text-[#121212] font-medium cursor-pointer transition-colors px-1 py-1 rounded-none hover:bg-gray-50"
+                className="flex items-center gap-2 text-[#575757] hover:text-[#121212] font-medium cursor-pointer transition-colors px-2 py-1.5 rounded-none hover:bg-gray-50"
               >
-                <Camera className="w-4 h-4 text-[#121212]" />
-                <span className="uppercase tracking-luxury text-[11px]">Image Search</span>
+                <Camera className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#121212]" />
+                <span className="uppercase tracking-luxury text-xs sm:text-[12px] font-semibold">Image Search</span>
               </label>
 
               <span className="text-[#e5e5e5]">|</span>
@@ -348,19 +348,19 @@ export const HomeSearchBar: React.FC = () => {
                   setActiveTab('categories');
                   inputRef.current?.focus();
                 }}
-                className="flex items-center gap-1.5 text-[#575757] hover:text-[#121212] font-medium cursor-pointer transition-colors px-1 py-1 rounded-none hover:bg-gray-50"
+                className="flex items-center gap-2 text-[#575757] hover:text-[#121212] font-medium cursor-pointer transition-colors px-2 py-1.5 rounded-none hover:bg-gray-50"
               >
-                <FileText className="w-4 h-4 text-[#121212]" />
-                <span className="uppercase tracking-luxury text-[11px]">Categories</span>
+                <FileText className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#121212]" />
+                <span className="uppercase tracking-luxury text-xs sm:text-[12px] font-semibold">Categories</span>
               </button>
             </div>
 
-            {/* Right: Sharp Purple Search Button */}
+            {/* Right: Sharp Prominent Purple Search Button */}
             <button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs sm:text-[11px] uppercase tracking-luxury px-6 sm:px-8 py-2.5 sm:py-3 rounded-none flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm uppercase tracking-luxury px-8 sm:px-12 py-3.5 sm:py-4 rounded-none flex items-center gap-2.5 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-98"
             >
-              <Search className="w-3.5 h-3.5 stroke-[2]" />
+              <Search className="w-4 h-4 stroke-[2.2]" />
               <span>Search</span>
             </button>
           </div>

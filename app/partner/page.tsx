@@ -242,7 +242,7 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
 }) => {
   return (
     <div
-      className={`relative w-full max-w-[350px] sm:max-w-[330px] flex items-center justify-center p-3 sm:p-3.5 min-h-[80px] sm:min-h-[90px] ${className}`}
+      className={`relative w-full max-w-[380px] sm:max-w-[420px] flex items-center justify-center p-4 sm:p-6 min-h-[105px] sm:min-h-[125px] ${className}`}
     >
       {/* SVG Cloud Border with Safe Padding & Overflow Visible */}
       <svg
@@ -276,7 +276,7 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
       </svg>
 
       {/* Cloud inner content with comfortable padding */}
-      <div className="relative z-10 text-center px-4 sm:px-6 py-1.5 max-w-[84%] flex items-center justify-center">
+      <div className="relative z-10 text-center px-6 sm:px-8 py-2.5 sm:py-3.5 max-w-[80%] flex items-center justify-center">
         {children}
       </div>
     </div>
@@ -542,7 +542,7 @@ export default function PartnerPage() {
           <div className="order-1 lg:order-2 relative">
             <div className="lg:sticky lg:top-[84px] flex flex-col items-center">
               {/* THOUGHT CLOUD */}
-              <div className="w-full max-w-[300px] sm:max-w-[330px] flex flex-col items-center">
+              <div className="w-full max-w-[380px] sm:max-w-[420px] flex flex-col items-center">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={selectedRole || 'empty'}
@@ -553,7 +553,7 @@ export default function PartnerPage() {
                     className="w-full flex justify-center"
                   >
                     <PurpleBorderCloud>
-                      <h3 className="font-serif-luxury text-sm sm:text-base text-[#121212] font-medium leading-snug text-center">
+                      <h3 className="font-serif-luxury text-base sm:text-lg md:text-xl text-[#121212] font-medium leading-snug text-center">
                         {getCatSpeech()}
                       </h3>
                     </PurpleBorderCloud>
