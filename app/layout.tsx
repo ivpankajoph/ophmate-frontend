@@ -9,15 +9,20 @@ import { CartDrawer } from '../components/ui/CartDrawer';
 import { MobileNav } from '../components/layout/MobileNav';
 
 export const metadata: Metadata = {
-  title: 'OPHMNART | Haute Édition',
+  title: 'Ophmart | Smart Shopping & Contemporary Lifestyle',
   description:
     'Editorial luxury e-commerce house defining modern silhouettes, virgin wool tailoring, fine horology, and minimalist living.',
   keywords: ['luxury fashion', 'editorial menswear', 'haute couture', 'ophmart', 'designer apparel'],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png'
+  },
   openGraph: {
-    title: 'OPHMNART | Haute Édition',
+    title: 'Ophmart',
     description: 'Modern silhouettes, virgin wool tailoring, fine horology, and minimalist living.',
     url: 'https://ophmart.com',
-    siteName: 'OPHMNART',
+    siteName: 'Ophmart',
     type: 'website'
   }
 };
