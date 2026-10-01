@@ -575,7 +575,7 @@ export default function ServiceProviderPage() {
         {/* Navigation Breadcrumb */}
         <div className="mb-2 sm:mb-3 flex items-center justify-between">
           <Link
-            href="/partner"
+            href="/sellers"
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-luxury font-medium text-[#737373] hover:text-purple-600 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />

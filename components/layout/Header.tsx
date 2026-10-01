@@ -93,13 +93,21 @@ export const Header: React.FC = () => {
 
           {/* RIGHT: BECOME PARTNER BUTTON & ACTION ICONS */}
           <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
-            {/* Become our Partner Button - Purple */}
-            <Link
-              href="/partner"
-              className="text-[10px] sm:text-[11px] uppercase tracking-luxury font-medium px-3.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 border border-purple-600 rounded-none transition-colors flex-shrink-0"
-            >
-              Become our Partner
-            </Link>
+            {/* Buyer & Seller Action Buttons: I'm Buyer (Purple) & I'm Seller (White) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <Link
+                href="/buyers"
+                className="text-[10px] sm:text-[11px] uppercase tracking-luxury font-medium px-2.5 sm:px-3.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 border border-purple-600 rounded-none transition-colors flex-shrink-0"
+              >
+                I&apos;m Buyer
+              </Link>
+              <Link
+                href="/sellers"
+                className="text-[10px] sm:text-[11px] uppercase tracking-luxury font-medium px-2.5 sm:px-3.5 py-1.5 bg-white text-purple-600 hover:bg-purple-50 border border-purple-600 rounded-none transition-colors flex-shrink-0"
+              >
+                I&apos;m Seller
+              </Link>
+            </div>
 
             {/* Search Trigger */}
             <button
