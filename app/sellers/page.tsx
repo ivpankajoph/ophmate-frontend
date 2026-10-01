@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -327,6 +328,7 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
 };
 
 export default function SellersPage() {
+  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
@@ -381,16 +383,25 @@ export default function SellersPage() {
   };
 
   const handleContinue = () => {
-    // Save to localStorage for fresh pages creation
+    if (!selectedRole || (selectedRole === 'Sourcing Agent' && !selectedSourcingType)) return;
+
+    // Save to localStorage for persistence
     if (typeof window !== 'undefined') {
       if (selectedRole) {
         localStorage.setItem('ophmart_selected_role', selectedRole);
       }
       if (selectedSourcingType) {
         localStorage.setItem('ophmart_selected_sourcing_type', selectedSourcingType);
+      } else {
+        localStorage.removeItem('ophmart_selected_sourcing_type');
       }
     }
-    // "abhi uske click pe kuch mat dikhana and jo pehel dikhate hai wo sab code hatao we will create fresh pages"
+
+    const queryParams = new URLSearchParams();
+    if (selectedRole) queryParams.set('role', selectedRole);
+    if (selectedSourcingType) queryParams.set('sourcingType', selectedSourcingType);
+
+    router.push(`/sellers/registration?${queryParams.toString()}`);
   };
 
   const selectedSourcingItem = SOURCING_AGENT_TYPES.find(
