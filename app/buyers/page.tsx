@@ -1107,11 +1107,11 @@ export default function BuyersPage() {
         {/* Navigation Breadcrumb */}
         <div className="mb-2 sm:mb-3">
           <Link
-            href="/sellers"
+            href="/"
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-luxury font-medium text-[#737373] hover:text-purple-600 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Partner Selection
+            Return to Store
           </Link>
         </div>
 
