@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#2b3990"/>
+  <!-- IndiaMART Red & Green Shapes -->
+  <circle cx="40" cy="34" r="18" fill="#ffffff"/>
+  <!-- Red M shape -->
+  <path d="M 28 42 L 28 26 L 35 34 L 40 29 L 45 34 L 52 26 L 52 42 L 47 42 L 47 32 L 42 37 L 40 35 L 38 37 L 33 32 L 33 42 Z" fill="#ed1c24"/>
+  <!-- Teal Green dot -->
+  <circle cx="40" cy="22" r="3.5" fill="#00a651"/>
+  <!-- Text pill -->
+  <rect x="10" y="58" width="60" height="14" rx="4" fill="#ffffff"/>
+  <text x="40" y="68" font-family="Arial, sans-serif" font-weight="900" font-size="8.5" fill="#2b3990" text-anchor="middle">
+    <tspan fill="#2b3990">india</tspan><tspan fill="#00a651">MART</tspan>
+  </text>
+</svg>

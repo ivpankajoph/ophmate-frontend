@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#de2910"/>
+  <!-- Large Yellow Star -->
+  <polygon points="28,20 31,28 39,28 33,33 35,41 28,36 21,41 23,33 17,28 25,28" fill="#ffde00"/>
+  <!-- 4 Small Arc Stars -->
+  <polygon points="42,16 43,19 46,19 44,21 45,24 42,22 39,24 40,21 38,19 41,19" fill="#ffde00" transform="rotate(10 42 20)"/>
+  <polygon points="47,23 48,26 51,26 49,28 50,31 47,29 44,31 45,28 43,26 46,26" fill="#ffde00" transform="rotate(25 47 27)"/>
+  <polygon points="47,33 48,36 51,36 49,38 50,41 47,39 44,41 45,38 43,36 46,36" fill="#ffde00" transform="rotate(45 47 37)"/>
+  <polygon points="42,42 43,45 46,45 44,47 45,50 42,48 39,50 40,47 38,45 41,45" fill="#ffde00" transform="rotate(60 42 46)"/>
+  <!-- Label badge -->
+  <rect x="12" y="60" width="56" height="13" rx="3" fill="#ffffff"/>
+  <text x="40" y="69.5" font-family="Arial, sans-serif" font-weight="900" font-size="8" fill="#de2910" text-anchor="middle" letter-spacing="1">CHINA HUB</text>
+</svg>

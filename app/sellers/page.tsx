@@ -2,120 +2,92 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
   Check,
   ArrowRight,
   ChevronDown,
-  Store,
-  Factory,
-  Sparkles,
-  Layers,
-  Globe2,
-  Palette,
-  Truck,
-  ShieldCheck,
-  Award,
-  ExternalLink,
-  CheckCircle2
+  Building2,
+  Sparkles
 } from 'lucide-react';
 
-interface SellerTypeOption {
+const PRIMARY_ROLES: string[] = [
+  'Buyer / Importer',
+  'Manufacturer',
+  'Supplier / Trader',
+  'Exporter',
+  'Sourcing Agent',
+  'Service Provider'
+];
+
+interface SourcingAgentType {
   id: string;
   name: string;
-  badge: string;
-  icon: React.ElementType;
-  description: string;
-  highlights: string[];
-  catDialogue: string;
+  image: string;
 }
 
-const SELLER_TYPES: SellerTypeOption[] = [
+const SOURCING_AGENT_TYPES: SourcingAgentType[] = [
   {
-    id: 'manufacturer',
-    name: 'Direct Factory / Manufacturer (OEM & ODM)',
-    badge: 'Direct Production',
-    icon: Factory,
-    description:
-      'Garment, footwear & textile manufacturing plants, CMT units, and custom private label specialists with bulk production capacity.',
-    highlights: [
-      'Direct RFQ bidding & purchase order routing from global retail importers & brand buyers',
-      'Advance milestone escrow contracts with 100% production deposit guarantees',
-      'Factory audit verification badge & instant catalog distribution to enterprise accounts'
-    ],
-    catDialogue: 'Awesome! Ready to manufacture bulk orders for verified global buyers?'
+    id: 'import-sourcing-agent',
+    name: 'Import Sourcing Agent',
+    image: '/images/sourcing/import-agent.svg'
   },
   {
-    id: 'brand-owner',
-    name: 'Brand Owner & Independent Designer Atelier',
-    badge: 'Designer & Label',
-    icon: Palette,
-    description:
-      'Proprietary luxury labels, designer studios & contemporary fashion houses with in-house collections and seasonal releases.',
-    highlights: [
-      'Zero upfront listing fees with ironclad brand equity, pricing autonomy & IP copyright protection',
-      'Curated showcase in the exclusive Ophmart Designer Salons & Private Sales',
-      'Full control over seasonal line sheets, wholesale MOQs & authorized retailer screening'
-    ],
-    catDialogue: "Love your brand! Let's introduce your collections to premier worldwide buyers!"
+    id: 'dropshipping-agent',
+    name: 'Dropshipping Agent',
+    image: '/images/sourcing/dropshipping-agent.svg'
   },
   {
-    id: 'wholesale-distributor',
-    name: 'Wholesale Distributor & Stockist',
-    badge: 'Ready Inventory',
-    icon: Layers,
-    description:
-      'Authorized regional distributors, volume stockists & multi-brand trade wholesalers with ready-to-ship inventory.',
-    highlights: [
-      'Real-time multi-currency catalog synchronization & tiered bulk volume pricing',
-      'Rapid clearance channels for excess stock, seasonal overruns & volume closeouts',
-      'Integrated B2B freight logistics with discounted domestic & international shipping'
-    ],
-    catDialogue: 'Great stock! Ready to move bulk inventory to verified commercial buyers?'
+    id: 'alibaba-sourcing-agent',
+    name: 'Alibaba Sourcing Agent',
+    image: '/images/sourcing/alibaba-agent.svg'
   },
   {
-    id: 'exporter',
-    name: 'Exporter & International Trading House',
-    badge: 'Cross-Border Trade',
-    icon: Globe2,
-    description:
-      'Licensed export corporations, cross-border trading firms & international mercantile intermediaries.',
-    highlights: [
-      'Comprehensive export customs clearance, HS-code mapping & tariff advisory assistance',
-      'Multi-port container freight coordination & bonded warehouse storage across global hubs',
-      'Letters of Credit (LC) escrow settlement & currency risk hedging protection'
-    ],
-    catDialogue: "Global trade ready! Let's expand your export shipments worldwide!"
+    id: 'product-sourcing-agent',
+    name: 'Product Sourcing Agent',
+    image: '/images/sourcing/product-sourcing-agent.svg'
   },
   {
-    id: 'artisan-atelier',
-    name: 'Artisan & Handcrafted Atelier',
-    badge: 'Heritage & Craft',
-    icon: Sparkles,
-    description:
-      'Handmade leather goods, heritage loom weavers, organic ateliers & master artisan craft creators.',
-    highlights: [
-      'Fair-trade certified premium pricing & global craft heritage storytelling showcase',
-      'Dedicated artisan concierge for export packaging, barcoding & luxury presentation',
-      'Flexible, low-minimum order caps (MOQs) tailored for hand-made craftsmanship'
-    ],
-    catDialogue: 'Pure craftsmanship! Global buyers will adore your handcrafted luxury creations!'
+    id: '1688-sourcing-agent',
+    name: '1688 Sourcing Agent',
+    image: '/images/sourcing/1688-agent.svg'
   },
   {
-    id: 'dropshipping-ondemand',
-    name: 'Dropshipping & On-Demand Supplier',
-    badge: 'Agile Fulfillment',
-    icon: Truck,
-    description:
-      'Agile on-demand printers, made-to-order apparel studios & fast-dispatch direct fulfillment partners.',
-    highlights: [
-      'Direct API integration for automated purchase order routing & white-label packing slips',
-      'Blind drop-shipping directly to domestic and international commercial clients',
-      '24-48 hour dispatch performance tracking with verified carrier tracking sync'
-    ],
-    catDialogue: "Agile supply! Let's connect your on-demand inventory to high-volume buyers!"
+    id: 'dropshipping-sourcing-agent',
+    name: 'Dropshipping Sourcing Agent',
+    image: '/images/sourcing/dropshipping-sourcing-agent.svg'
+  },
+  {
+    id: 'indiamart-sourcing-agent',
+    name: 'IndiaMART Sourcing Agent',
+    image: '/images/sourcing/indiamart-agent.svg'
+  },
+  {
+    id: 'wholesale-trading-agent',
+    name: 'Wholesale Trading Agent',
+    image: '/images/sourcing/wholesale-trading-agent.svg'
+  },
+  {
+    id: 'asia-sourcing-agent',
+    name: 'Asia Sourcing Agent',
+    image: '/images/sourcing/asia-sourcing-agent.svg'
+  },
+  {
+    id: 'india-sourcing-agent',
+    name: 'India Sourcing Agent',
+    image: '/images/sourcing/india-sourcing-agent.svg'
+  },
+  {
+    id: 'china-sourcing-agent',
+    name: 'China Sourcing Agent',
+    image: '/images/sourcing/china-sourcing-agent.svg'
+  },
+  {
+    id: 'fba-sourcing-agent',
+    name: 'FBA Sourcing Agent',
+    image: '/images/sourcing/fba-sourcing-agent.svg'
   }
 ];
 
@@ -315,7 +287,7 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
 }) => {
   return (
     <div
-      className={`relative w-full max-w-[380px] sm:max-w-[420px] flex items-center justify-center p-4 sm:p-6 min-h-[105px] sm:min-h-[125px] ${className}`}
+      className={`relative w-full max-w-[340px] sm:max-w-[380px] flex items-center justify-center p-3 sm:p-4 min-h-[92px] sm:min-h-[110px] ${className}`}
     >
       <svg
         viewBox="-15 -15 410 230"
@@ -347,7 +319,7 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
         />
       </svg>
 
-      <div className="relative z-10 text-center px-6 sm:px-8 py-2.5 sm:py-3.5 max-w-[85%] flex items-center justify-center">
+      <div className="relative z-10 text-center px-4 sm:px-6 py-2 sm:py-2.5 max-w-[85%] flex items-center justify-center">
         {children}
       </div>
     </div>
@@ -355,17 +327,29 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
 };
 
 export default function SellersPage() {
-  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
-  // Close dropdown when clicking outside
+  const [selectedSourcingType, setSelectedSourcingType] = useState<string | null>(null);
+  const [isSourcingDropdownOpen, setIsSourcingDropdownOpen] = useState(false);
+
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const sourcingDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRoleDropdownOpen(false);
+      }
+      if (
+        sourcingDropdownRef.current &&
+        !sourcingDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSourcingDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -374,45 +358,60 @@ export default function SellersPage() {
     };
   }, []);
 
-  const selectedSeller = SELLER_TYPES.find((role) => role.name === selectedRole) || null;
-
-  const handleSelectRole = (roleName: string) => {
-    setSelectedRole(roleName);
-    setIsDropdownOpen(false);
+  const handleSelectRole = (role: string) => {
+    setSelectedRole(role);
+    setIsRoleDropdownOpen(false);
+    if (role !== 'Sourcing Agent') {
+      setSelectedSourcingType(null);
+    }
   };
 
   const handleClearRole = () => {
     setSelectedRole(null);
+    setSelectedSourcingType(null);
+  };
+
+  const handleSelectSourcingType = (name: string) => {
+    setSelectedSourcingType(name);
+    setIsSourcingDropdownOpen(false);
+  };
+
+  const handleClearSourcingType = () => {
+    setSelectedSourcingType(null);
   };
 
   const handleContinue = () => {
-    if (!selectedRole) return;
-
-    setIsRedirecting(true);
-
+    // Save to localStorage for fresh pages creation
     if (typeof window !== 'undefined') {
-      localStorage.setItem('ophmart_seller_role', selectedRole);
-      localStorage.setItem('ophmart_seller_type', selectedRole);
-      localStorage.setItem('ophmart_partner_role', selectedRole);
+      if (selectedRole) {
+        localStorage.setItem('ophmart_selected_role', selectedRole);
+      }
+      if (selectedSourcingType) {
+        localStorage.setItem('ophmart_selected_sourcing_type', selectedSourcingType);
+      }
     }
-
-    // Direct to the dedicated Vendor Registration flow
-    const vendorRegBase =
-      process.env.NEXT_PUBLIC_VENDOR_REGISTRATION_URL || 'http://localhost:3100/vendor/registration';
-    const targetUrl = `${vendorRegBase}?role=${encodeURIComponent(selectedRole)}`;
-
-    // Smooth redirect
-    setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 250);
+    // "abhi uske click pe kuch mat dikhana and jo pehel dikhate hai wo sab code hatao we will create fresh pages"
   };
+
+  const selectedSourcingItem = SOURCING_AGENT_TYPES.find(
+    (item) => item.name === selectedSourcingType
+  );
 
   const getCatSpeech = () => {
-    if (!selectedSeller) {
-      return 'Tell us, which type of seller are you?';
+    if (!selectedRole) {
+      return 'Tell us, what do you want to be?';
     }
-    return selectedSeller.catDialogue;
+    if (selectedRole === 'Sourcing Agent') {
+      if (selectedSourcingType) {
+        return `Awesome! You chose ${selectedSourcingType}!`;
+      }
+      return 'Which type of Sourcing Agent are you?';
+    }
+    return `Okay, so you want to be our ${selectedRole}!`;
   };
+
+  const isContinueDisabled =
+    !selectedRole || (selectedRole === 'Sourcing Agent' && !selectedSourcingType);
 
   return (
     <div className="min-h-screen bg-white text-[#121212] pt-1 sm:pt-2 pb-16 px-4 sm:px-6 md:px-10 lg:px-12">
@@ -428,66 +427,49 @@ export default function SellersPage() {
           </Link>
         </div>
 
-        {/* Minimalist Editorial Page Title: Become our Seller */}
-        <div className="text-center max-w-xl mx-auto mb-5 sm:mb-7">
-
-          <h1 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-[#121212] font-normal tracking-wide">
+        {/* Editorial Page Title: Become our Seller */}
+        <div className="text-center max-w-xl mx-auto mb-4 sm:mb-6">
+          <h1 className="font-serif-luxury text-2xl sm:text-3xl md:text-4xl text-[#121212] font-normal tracking-wide">
             Become our Seller
           </h1>
-          <div className="w-14 h-[2.5px] bg-purple-600 mx-auto mt-2.5" />
-
+          <div className="w-10 h-[2px] bg-purple-600 mx-auto mt-2" />
         </div>
 
         {/* 2-Column Layout: 50:50 Width Ratio */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
           {/* ========================================================== */}
-          {/* LEFT COLUMN: WHICH TYPE OF SELLER ARE YOU? (50%)           */}
+          {/* LEFT COLUMN: WHAT DO YOU WANT TO BE? + DROPDOWNS           */}
           {/* ========================================================== */}
-          <div className="order-2 lg:order-1 space-y-6">
+          <div className="order-2 lg:order-1 space-y-4 sm:space-y-5">
             <div>
-              <h2 className="font-serif-luxury text-2xl sm:text-3xl text-[#121212] font-normal">
-                Which type of seller are you?
+              <h2 className="font-serif-luxury text-xl sm:text-2xl text-[#121212] font-normal">
+                What do you want to be?
               </h2>
-              <p className="text-xs text-[#737373] mt-1 font-light leading-relaxed">
-                Select your seller category to access dedicated wholesale tools, verified buyer RFQs, and secure escrow settlement payouts.
-              </p>
             </div>
 
-            {/* SINGLE-SELECT DROPDOWN CONTAINER */}
-            <div ref={dropdownRef} className="relative">
-              {/* Dropdown Label */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs uppercase tracking-luxury text-[#575757] font-semibold flex items-center gap-1.5">
-                  <Store className="w-3.5 h-3.5 text-purple-600" />
-                  Select Seller Category
-                </span>
-                {selectedRole && (
-                  <span className="text-[10px] uppercase tracking-luxury text-purple-700 font-bold bg-purple-50 px-2 py-0.5 border border-purple-200">
-                    Selected: {selectedSeller?.badge || selectedRole}
-                  </span>
-                )}
-              </div>
-
-              {/* Large Dropdown Trigger Button */}
+            {/* 1. PRIMARY ROLE DROPDOWN */}
+            <div ref={roleDropdownRef} className="relative">
+              {/* Trigger Button */}
               <div
-                onClick={() => setIsDropdownOpen((prev) => !prev)}
-                className={`w-full min-h-[58px] p-3.5 sm:p-4 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-3 ${isDropdownOpen
-                  ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
-                  : selectedRole
+                onClick={() => setIsRoleDropdownOpen((prev) => !prev)}
+                className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                  isRoleDropdownOpen
+                    ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
+                    : selectedRole
                     ? 'border-purple-600 bg-purple-50/20'
                     : 'border-[#121212] hover:border-purple-600'
-                  }`}
+                }`}
               >
                 {/* Selected Role Display or Placeholder */}
                 <div className="flex-1 flex items-center min-w-0">
                   {!selectedRole ? (
-                    <span className="text-sm text-[#8c8c8c] font-light truncate">
-                      Click to choose your seller category (Manufacturer, Brand Owner, Distributor...)...
+                    <span className="text-xs sm:text-[13px] text-[#8c8c8c] font-light truncate">
+                      Click to choose your role (Buyer / Importer, Manufacturer, Supplier...)...
                     </span>
                   ) : (
                     <div className="flex items-center gap-2 truncate">
-                      <span className="inline-flex items-center gap-2 py-1.5 px-3 bg-purple-50 border border-purple-600 text-purple-950 text-xs sm:text-sm uppercase tracking-wider font-bold rounded-none">
-                        <Check className="w-3.5 h-3.5 text-purple-600 stroke-[3]" />
+                      <span className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-purple-50 border border-purple-500 text-purple-950 text-xs uppercase tracking-luxury font-medium rounded-none">
+                        <Check className="w-3 h-3 text-purple-600 stroke-[2.5]" />
                         <span className="truncate">{selectedRole}</span>
                       </span>
                     </div>
@@ -495,7 +477,7 @@ export default function SellersPage() {
                 </div>
 
                 {/* Right Actions: Clear & Chevron */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {selectedRole && (
                     <button
                       type="button"
@@ -503,92 +485,59 @@ export default function SellersPage() {
                         e.stopPropagation();
                         handleClearRole();
                       }}
-                      className="text-xs uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 transition-colors pr-2 border-r border-[#e5e5e5] cursor-pointer"
+                      className="text-[11px] uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 transition-colors pr-2 border-r border-[#e5e5e5] cursor-pointer"
                     >
                       Clear
                     </button>
                   )}
                   <ChevronDown
-                    className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-purple-600' : 'text-[#121212]'
-                      }`}
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      isRoleDropdownOpen ? 'rotate-180 text-purple-600' : 'text-[#121212]'
+                    }`}
                   />
                 </div>
               </div>
 
-              {/* DROPDOWN MENU PANEL */}
+              {/* PRIMARY DROPDOWN MENU PANEL (Clean without subheadings or labels) */}
               <AnimatePresence>
-                {isDropdownOpen && (
+                {isRoleDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
-                    className="absolute top-full left-0 right-0 mt-2 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden max-h-[420px] flex flex-col"
+                    className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden max-h-[340px] flex flex-col"
                   >
-                    {/* Header */}
-                    <div className="p-3 bg-[#faf9f6] border-b border-[#e5e5e5] flex items-center justify-between text-xs flex-shrink-0">
-                      <span className="text-[11px] uppercase tracking-luxury text-[#575757] font-semibold">
-                        Choose 1 seller category:
-                      </span>
-                      {selectedRole && (
-                        <button
-                          type="button"
-                          onClick={handleClearRole}
-                          className="text-[10px] uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 font-semibold cursor-pointer"
-                        >
-                          Clear Selection
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Roles Options List */}
                     <div className="divide-y divide-[#f0f0f0] overflow-y-auto">
-                      {SELLER_TYPES.map((role) => {
-                        const isSelected = selectedRole === role.name;
-                        const IconComponent = role.icon;
+                      {PRIMARY_ROLES.map((role) => {
+                        const isSelected = selectedRole === role;
                         return (
                           <div
-                            key={role.id}
-                            onClick={() => handleSelectRole(role.name)}
-                            className={`p-4 flex items-start gap-3.5 cursor-pointer transition-colors select-none ${isSelected
-                              ? 'bg-purple-50/80 hover:bg-purple-50'
-                              : 'bg-white hover:bg-[#faf9f6]'
-                              }`}
+                            key={role}
+                            onClick={() => handleSelectRole(role)}
+                            className={`p-3 sm:p-3.5 flex items-center gap-3 cursor-pointer transition-colors select-none ${
+                              isSelected
+                                ? 'bg-purple-50/90 text-purple-900 font-bold'
+                                : 'bg-white hover:bg-[#faf9f6] text-[#121212]'
+                            }`}
                           >
                             {/* Luxury Purple Radio Dot */}
                             <div
-                              className={`w-5 h-5 mt-0.5 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${isSelected
-                                ? 'border-purple-600 bg-white'
-                                : 'border-[#a3a3a3] bg-white'
-                                }`}
+                              className={`w-4 h-4 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${
+                                isSelected
+                                  ? 'border-purple-600 bg-white'
+                                  : 'border-[#a3a3a3] bg-white'
+                              }`}
                             >
                               {isSelected && (
-                                <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />
+                                <div className="w-2 h-2 rounded-full bg-purple-600" />
                               )}
                             </div>
 
-                            {/* Role Name, Badge & Description */}
-                            <div className="flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-1.5">
-                                <div className="flex items-center gap-2">
-                                  <IconComponent className="w-4 h-4 text-purple-600" />
-                                  <span
-                                    className={`text-sm uppercase tracking-luxury font-medium ${isSelected
-                                      ? 'text-purple-900 font-bold'
-                                      : 'text-[#121212]'
-                                      }`}
-                                  >
-                                    {role.name}
-                                  </span>
-                                </div>
-                                <span className="text-[9px] uppercase tracking-widest text-purple-700 font-semibold bg-purple-100/70 border border-purple-200 px-2 py-0.5">
-                                  {role.badge}
-                                </span>
-                              </div>
-                              <p className="text-xs text-[#737373] font-light mt-1.5 leading-relaxed">
-                                {role.description}
-                              </p>
-                            </div>
+                            {/* Clean Role Name - No Subheadings, No Labels */}
+                            <span className="text-xs sm:text-[13px] uppercase tracking-luxury font-medium">
+                              {role}
+                            </span>
                           </div>
                         );
                       })}
@@ -598,84 +547,179 @@ export default function SellersPage() {
               </AnimatePresence>
             </div>
 
-            {/* SELLER HIGHLIGHTS / PRIVILEGES CARD (Shown when role is selected) */}
+            {/* 2. SUB-DROPDOWN: SOURCING AGENT SPECIALIZATION WITH IMAGES */}
             <AnimatePresence>
-              {selectedSeller && (
+              {selectedRole === 'Sourcing Agent' && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: -6, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -6, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="border-2 border-purple-600 bg-purple-50/30 p-5 rounded-none space-y-4"
+                  ref={sourcingDropdownRef}
+                  className="relative space-y-1.5 pt-0.5"
                 >
-                  <div className="flex items-center justify-between border-b border-purple-200 pb-3">
-                    <div className="flex items-center gap-2">
-                      <selectedSeller.icon className="w-4 h-4 text-purple-600" />
-                      <span className="text-xs uppercase tracking-luxury font-bold text-purple-950">
-                        Tailored Seller Privileges
-                      </span>
-                    </div>
-                    <span className="text-[10px] uppercase tracking-widest font-semibold text-purple-700 bg-purple-100 px-2 py-0.5">
-                      {selectedSeller.badge}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] uppercase tracking-luxury text-[#575757] font-semibold flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-purple-600" />
+                      Select Sourcing Specialization
                     </span>
+                    {selectedSourcingType && (
+                      <span className="text-[9px] uppercase tracking-luxury text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 border border-purple-200">
+                        {selectedSourcingType}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Highlights list */}
-                  <div className="space-y-2.5">
-                    {selectedSeller.highlights.map((highlight, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-xs text-[#333333] font-normal leading-relaxed">
-                          {highlight}
+                  {/* Sourcing Sub-Dropdown Trigger */}
+                  <div
+                    onClick={() => setIsSourcingDropdownOpen((prev) => !prev)}
+                    className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                      isSourcingDropdownOpen
+                        ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
+                        : selectedSourcingType
+                        ? 'border-purple-600 bg-purple-50/20'
+                        : 'border-[#121212] hover:border-purple-600'
+                    }`}
+                  >
+                    <div className="flex-1 flex items-center min-w-0">
+                      {!selectedSourcingType ? (
+                        <span className="text-xs sm:text-[13px] text-[#8c8c8c] font-light truncate">
+                          Choose Sourcing Agent type (Alibaba, 1688, IndiaMART, FBA, Dropshipping...)...
                         </span>
-                      </div>
-                    ))}
+                      ) : (
+                        <div className="flex items-center gap-2.5 truncate">
+                          {selectedSourcingItem && (
+                            <img
+                              src={selectedSourcingItem.image}
+                              alt={selectedSourcingItem.name}
+                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0 rounded-xs"
+                            />
+                          )}
+                          <span className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-purple-50 border border-purple-500 text-purple-950 text-xs uppercase tracking-luxury font-medium rounded-none truncate">
+                            <Check className="w-3 h-3 text-purple-600 stroke-[2.5] flex-shrink-0" />
+                            <span className="truncate">{selectedSourcingType}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {selectedSourcingType && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleClearSourcingType();
+                          }}
+                          className="text-[11px] uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 transition-colors pr-2 border-r border-[#e5e5e5] cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          isSourcingDropdownOpen ? 'rotate-180 text-purple-600' : 'text-[#121212]'
+                        }`}
+                      />
+                    </div>
                   </div>
 
-                  {/* Trust guarantees bar */}
-                  <div className="pt-3 border-t border-purple-200/80 grid grid-cols-3 gap-2 text-center">
-                    <div className="p-1.5 bg-white border border-purple-200">
-                      <p className="text-[10px] font-bold text-purple-950 tracking-wider">0% LISTING FEE</p>
-                      <p className="text-[9px] text-[#737373]">Zero upfront cost</p>
-                    </div>
-                    <div className="p-1.5 bg-white border border-purple-200">
-                      <p className="text-[10px] font-bold text-purple-950 tracking-wider">ESCROW SECURE</p>
-                      <p className="text-[9px] text-[#737373]">Guaranteed payouts</p>
-                    </div>
-                    <div className="p-1.5 bg-white border border-purple-200">
-                      <p className="text-[10px] font-bold text-purple-950 tracking-wider">GLOBAL REACH</p>
-                      <p className="text-[9px] text-[#737373]">Verified buyers</p>
-                    </div>
-                  </div>
+                  {/* SOURCING DROPDOWN MENU PANEL WITH IMAGES */}
+                  <AnimatePresence>
+                    {isSourcingDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.16 }}
+                        className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden max-h-[350px] flex flex-col"
+                      >
+                        <div className="p-2.5 bg-[#faf9f6] border-b border-[#e5e5e5] flex items-center justify-between text-xs flex-shrink-0">
+                          <span className="text-[10px] uppercase tracking-luxury text-[#575757] font-semibold">
+                            Choose 1 Sourcing Specialization ({SOURCING_AGENT_TYPES.length} Options):
+                          </span>
+                          {selectedSourcingType && (
+                            <button
+                              type="button"
+                              onClick={handleClearSourcingType}
+                              className="text-[9px] uppercase tracking-luxury text-[#8c8c8c] hover:text-red-600 font-semibold cursor-pointer"
+                            >
+                              Clear Selection
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="divide-y divide-[#f0f0f0] overflow-y-auto">
+                          {SOURCING_AGENT_TYPES.map((agent) => {
+                            const isSelected = selectedSourcingType === agent.name;
+                            return (
+                              <div
+                                key={agent.id}
+                                onClick={() => handleSelectSourcingType(agent.name)}
+                                className={`p-2.5 sm:p-3 flex items-center gap-3 cursor-pointer transition-colors select-none ${
+                                  isSelected
+                                    ? 'bg-purple-50/90 text-purple-950 font-bold'
+                                    : 'bg-white hover:bg-[#faf9f6] text-[#121212]'
+                                }`}
+                              >
+                                {/* Radio Dot */}
+                                <div
+                                  className={`w-4 h-4 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${
+                                    isSelected
+                                      ? 'border-purple-600 bg-white'
+                                      : 'border-[#a3a3a3] bg-white'
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                                  )}
+                                </div>
+
+                                {/* Option Image */}
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0 p-0.5 bg-white border border-[#e5e5e5] rounded-xs flex items-center justify-center shadow-2xs">
+                                  <img
+                                    src={agent.image}
+                                    alt={agent.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+
+                                {/* Option Name */}
+                                <span className="text-xs sm:text-[13px] font-medium tracking-normal flex-1">
+                                  {agent.name}
+                                </span>
+
+                                {isSelected && (
+                                  <span className="text-[9px] uppercase tracking-wider text-purple-700 font-semibold bg-purple-100 px-1.5 py-0.5 flex-shrink-0">
+                                    Selected
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* ACTION AREA: CONTINUE BUTTON */}
-            <div className="border border-[#e5e5e5] rounded-none p-5 sm:p-6 bg-white space-y-3">
+            {/* CONTINUE BUTTON */}
+            <div className="border border-[#e5e5e5] rounded-none p-4 sm:p-5 bg-white">
               <button
                 type="button"
                 onClick={handleContinue}
-                disabled={!selectedRole || isRedirecting}
-                className={`w-full py-4 px-6 rounded-none border-2 border-purple-600 bg-white text-xs sm:text-sm uppercase tracking-luxury font-bold transition-all flex items-center justify-center gap-2 shadow-xs ${!selectedRole || isRedirecting
-                  ? 'opacity-40 text-purple-300 cursor-not-allowed'
-                  : 'text-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer active:scale-[0.99]'
-                  }`}
+                disabled={isContinueDisabled}
+                className={`w-full py-3 sm:py-3.5 px-5 rounded-none border-2 border-purple-600 bg-white text-xs uppercase tracking-luxury font-bold transition-all flex items-center justify-center gap-2 shadow-xs ${
+                  isContinueDisabled
+                    ? 'opacity-40 text-purple-300 cursor-not-allowed'
+                    : 'text-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer active:scale-[0.99]'
+                }`}
               >
-                {isRedirecting ? (
-                  <span>Initiating Seller Registration...</span>
-                ) : (
-                  <>
-                    <span>
-                      {selectedRole ? `Become our Seller — Continue` : 'Select a Category to Continue'}
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
+                <span>Continue</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
-
-              {/* Secondary link for existing sellers */}
-
             </div>
           </div>
 
@@ -686,10 +730,10 @@ export default function SellersPage() {
           <div className="order-1 lg:order-2 relative">
             <div className="lg:sticky lg:top-[84px] flex flex-col items-center">
               {/* THOUGHT CLOUD */}
-              <div className="w-full max-w-[380px] sm:max-w-[420px] flex flex-col items-center">
+              <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={selectedRole || 'empty'}
+                    key={`${selectedRole || 'empty'}-${selectedSourcingType || ''}`}
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
@@ -697,7 +741,7 @@ export default function SellersPage() {
                     className="w-full flex justify-center"
                   >
                     <PurpleBorderCloud>
-                      <h3 className="font-serif-luxury text-base sm:text-lg md:text-xl text-[#121212] font-medium leading-snug text-center">
+                      <h3 className="font-serif-luxury text-sm sm:text-base md:text-[17px] text-[#121212] font-medium leading-snug text-center">
                         {getCatSpeech()}
                       </h3>
                     </PurpleBorderCloud>
@@ -706,17 +750,15 @@ export default function SellersPage() {
 
                 {/* Thought trail dots leading down to the cat */}
                 <div className="flex flex-col items-center gap-0.5 my-0.5">
-                  <div className="w-2.5 h-2.5 rounded-full border-[1.8px] border-purple-600 bg-white ml-2" />
-                  <div className="w-1.5 h-1.5 rounded-full border-[1.8px] border-purple-600 bg-white ml-4" />
+                  <div className="w-2 h-2 rounded-full border-[1.8px] border-purple-600 bg-white ml-2" />
+                  <div className="w-1.5 h-1.5 rounded-full border-[1.8px] border-purple-600 bg-white ml-3.5" />
                 </div>
               </div>
 
-              {/* CAT MADE FROM PURPLE BORDER - Prominent Large Mascot */}
-              <div className="relative w-56 sm:w-64 md:w-72 lg:w-80 max-h-[260px] sm:max-h-[285px] aspect-square bg-transparent flex items-center justify-center -mt-1 sm:-mt-2">
+              {/* CAT MADE FROM PURPLE BORDER - Prominent Mascot */}
+              <div className="relative w-48 sm:w-56 md:w-64 max-h-[220px] sm:max-h-[245px] aspect-square bg-transparent flex items-center justify-center -mt-1 sm:-mt-2">
                 <PurpleBorderCat />
               </div>
-
-
             </div>
           </div>
         </div>

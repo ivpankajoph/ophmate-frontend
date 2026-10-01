@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <!-- India Tricolor Circle Shield -->
+  <g clip-path="url(#circle-clip)">
+    <clipPath id="circle-clip">
+      <circle cx="40" cy="40" r="26"/>
+    </clipPath>
+    <!-- Saffron top -->
+    <rect x="10" y="14" width="60" height="17" fill="#ff9933"/>
+    <!-- White middle -->
+    <rect x="10" y="31" width="60" height="18" fill="#ffffff"/>
+    <!-- Green bottom -->
+    <rect x="10" y="49" width="60" height="17" fill="#138808"/>
+    <!-- Ashoka Chakra -->
+    <circle cx="40" cy="40" r="7" stroke="#000080" stroke-width="1.2" fill="none"/>
+    <circle cx="40" cy="40" r="1.5" fill="#000080"/>
+    <!-- Chakra Spokes -->
+    <line x1="40" y1="33" x2="40" y2="47" stroke="#000080" stroke-width="0.8"/>
+    <line x1="33" y1="40" x2="47" y2="40" stroke="#000080" stroke-width="0.8"/>
+    <line x1="35" y1="35" x2="45" y2="45" stroke="#000080" stroke-width="0.8"/>
+    <line x1="35" y1="45" x2="45" y2="35" stroke="#000080" stroke-width="0.8"/>
+  </g>
+  <circle cx="40" cy="40" r="26" stroke="#ff9933" stroke-width="2" fill="none"/>
+</svg>

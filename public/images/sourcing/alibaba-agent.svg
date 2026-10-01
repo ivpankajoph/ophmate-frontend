@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#ff6a00"/>
+  <!-- Alibaba iconic smiling letter "a" silhouette -->
+  <circle cx="40" cy="40" r="26" fill="#ffffff" opacity="0.15"/>
+  <path d="M 40 18 C 28 18, 20 28, 20 40 C 20 52, 28 62, 40 62 C 48 62, 54 58, 58 52 L 50 47 C 48 51, 44 54, 40 54 C 32 54, 28 48, 28 40 C 28 32, 33 26, 40 26 C 45 26, 49 29, 51 33 L 59 28 C 55 22, 48 18, 40 18 Z" fill="#ffffff"/>
+  <!-- The Alibaba friendly eye & smile -->
+  <circle cx="36" cy="38" r="3.5" fill="#ffffff"/>
+  <path d="M 32 44 Q 40 52 48 44" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- "Alibaba" text label pill -->
+  <rect x="14" y="61" width="52" height="12" rx="3" fill="#ffffff"/>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="8.5" fill="#ff6a00" text-anchor="middle" letter-spacing="0.5">Alibaba</text>
+</svg>

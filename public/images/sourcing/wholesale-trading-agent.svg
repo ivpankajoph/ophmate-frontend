@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#1c1917"/>
+  <!-- Wooden Pallet Base -->
+  <rect x="14" y="60" width="52" height="6" rx="1" fill="#d97706"/>
+  <rect x="18" y="66" width="8" height="4" fill="#92400e"/>
+  <rect x="36" y="66" width="8" height="4" fill="#92400e"/>
+  <rect x="54" y="66" width="8" height="4" fill="#92400e"/>
+  <!-- Bulk Stacked Boxes -->
+  <rect x="16" y="44" width="22" height="15" rx="2" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+  <rect x="42" y="44" width="22" height="15" rx="2" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+  <rect x="29" y="27" width="22" height="16" rx="2" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <!-- B2B Wholesale Seal -->
+  <circle cx="62" cy="24" r="11" fill="#9333ea"/>
+  <text x="62" y="27.5" font-family="Arial, sans-serif" font-weight="bold" font-size="7.5" fill="#ffffff" text-anchor="middle">B2B</text>
+</svg>

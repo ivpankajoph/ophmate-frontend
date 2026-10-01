@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#232f3e"/>
+  <!-- Amazon Kraft Cardboard Box -->
+  <rect x="16" y="16" width="48" height="40" rx="4" fill="#fcd34d" stroke="#d97706" stroke-width="2"/>
+  <!-- Box Flap & Tape -->
+  <line x1="40" y1="16" x2="40" y2="40" stroke="#b45309" stroke-width="2"/>
+  <rect x="36" y="16" width="8" height="24" fill="#fef3c7" opacity="0.6"/>
+  <!-- FBA Letters -->
+  <text x="40" y="34" font-family="'Arial Black', Arial, sans-serif" font-weight="900" font-size="12" fill="#131921" text-anchor="middle" letter-spacing="0.5">FBA</text>
+  <!-- Amazon Smile Arrow -->
+  <path d="M 26 43 Q 40 52 54 44" stroke="#ff9900" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <polygon points="56,43 51,41 53,46" fill="#ff9900"/>
+  <!-- Amazon Fulfillment sub-label -->
+  <rect x="12" y="62" width="56" height="11" rx="2" fill="#ff9900"/>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-weight="bold" font-size="7" fill="#131921" text-anchor="middle">AMAZON FBA</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#1e1b4b"/>
+  <!-- Motion speed trails -->
+  <path d="M10 28 L 22 28" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M6 38 L 18 38" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round"/>
+  <path d="M12 48 L 24 48" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Isometric 3D Box -->
+  <!-- Top Face -->
+  <polygon points="46,18 66,28 46,38 26,28" fill="#a855f7"/>
+  <!-- Left Face -->
+  <polygon points="26,28 46,38 46,62 26,52" fill="#7e22ce"/>
+  <!-- Right Face -->
+  <polygon points="46,38 66,28 66,52 46,62" fill="#9333ea"/>
+  <!-- Box Tape -->
+  <polygon points="42,20 50,24 50,62 42,58" fill="#f3e8ff" opacity="0.3"/>
+  <!-- Lightning bolt overlay -->
+  <polygon points="48,22 36,40 44,40 40,56 56,36 48,36" fill="#fbbf24"/>
+</svg>

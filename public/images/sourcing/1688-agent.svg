@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="16" fill="#ff4400"/>
+  <!-- Modern 1688 Badge -->
+  <rect x="10" y="14" width="60" height="42" rx="8" fill="#ffffff"/>
+  <text x="40" y="44" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="22" fill="#ff4400" text-anchor="middle" letter-spacing="-1">1688</text>
+  <!-- Wholesale subtitle -->
+  <rect x="14" y="60" width="52" height="12" rx="3" fill="#ffffff" opacity="0.9"/>
+  <text x="40" y="69" font-family="Arial, sans-serif" font-weight="bold" font-size="7.5" fill="#ff4400" text-anchor="middle" letter-spacing="1">WHOLESALE</text>
+</svg>
