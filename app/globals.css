@@ -99,3 +99,15 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* Keep the procurement form visually light without affecting the store UI. */
+.buyer-procurement-form label {
+  font-size: 12px;
+}
+
+.buyer-procurement-form input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+.buyer-procurement-form textarea,
+.buyer-procurement-form select {
+  border-color: #e8e8e8 !important;
+  font-size: 13px;
+}

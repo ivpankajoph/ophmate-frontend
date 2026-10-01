@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -10,7 +9,6 @@ import {
   Check,
   ArrowRight,
   ChevronDown,
-  Building2,
   Sparkles
 } from 'lucide-react';
 
@@ -89,6 +87,71 @@ const SOURCING_AGENT_TYPES: SourcingAgentType[] = [
     id: 'fba-sourcing-agent',
     name: 'FBA Sourcing Agent',
     image: '/images/sourcing/fba-sourcing-agent.svg'
+  },
+  {
+    id: 'china-buying-agent',
+    name: 'China Buying Agent',
+    image: '/images/sourcing/china-sourcing-agent.svg'
+  },
+  {
+    id: 'china-import-agent',
+    name: 'China Import Agent',
+    image: '/images/sourcing/import-agent.svg'
+  },
+  {
+    id: 'trending-chinese-products-research',
+    name: 'Trending Chinese Products Research',
+    image: '/images/sourcing/product-sourcing-agent.svg'
+  },
+  {
+    id: 'chinese-product-inspection',
+    name: 'Chinese Product Inspection',
+    image: '/images/sourcing/asia-sourcing-agent.svg'
+  },
+  {
+    id: 'chinese-factory-visit',
+    name: 'Chinese Factory Visit',
+    image: '/images/sourcing/wholesale-trading-agent.svg'
+  },
+  {
+    id: 'door-to-door-service',
+    name: 'Door-to-Door Service',
+    image: '/images/sourcing/dropshipping-sourcing-agent.svg'
+  },
+  {
+    id: 'china-freight-forwarder',
+    name: 'China Freight Forwarder',
+    image: '/images/sourcing/dropshipping-agent.svg'
+  },
+  {
+    id: 'indian-buying-agent',
+    name: 'Indian Buying Agent',
+    image: '/images/sourcing/india-sourcing-agent.svg'
+  },
+  {
+    id: 'india-import-agent',
+    name: 'India Import Agent',
+    image: '/images/sourcing/import-agent.svg'
+  },
+  {
+    id: 'trending-indian-product-research',
+    name: 'Trending Indian Product Research',
+    image: '/images/sourcing/product-sourcing-agent.svg'
+  },
+  {
+    id: 'india-factory-visit',
+    name: 'India Factory Visit',
+    image: '/images/sourcing/wholesale-trading-agent.svg'
+  },
+  {
+    id: 'indian-product-inspection',
+    name: 'Indian Product Inspection',
+    image: '/images/sourcing/indiamart-agent.svg'
+  },
+  {
+    id: 'indian-freight-forwarder',
+    name: 'Indian Freight Forwarder',
+    image: '/images/sourcing/dropshipping-agent.svg'
   }
 ];
 
@@ -329,10 +392,10 @@ const PurpleBorderCloud: React.FC<{ children: React.ReactNode; className?: strin
 
 export default function SellersPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
-  const [selectedSourcingType, setSelectedSourcingType] = useState<string | null>(null);
+  const [selectedSourcingTypes, setSelectedSourcingTypes] = useState<string[]>([]);
   const [isSourcingDropdownOpen, setIsSourcingDropdownOpen] = useState(false);
 
   const roleDropdownRef = useRef<HTMLDivElement>(null);
@@ -361,68 +424,81 @@ export default function SellersPage() {
   }, []);
 
   const handleSelectRole = (role: string) => {
-    setSelectedRole(role);
-    setIsRoleDropdownOpen(false);
-    if (role !== 'Sourcing Agent') {
-      setSelectedSourcingType(null);
+    setSelectedRoles((currentRoles) =>
+      currentRoles.includes(role)
+        ? currentRoles.filter((selectedRole) => selectedRole !== role)
+        : [...currentRoles, role]
+    );
+    if (role === 'Sourcing Agent' && selectedRoles.includes(role)) {
+      setSelectedSourcingTypes([]);
     }
   };
 
   const handleClearRole = () => {
-    setSelectedRole(null);
-    setSelectedSourcingType(null);
+    setSelectedRoles([]);
+    setSelectedSourcingTypes([]);
   };
 
   const handleSelectSourcingType = (name: string) => {
-    setSelectedSourcingType(name);
-    setIsSourcingDropdownOpen(false);
+    setSelectedSourcingTypes((currentTypes) =>
+      currentTypes.includes(name)
+        ? currentTypes.filter((type) => type !== name)
+        : [...currentTypes, name]
+    );
   };
 
   const handleClearSourcingType = () => {
-    setSelectedSourcingType(null);
+    setSelectedSourcingTypes([]);
   };
 
   const handleContinue = () => {
-    if (!selectedRole || (selectedRole === 'Sourcing Agent' && !selectedSourcingType)) return;
+    const hasSourcingAgent = selectedRoles.includes('Sourcing Agent');
+    if (selectedRoles.length === 0 || (hasSourcingAgent && selectedSourcingTypes.length === 0)) return;
+
+    // Keep the existing registration flow compatible while preserving every selection.
+    const primaryRole = hasSourcingAgent ? 'Sourcing Agent' : selectedRoles[0];
 
     // Save to localStorage for persistence
     if (typeof window !== 'undefined') {
-      if (selectedRole) {
-        localStorage.setItem('ophmart_selected_role', selectedRole);
-      }
-      if (selectedSourcingType) {
-        localStorage.setItem('ophmart_selected_sourcing_type', selectedSourcingType);
+      localStorage.setItem('ophmart_selected_role', primaryRole);
+      localStorage.setItem('ophmart_selected_roles', JSON.stringify(selectedRoles));
+      if (selectedSourcingTypes.length > 0) {
+        localStorage.setItem('ophmart_selected_sourcing_types', JSON.stringify(selectedSourcingTypes));
+        localStorage.setItem('ophmart_selected_sourcing_type', selectedSourcingTypes[0]);
       } else {
+        localStorage.removeItem('ophmart_selected_sourcing_types');
         localStorage.removeItem('ophmart_selected_sourcing_type');
       }
     }
 
     const queryParams = new URLSearchParams();
-    if (selectedRole) queryParams.set('role', selectedRole);
-    if (selectedSourcingType) queryParams.set('sourcingType', selectedSourcingType);
+    queryParams.set('role', primaryRole);
+    queryParams.set('roles', selectedRoles.join(','));
+    if (selectedSourcingTypes.length > 0) queryParams.set('sourcingTypes', selectedSourcingTypes.join(','));
 
     router.push(`/sellers/registration?${queryParams.toString()}`);
   };
 
-  const selectedSourcingItem = SOURCING_AGENT_TYPES.find(
-    (item) => item.name === selectedSourcingType
-  );
-
   const getCatSpeech = () => {
-    if (!selectedRole) {
+    if (selectedRoles.length === 0) {
       return 'Tell us, what do you want to be?';
     }
-    if (selectedRole === 'Sourcing Agent') {
-      if (selectedSourcingType) {
-        return `Awesome! You chose ${selectedSourcingType}!`;
+    if (selectedRoles.includes('Sourcing Agent')) {
+      if (selectedSourcingTypes.length > 0) {
+        return selectedRoles.length > 1
+          ? `Great! You selected ${selectedRoles.length} roles and ${selectedSourcingTypes.length} sourcing services.`
+          : `Awesome! You chose ${selectedSourcingTypes.length} sourcing ${selectedSourcingTypes.length === 1 ? 'service' : 'services'}!`;
       }
       return 'Which type of Sourcing Agent are you?';
     }
-    return `Okay, so you want to be our ${selectedRole}!`;
+    return selectedRoles.length === 1
+      ? `Okay, so you want to be our ${selectedRoles[0]}!`
+      : `Great! You selected ${selectedRoles.length} roles.`;
   };
 
   const isContinueDisabled =
-    !selectedRole || (selectedRole === 'Sourcing Agent' && !selectedSourcingType);
+    selectedRoles.length === 0 ||
+    (selectedRoles.includes('Sourcing Agent') && selectedSourcingTypes.length === 0);
 
   return (
     <div className="min-h-screen bg-white text-[#121212] pt-1 sm:pt-2 pb-16 px-4 sm:px-6 md:px-10 lg:px-12">
@@ -463,33 +539,35 @@ export default function SellersPage() {
               {/* Trigger Button */}
               <div
                 onClick={() => setIsRoleDropdownOpen((prev) => !prev)}
-                className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                   isRoleDropdownOpen
                     ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
-                    : selectedRole
+                    : selectedRoles.length > 0
                     ? 'border-purple-600 bg-purple-50/20'
-                    : 'border-[#121212] hover:border-purple-600'
+                    : 'border-[#e8e8e8] hover:border-purple-600'
                 }`}
               >
                 {/* Selected Role Display or Placeholder */}
                 <div className="flex-1 flex items-center min-w-0">
-                  {!selectedRole ? (
+                  {selectedRoles.length === 0 ? (
                     <span className="text-xs sm:text-[13px] text-[#8c8c8c] font-light truncate">
                       Click to choose your role (Buyer / Importer, Manufacturer, Supplier...)...
                     </span>
                   ) : (
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-purple-50 border border-purple-500 text-purple-950 text-xs uppercase tracking-luxury font-medium rounded-none">
-                        <Check className="w-3 h-3 text-purple-600 stroke-[2.5]" />
-                        <span className="truncate">{selectedRole}</span>
-                      </span>
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      {selectedRoles.map((role) => (
+                        <span key={role} className="inline-flex items-center gap-1.5 py-1 px-2 bg-purple-50 border border-purple-200 text-purple-950 text-[11px] uppercase tracking-wider font-medium rounded-none">
+                          <Check className="w-3 h-3 text-purple-600 stroke-[2.5]" />
+                          <span>{role}</span>
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
 
                 {/* Right Actions: Clear & Chevron */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {selectedRole && (
+                  {selectedRoles.length > 0 && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -517,11 +595,11 @@ export default function SellersPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
-                    className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden max-h-[340px] flex flex-col"
+                    className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border border-[#e8e8e8] shadow-xl rounded-none overflow-hidden max-h-[340px] flex flex-col"
                   >
                     <div className="divide-y divide-[#f0f0f0] overflow-y-auto">
                       {PRIMARY_ROLES.map((role) => {
-                        const isSelected = selectedRole === role;
+                        const isSelected = selectedRoles.includes(role);
                         return (
                           <div
                             key={role}
@@ -532,16 +610,16 @@ export default function SellersPage() {
                                 : 'bg-white hover:bg-[#faf9f6] text-[#121212]'
                             }`}
                           >
-                            {/* Luxury Purple Radio Dot */}
+                            {/* Multi-select checkbox */}
                             <div
-                              className={`w-4 h-4 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${
+                              className={`w-4 h-4 flex-shrink-0 border rounded-sm flex items-center justify-center transition-colors ${
                                 isSelected
-                                  ? 'border-purple-600 bg-white'
-                                  : 'border-[#a3a3a3] bg-white'
+                                  ? 'border-purple-600 bg-purple-600'
+                                  : 'border-[#d8d8d8] bg-white'
                               }`}
                             >
                               {isSelected && (
-                                <div className="w-2 h-2 rounded-full bg-purple-600" />
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
                               )}
                             </div>
 
@@ -560,7 +638,7 @@ export default function SellersPage() {
 
             {/* 2. SUB-DROPDOWN: SOURCING AGENT SPECIALIZATION WITH IMAGES */}
             <AnimatePresence>
-              {selectedRole === 'Sourcing Agent' && (
+              {selectedRoles.includes('Sourcing Agent') && (
                 <motion.div
                   initial={{ opacity: 0, y: -6, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
@@ -574,9 +652,9 @@ export default function SellersPage() {
                       <Sparkles className="w-3 h-3 text-purple-600" />
                       Select Sourcing Specialization
                     </span>
-                    {selectedSourcingType && (
+                    {selectedSourcingTypes.length > 0 && (
                       <span className="text-[9px] uppercase tracking-luxury text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 border border-purple-200">
-                        {selectedSourcingType}
+                        {selectedSourcingTypes.length} selected
                       </span>
                     )}
                   </div>
@@ -584,38 +662,33 @@ export default function SellersPage() {
                   {/* Sourcing Sub-Dropdown Trigger */}
                   <div
                     onClick={() => setIsSourcingDropdownOpen((prev) => !prev)}
-                    className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border-2 rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                    className={`w-full min-h-[48px] sm:min-h-[52px] p-2.5 sm:p-3 bg-white border rounded-none transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                       isSourcingDropdownOpen
                         ? 'border-purple-600 ring-1 ring-purple-600 shadow-sm'
-                        : selectedSourcingType
+                        : selectedSourcingTypes.length > 0
                         ? 'border-purple-600 bg-purple-50/20'
-                        : 'border-[#121212] hover:border-purple-600'
+                        : 'border-[#e8e8e8] hover:border-purple-600'
                     }`}
                   >
                     <div className="flex-1 flex items-center min-w-0">
-                      {!selectedSourcingType ? (
+                      {selectedSourcingTypes.length === 0 ? (
                         <span className="text-xs sm:text-[13px] text-[#8c8c8c] font-light truncate">
                           Choose Sourcing Agent type (Alibaba, 1688, IndiaMART, FBA, Dropshipping...)...
                         </span>
                       ) : (
-                        <div className="flex items-center gap-2.5 truncate">
-                          {selectedSourcingItem && (
-                            <img
-                              src={selectedSourcingItem.image}
-                              alt={selectedSourcingItem.name}
-                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0 rounded-xs"
-                            />
-                          )}
-                          <span className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-purple-50 border border-purple-500 text-purple-950 text-xs uppercase tracking-luxury font-medium rounded-none truncate">
-                            <Check className="w-3 h-3 text-purple-600 stroke-[2.5] flex-shrink-0" />
-                            <span className="truncate">{selectedSourcingType}</span>
-                          </span>
+                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                          {selectedSourcingTypes.map((type) => (
+                            <span key={type} className="inline-flex items-center gap-1.5 py-1 px-2 bg-purple-50 border border-purple-200 text-purple-950 text-[11px] uppercase tracking-wider font-medium rounded-none">
+                              <Check className="w-3 h-3 text-purple-600 stroke-[2.5] flex-shrink-0" />
+                              <span>{type}</span>
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {selectedSourcingType && (
+                      {selectedSourcingTypes.length > 0 && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -643,13 +716,13 @@ export default function SellersPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.16 }}
-                        className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border-2 border-[#121212] shadow-2xl rounded-none overflow-hidden max-h-[350px] flex flex-col"
+                        className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white border border-[#e8e8e8] shadow-xl rounded-none overflow-hidden max-h-[350px] flex flex-col"
                       >
                         <div className="p-2.5 bg-[#faf9f6] border-b border-[#e5e5e5] flex items-center justify-between text-xs flex-shrink-0">
                           <span className="text-[10px] uppercase tracking-luxury text-[#575757] font-semibold">
-                            Choose 1 Sourcing Specialization ({SOURCING_AGENT_TYPES.length} Options):
+                            Choose Sourcing Specializations ({SOURCING_AGENT_TYPES.length} Options):
                           </span>
-                          {selectedSourcingType && (
+                          {selectedSourcingTypes.length > 0 && (
                             <button
                               type="button"
                               onClick={handleClearSourcingType}
@@ -662,7 +735,7 @@ export default function SellersPage() {
 
                         <div className="divide-y divide-[#f0f0f0] overflow-y-auto">
                           {SOURCING_AGENT_TYPES.map((agent) => {
-                            const isSelected = selectedSourcingType === agent.name;
+                            const isSelected = selectedSourcingTypes.includes(agent.name);
                             return (
                               <div
                                 key={agent.id}
@@ -673,16 +746,16 @@ export default function SellersPage() {
                                     : 'bg-white hover:bg-[#faf9f6] text-[#121212]'
                                 }`}
                               >
-                                {/* Radio Dot */}
+                                {/* Multi-select checkbox */}
                                 <div
-                                  className={`w-4 h-4 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors ${
+                                  className={`w-4 h-4 flex-shrink-0 border rounded-sm flex items-center justify-center transition-colors ${
                                     isSelected
-                                      ? 'border-purple-600 bg-white'
+                                      ? 'border-purple-600 bg-purple-600'
                                       : 'border-[#a3a3a3] bg-white'
                                   }`}
                                 >
                                   {isSelected && (
-                                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                                    <Check className="w-3 h-3 text-white stroke-[3]" />
                                   )}
                                 </div>
 
@@ -717,7 +790,7 @@ export default function SellersPage() {
             </AnimatePresence>
 
             {/* CONTINUE BUTTON */}
-            <div className="border border-[#e5e5e5] rounded-none p-4 sm:p-5 bg-white">
+            <div className="rounded-none p-4 sm:p-5 bg-white">
               <button
                 type="button"
                 onClick={handleContinue}
@@ -744,7 +817,7 @@ export default function SellersPage() {
               <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={`${selectedRole || 'empty'}-${selectedSourcingType || ''}`}
+                    key={`${selectedRoles.join('|') || 'empty'}-${selectedSourcingTypes.join('|')}`}
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}

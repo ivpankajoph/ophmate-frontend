@@ -1121,11 +1121,11 @@ export default function BuyersPage() {
           {/* LEFT COLUMN: THE SOURCING APPLICATION FORM                */}
           {/* ========================================================== */}
           <div className="lg:col-span-7 xl:col-span-8 order-2 lg:order-1">
-            <div className="border border-[#121212] bg-white p-5 sm:p-7 md:p-8 shadow-xs">
+            <div className="bg-white p-5 sm:p-7 md:p-8">
               {/* Header Title Section */}
               <div className="border-b border-[#e5e5e5] pb-4 mb-5">
 
-                <h1 className="font-serif-luxury text-xl sm:text-2xl md:text-3xl text-[#121212] font-semibold tracking-tight">
+                <h1 className="font-serif-luxury text-xl sm:text-2xl md:text-[28px] text-[#121212] font-semibold tracking-tight">
                   Buyer Procurement Registration
                 </h1>
 
@@ -1189,7 +1189,7 @@ export default function BuyersPage() {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="buyer-procurement-form space-y-6">
                   {submitError && (
                     <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1237,9 +1237,7 @@ export default function BuyersPage() {
                               Product
                             </span>
                           </div>
-                          <span className="text-[11px] sm:text-xs text-[#575757] block mt-0.5 font-light">
-                            Physical Goods, Apparel, Materials
-                          </span>
+                       
                         </div>
                       </button>
 
@@ -1269,9 +1267,7 @@ export default function BuyersPage() {
                               Services
                             </span>
                           </div>
-                          <span className="text-[11px] sm:text-xs text-[#575757] block mt-0.5 font-light">
-                            Professional & Business Services
-                          </span>
+                         
                         </div>
                       </button>
                     </div>
@@ -1571,7 +1567,7 @@ export default function BuyersPage() {
                         className={`w-full min-h-[44px] px-3.5 py-2 border transition-all cursor-pointer bg-white flex items-center justify-between gap-2 rounded-none ${
                           isCountryDropdownOpen
                             ? 'border-purple-600 ring-1 ring-purple-600'
-                            : 'border-[#121212] hover:border-purple-600'
+                            : 'border-[#e8e8e8] hover:border-purple-600'
                         }`}
                       >
                         <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
